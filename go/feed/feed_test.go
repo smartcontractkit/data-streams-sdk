@@ -9,6 +9,7 @@ var (
 	v1FeedID = (ID)([32]uint8{00, 01, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114})
 	v2FeedID = (ID)([32]uint8{00, 02, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114})
 	v3FeedID = (ID)([32]uint8{00, 03, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114})
+	v4FeedID = (ID)([32]uint8{00, 04, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114})
 )
 
 func TestFeedVersion(t *testing.T) {
@@ -22,6 +23,10 @@ func TestFeedVersion(t *testing.T) {
 
 	if v3FeedID.Version() != FeedVersion3 {
 		t.Fatalf("expected feed version: %d, got: %d", FeedVersion3, v3FeedID.Version())
+	}
+
+	if v4FeedID.Version() != FeedVersion4 {
+		t.Fatalf("expected feed version: %d, got: %d", FeedVersion4, v4FeedID.Version())
 	}
 }
 
@@ -48,6 +53,11 @@ func TestFeedMarshalJSON(t *testing.T) {
 			name: "v3",
 			feed: v3FeedID,
 			want: `"0x00036b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472"`,
+		},
+		{
+			name: "v4",
+			feed: v4FeedID,
+			want: `"0x00046b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472"`,
 		},
 	}
 
@@ -87,6 +97,11 @@ func TestFeedUnMarshalJSON(t *testing.T) {
 			name: "v3",
 			feed: v3FeedID,
 			want: []byte(`"0x00036b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472"`),
+		},
+		{
+			name: "v4",
+			feed: v4FeedID,
+			want: []byte(`"0x00046b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472"`),
 		},
 	}
 
