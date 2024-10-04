@@ -14,6 +14,7 @@ const (
 	FeedVersion1
 	FeedVersion2
 	FeedVersion3
+	FeedVersion4
 	_
 )
 
