@@ -7,9 +7,44 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use sha2::{Digest, Sha256};
 use std::error::Error;
 
+/// Type alias for HMAC-SHA256.
 type HmacSha256 = Hmac<Sha256>;
 
-fn generate_hmac(
+/// Generates an HMAC-SHA256 signature based on the provided parameters.
+///
+/// # Arguments
+///
+/// * `method` - The HTTP method (e.g., "GET", "POST", etc.).
+/// * `path` - The API endpoint path (e.g., "/api/v1/feeds", "/api/v1/reports/bulk", etc.).
+/// * `body` - The request body as a byte slice.
+/// * `client_id` - The client's API key.
+/// * `timestamp` - The current timestamp as an `i64`.
+/// * `user_secret` - The client's API secret.
+///
+/// # Returns
+///
+/// A `Result` containing the hex-encoded HMAC string if successful, or an error.
+///
+/// # Examples
+///
+/// ```rust
+/// use data_streams_sdk::auth::generate_hmac;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let method = "GET";
+///     let path = "/api/v1/feeds";
+///     let body = b"";
+///     let client_id = "clientId";
+///     let user_secret = "userSecret";
+///     let timestamp = 1718885772; // Example timestamp
+///
+///     let hmac = generate_hmac(method, path, body, client_id, timestamp, user_secret)?;
+///     println!("Generated HMAC: {}", hmac);
+///
+///     Ok(())
+/// }
+/// ```
+pub fn generate_hmac(
     method: &str,
     path: &str,
     body: &[u8],
@@ -38,7 +73,56 @@ fn generate_hmac(
     Ok(user_hmac)
 }
 
-fn generate_auth_headers(
+/// Generates and inserts authentication headers into the provided `HeaderMap`.
+///
+/// # Arguments
+///
+/// * `headers` - A mutable reference to a `HeaderMap` where headers will be inserted.
+/// * `method` - The HTTP method (e.g., "GET", "POST", etc.).
+/// * `path` - The API endpoint path (e.g., "/api/v1/feeds", "/api/v1/reports/bulk", etc.).
+/// * `body` - The request body as a byte slice.
+/// * `client_id` - The client's API key.
+/// * `user_secret` - The client's API secret.
+/// * `timestamp` - The current timestamp as an `i64`.
+///
+/// # Returns
+///
+/// A `Result` indicating success or containing an error.
+///
+/// # Examples
+///
+/// ```rust
+/// use reqwest::header::HeaderMap;
+/// use data_streams_sdk::auth::generate_auth_headers;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let method = "GET";
+///     let path = "/api/v1/feeds";
+///     let body = b"";
+///     let client_id = "clientId";
+///     let user_secret = "userSecret";
+///     let timestamp = 1718885772; // Example timestamp
+///
+///     let mut headers = HeaderMap::new();
+///     generate_auth_headers(
+///         &mut headers,
+///         method,
+///         path,
+///         body,
+///         client_id,
+///         user_secret,
+///         timestamp,
+///     )?;
+///
+///     // Now `headers` contains the authentication headers.
+///     for (key, value) in headers.iter() {
+///         println!("{}: {:?}", key, value);
+///     }
+///
+///     Ok(())
+/// }
+/// ```
+pub fn generate_auth_headers(
     headers: &mut HeaderMap,
     method: &str,
     path: &str,
