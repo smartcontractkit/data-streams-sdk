@@ -1,6 +1,4 @@
-use crate::endpoints::{
-    get_authz_header, get_authz_sig_header, get_authz_ts_header, API_V1_FEEDS, API_V1_REPORTS_BULK,
-};
+use crate::endpoints::{get_authz_header, get_authz_sig_header, get_authz_ts_header};
 
 use hmac::{Hmac, Mac};
 use reqwest::header::{HeaderMap, HeaderValue};
@@ -49,7 +47,7 @@ pub fn generate_hmac(
     path: &str,
     body: &[u8],
     client_id: &str,
-    timestamp: i64,
+    timestamp: u128,
     user_secret: &str,
 ) -> Result<String, Box<dyn Error>> {
     let mut hasher = Sha256::new();
@@ -129,7 +127,7 @@ pub fn generate_auth_headers(
     body: &[u8],
     client_id: &str,
     user_secret: &str,
-    timestamp: i64,
+    timestamp: u128,
 ) -> Result<(), Box<dyn Error>> {
     let hmac_string = generate_hmac(method, path, body, client_id, timestamp, user_secret)?;
 
@@ -146,6 +144,7 @@ pub fn generate_auth_headers(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::endpoints::{API_V1_FEEDS, API_V1_REPORTS_BULK};
 
     #[test]
     fn generate_hmac_valid1() {

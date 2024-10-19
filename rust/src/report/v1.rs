@@ -25,10 +25,9 @@ impl ReportDataV1 {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::report::tests::generate_mock_report_data_v1;
     use alloy::primitives::{aliases::I192, b256};
-
-    use super::*;
 
     #[test]
     fn decode_report_data_v1() {

@@ -3,12 +3,30 @@ pub mod v2;
 pub mod v3;
 pub mod v4;
 
+use crate::feed::ID;
+
 use alloy::sol;
 use alloy::sol_types::SolValue;
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize)]
+pub struct Report {
+    #[serde(rename = "feedID")]
+    pub feed_id: ID,
+
+    #[serde(rename = "validFromTimestamp")]
+    pub valid_from_timestamp: usize,
+
+    #[serde(rename = "observationsTimestamp")]
+    pub observations_timestamp: usize,
+
+    #[serde(rename = "fullReport")]
+    pub full_report: String,
+}
 
 sol! {
     #[derive(Debug)]
-    struct Report {
+    struct ReportCallback {
         bytes32[3] reportContext;
         bytes reportBlob;
         bytes32[] rawRs;
@@ -17,11 +35,52 @@ sol! {
     }
 }
 
-impl Report {
-    /// Decodes an ABI-encoded `Report` from bytes.
+impl ReportCallback {
+    /// Decodes an ABI-encoded `ReportCallback` from bytes.
     pub fn decode(data: &[u8]) -> Result<Self, String> {
         Self::abi_decode(data, false).map_err(|e| e.to_string())
     }
+}
+
+/// ABI-decodes a full report payload into its report context (bytes32[3]) and report blob (bytes).
+/// The report blob is the actual report data that needs to be decoded further - to version-specific report data.
+pub fn decode_full_report(payload: &[u8]) -> Result<(Vec<[u8; 32]>, Vec<u8>), String> {
+    if payload.len() < 128 {
+        return Err("Payload is too short".to_string());
+    }
+
+    // Decode the first three bytes32 elements
+    let report_context = (0..3)
+        .map(|i| payload[i * 32..(i + 1) * 32].try_into())
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| "Failed to parse report_context")?;
+
+    // Decode the offset for the bytes reportBlob data
+    let offset = usize::from_be_bytes(
+        payload[96..128][24..32]
+            .try_into()
+            .map_err(|_| "Failed to parse offset as usize")?,
+    );
+
+    if offset < 128 || offset >= payload.len() {
+        return Err("Invalid offset".to_string());
+    }
+
+    // Decode the length of the bytes reportBlob data
+    let length = usize::from_be_bytes(
+        payload[offset..offset + 32][24..32]
+            .try_into()
+            .map_err(|_| "Failed to parse length as usize")?,
+    );
+
+    if offset + 32 + length > payload.len() {
+        return Err("Invalid length for bytes data".to_string());
+    }
+
+    // Decode the remainder of the payload (actual bytes reportBlob data)
+    let report_blob = payload[offset + 32..offset + 32 + length].to_vec();
+
+    Ok((report_context, report_blob))
 }
 
 #[cfg(test)]
@@ -125,8 +184,8 @@ mod tests {
         report_data
     }
 
-    pub fn generate_mock_report(encoded_report_data: Bytes) -> Report {
-        let report = Report {
+    pub fn generate_mock_report(encoded_report_data: Bytes) -> ReportCallback {
+        let report = ReportCallback {
             reportContext: [
                 FixedBytes::from([0; 32]),
                 FixedBytes::from([0; 32]),
@@ -158,7 +217,7 @@ mod tests {
         let report = generate_mock_report(Bytes::from(encoded_report_data));
 
         let encoded_report = report.abi_encode();
-        let decoded_report = Report::decode(&encoded_report).unwrap();
+        let decoded_report = ReportCallback::decode(&encoded_report).unwrap();
 
         assert_eq!(decoded_report.reportContext[0], FixedBytes::from([0; 32]));
         assert_eq!(decoded_report.reportContext[1], FixedBytes::from([0; 32]));
@@ -193,7 +252,7 @@ mod tests {
         let report = generate_mock_report(Bytes::from(encoded_report_data));
 
         let encoded_report = report.abi_encode();
-        let decoded_report = Report::decode(&encoded_report).unwrap();
+        let decoded_report = ReportCallback::decode(&encoded_report).unwrap();
 
         assert_eq!(decoded_report.reportContext[0], FixedBytes::from([0; 32]));
         assert_eq!(decoded_report.reportContext[1], FixedBytes::from([0; 32]));
@@ -228,7 +287,7 @@ mod tests {
         let report = generate_mock_report(Bytes::from(encoded_report_data));
 
         let encoded_report = report.abi_encode();
-        let decoded_report = Report::decode(&encoded_report).unwrap();
+        let decoded_report = ReportCallback::decode(&encoded_report).unwrap();
 
         assert_eq!(decoded_report.reportContext[0], FixedBytes::from([0; 32]));
         assert_eq!(decoded_report.reportContext[1], FixedBytes::from([0; 32]));
@@ -263,7 +322,7 @@ mod tests {
         let report = generate_mock_report(Bytes::from(encoded_report_data));
 
         let encoded_report = report.abi_encode();
-        let decoded_report = Report::decode(&encoded_report).unwrap();
+        let decoded_report = ReportCallback::decode(&encoded_report).unwrap();
 
         assert_eq!(decoded_report.reportContext[0], FixedBytes::from([0; 32]));
         assert_eq!(decoded_report.reportContext[1], FixedBytes::from([0; 32]));
