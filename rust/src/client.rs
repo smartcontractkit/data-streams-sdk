@@ -1,6 +1,6 @@
 use crate::auth::generate_auth_headers;
 use crate::config::Config;
-use crate::endpoints::{API_V1_FEEDS, API_V1_REPORTS_LATEST};
+use crate::endpoints::{API_V1_FEEDS, API_V1_REPORTS, API_V1_REPORTS_LATEST};
 use crate::feed::{Feed, ID};
 use crate::report::Report;
 
@@ -165,6 +165,81 @@ impl Client {
             .http
             .get(url)
             .query(&[("feedID", feed_id)])
+            .headers(headers)
+            .send()
+            .await?
+            .error_for_status()
+            .map_err(|e| ClientError::ApiError(e.to_string()))?;
+
+        // Optionally inspect the response
+        if let Some(ref inspect_fn) = self.config.inspect_http_response {
+            inspect_fn(&response);
+        }
+
+        let report_response = response.json::<ReportResponse>().await?;
+
+        Ok(report_response)
+    }
+
+    /// Returns a single report at a given timestamp.
+    ///
+    /// Endpoint: /api/v1/reports
+    /// Type: HTTP GET
+    /// Parameters: feedID - A Data Streams feed ID.
+    ///             timestamp - The Unix timestamp for the report (in seconds).
+    ///
+    /// Sample request:
+    /// GET /api/v1/reports?feedID={feedID}&timestamp={timestamp}
+    ///
+    /// Sample response:
+    /// {
+    ///     "report": {
+    ///         "feedID": "Hex encoded feedId.",
+    ///         "validFromTimestamp": "Report's earliest applicable timestamp (in seconds).",
+    ///         "observationsTimestamp": "Report's latest applicable timestamp (in seconds).",
+    ///         "fullReport": "A blob containing the report context and body. Encode the fee token into the payload before passing it to the contract for verification."
+    ///     }
+    /// }
+    pub async fn get_report(
+        &self,
+        feed_id: ID,
+        timestamp: u128,
+    ) -> Result<ReportResponse, ClientError> {
+        let url = format!("{}{}", self.config.rest_url, API_V1_REPORTS);
+
+        let feed_id = feed_id.to_hex_string();
+
+        let method = "GET";
+        let path = format!(
+            "{}?feedID={}&timestamp={}",
+            API_V1_REPORTS, feed_id, timestamp
+        );
+        let body = b"";
+        let client_id = &self.config.api_key;
+        let user_secret = &self.config.api_secret;
+        let request_timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Error: Timestamp in the past")
+            .as_millis()
+            .try_into()
+            .unwrap();
+
+        let mut headers = HeaderMap::new();
+        generate_auth_headers(
+            &mut headers,
+            method,
+            &path,
+            body,
+            client_id,
+            user_secret,
+            request_timestamp,
+        )?;
+
+        // Make the GET request
+        let response = self
+            .http
+            .get(url)
+            .query(&[("feedID", feed_id), ("timestamp", timestamp.to_string())])
             .headers(headers)
             .send()
             .await?

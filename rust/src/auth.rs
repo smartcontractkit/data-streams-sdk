@@ -16,7 +16,7 @@ type HmacSha256 = Hmac<Sha256>;
 /// * `path` - The API endpoint path (e.g., "/api/v1/feeds", "/api/v1/reports/bulk", etc.).
 /// * `body` - The request body as a byte slice.
 /// * `client_id` - The client's API key.
-/// * `timestamp` - The current timestamp as an `i64`.
+/// * `timestamp` - The current timestamp as an `u128`.
 /// * `user_secret` - The client's API secret.
 ///
 /// # Returns
@@ -81,7 +81,7 @@ pub fn generate_hmac(
 /// * `body` - The request body as a byte slice.
 /// * `client_id` - The client's API key.
 /// * `user_secret` - The client's API secret.
-/// * `timestamp` - The current timestamp as an `i64`.
+/// * `timestamp` - The current timestamp as an `u128`.
 ///
 /// # Returns
 ///
