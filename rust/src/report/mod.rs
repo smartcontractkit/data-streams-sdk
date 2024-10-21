@@ -7,9 +7,31 @@ use crate::feed::ID;
 
 use alloy::sol;
 use alloy::sol_types::SolValue;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize)]
+/// Represents a report that will be returned from the Data Streams DON.
+///
+/// The `Report` struct contains the following fields:
+/// * `feed_id`: The unique identifier of the feed.
+/// * `valid_from_timestamp`: Earliest timestamp for which price is applicable.
+/// * `observations_timestamp`: Latest timestamp for which price is applicable.
+/// * `full_report`: The report data (bytes) that needs to be decoded further - to version-specific report data.
+///
+/// # Examples
+///
+/// ```rust
+/// use data_streams_sdk::report::Report;
+/// use data_streams_sdk::feed::ID;
+///
+/// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
+/// let report = Report {
+///    feed_id: id,
+///    valid_from_timestamp: 1718885772,
+///    observations_timestamp: 1718885772,
+///    full_report: "00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b84720000000000000000000000000000000000000000000000000000000066741d8c00000000000000000000000000000000000000000000000000000000000000640000000000000000000000000000000000000000000000000000000000000064000000000000000000000000000000000000000000000000000000000000006400000000000000000000000000000000000000000000000000000000000000640000070407020401522602090605060802080505a335ef7fae696b663f1b840100000000000000000000000000000000000000000000000000000000000bbbda0000000000000000000000000000000000000000000000000000000066741d8c".to_string(),
+/// };
+/// ```    
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Report {
     #[serde(rename = "feedID")]
     pub feed_id: ID,
@@ -42,7 +64,7 @@ impl ReportCallback {
     }
 }
 
-/// ABI-decodes a full report payload into its report context (bytes32[3]) and report blob (bytes).
+/// ABI-decodes a full report payload into its report context (`bytes32[3]`) and report blob (`bytes`).
 /// The report blob is the actual report data that needs to be decoded further - to version-specific report data.
 pub fn decode_full_report(payload: &[u8]) -> Result<(Vec<[u8; 32]>, Vec<u8>), String> {
     if payload.len() < 128 {

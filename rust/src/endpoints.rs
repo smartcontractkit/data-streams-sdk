@@ -2,7 +2,6 @@ use reqwest::header::HeaderName;
 use std::str::FromStr;
 use std::sync::OnceLock;
 
-/// API Endpoint constants
 pub const API_V1_WS: &str = "/api/v1/ws";
 pub const API_V1_FEEDS: &str = "/api/v1/feeds";
 pub const API_V1_REPORTS: &str = "/api/v1/reports";

@@ -121,7 +121,7 @@ impl Client {
     /// Parameters: feedID - A Data Streams feed ID.
     ///
     /// Sample request:
-    /// GET /api/v1/reports/latest?feedID=<feedID>
+    /// GET /api/v1/reports/latest?feedID={feedID}
     ///
     /// Sample response:
     /// {
