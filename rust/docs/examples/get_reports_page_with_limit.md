@@ -1,53 +1,18 @@
-# Get Reports Bulk
+# Get Reports Page with Limit
 
-This example demonstrates how to get reports for ETH/USD and BTC/USD feeds at the example timestamp (1729506909) on Arbitrum Sepolia.
+This example demonstrates how to get multiple sequential reports for a ETH/USD feed, starting at the example timestamp (1729506909) on Arbitrum Sepolia. The limit parameter specifies the number of reports to be returned.
 
 ## Running the example
 
 Make sure you git cloned the https://github.com/smartcontractkit/data-streams-sdk repository and navigated to the `rust` directory.
 
 ```bash
-cargo run --example get_reports_bulk
-```
-
-## Example output
-
-```bash
-Report 0:
-Feed ID: 0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782
-Valid From Timestamp: 1729506909
-Observations Timestamp: 1729506909
-ReportDataV3 {
-    feedId: 0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782,
-    validFromTimestamp: 1729506909,
-    observationsTimestamp: 1729506909,
-    nativeFee: 36940126380400,
-    linkFee: 8490469890258900,
-    expiresAt: 1729593309,
-    benchmarkPrice: 2707083321000000000000,
-    bid: 2707040224000000000000,
-    ask: 2707132663418226000000,
-}
-Report 1:
-Feed ID: 0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439
-Valid From Timestamp: 1729506909
-Observations Timestamp: 1729506909
-ReportDataV3 {
-    feedId: 0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439,
-    validFromTimestamp: 1729506909,
-    observationsTimestamp: 1729506909,
-    nativeFee: 36938874359400,
-    linkFee: 8490443733792400,
-    expiresAt: 1729593309,
-    benchmarkPrice: 68366578060671980000000,
-    bid: 68365711259711160000000,
-    ask: 68367314517132790000000,
-}
+cargo run --example get_reports_page_with_limit
 ```
 
 ## Examine the code
 
-The code for this example can be found in the `get_reports_bulk.rs` file in the `examples` directory of the `data-streams-sdk` repository.
+The code for this example can be found in the `get_reports_page_with_limit.rs` file in the `examples` directory of the `data-streams-sdk` repository.
 
 ```rust
 use data_streams_sdk::client::Client;
@@ -68,12 +33,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let eth_usd_feed_id =
         ID::from_hex_str("0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782")
             .unwrap();
-    let btc_usd_feed_id: ID =
-        ID::from_hex_str("0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439")
-            .unwrap();
-
-    let feed_ids = vec![eth_usd_feed_id, btc_usd_feed_id];
-    let timestamp = 1729506909; // Example timestamp
+    let start_timestamp = 1729506909; // Example timestamp
+    let limit = 5; // Return 5 reports
 
     // Initialize the configuration
     let config = Config::new(
@@ -93,8 +54,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Initialize the client
     let client = Client::new(config)?;
 
-    // Make a GET request to "/api/v1/reports/bulk?feedIDs={FeedID1},{FeedID2},...&timestamp={timestamp}"
-    match client.get_reports_bulk(feed_ids, timestamp).await {
+    // Make a GET request to "/api/v1/reports/page?feedID={FeedID}&startTimestamp={StartTimestamp}&limit={Limit}"
+    match client
+        .get_reports_page_with_limit(eth_usd_feed_id, start_timestamp, limit)
+        .await
+    {
         Ok(response) => {
             for (index, report) in response.iter().enumerate() {
                 println!("Report {}:", index);
