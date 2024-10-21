@@ -1,11 +1,12 @@
 use crate::auth::generate_auth_headers;
 use crate::config::Config;
-use crate::endpoints::{API_V1_FEEDS, API_V1_REPORTS, API_V1_REPORTS_LATEST};
+use crate::endpoints::{API_V1_FEEDS, API_V1_REPORTS, API_V1_REPORTS_BULK, API_V1_REPORTS_LATEST};
 use crate::feed::{Feed, ID};
 use crate::report::Report;
 
 use reqwest::{header::HeaderMap, Client as HttpClient};
 use serde::Deserialize;
+use serde_urlencoded;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 
@@ -33,6 +34,11 @@ struct FeedsResponse {
 #[derive(Debug, Deserialize)]
 pub struct ReportResponse {
     pub report: Report,
+}
+
+#[derive(Debug, Deserialize)]
+struct ReportsResponse {
+    reports: Vec<Report>,
 }
 
 pub struct Client {
@@ -254,5 +260,92 @@ impl Client {
         let report_response = response.json::<ReportResponse>().await?;
 
         Ok(report_response)
+    }
+
+    /// Return a report for multiple FeedIDs at a given timestamp.
+    ///
+    /// Endpoint: /api/v1/reports/bulk
+    /// Type: HTTP GET
+    /// Parameters: feedIDs - A comma-separated list of Data Streams feed IDs.
+    ///             timestamp - The Unix timestamp for the reports (in seconds).
+    ///
+    /// Sample request:
+    /// GET /api/v1/reports/bulk?feedIDs={FeedID1},{FeedID2},...&timestamp={timestamp}
+    ///
+    /// Sample response:
+    /// {
+    ///     "reports": [
+    ///         {
+    ///             "feedID": "Hex encoded feedId.",
+    ///             "validFromTimestamp": "Report's earliest applicable timestamp (in seconds).",
+    ///             "observationsTimestamp": "Report's latest applicable timestamp (in seconds).",
+    ///             "fullReport": "A blob containing the report context and body. Encode the fee token into the payload before passing it to the contract for verification."
+    ///         },
+    ///         //...
+    ///     ]
+    /// }
+    pub async fn get_reports_bulk(
+        &self,
+        feed_ids: Vec<ID>,
+        timestamp: u128,
+    ) -> Result<Vec<Report>, ClientError> {
+        let url = format!("{}{}", self.config.rest_url, API_V1_REPORTS_BULK);
+
+        let feed_ids: Vec<String> = feed_ids.iter().map(|id| id.to_hex_string()).collect();
+        let feed_ids_joined = feed_ids.join(",");
+
+        let timestamp_str = timestamp.to_string();
+
+        let query_params = &[
+            ("feedIDs", feed_ids_joined.as_str()),
+            ("timestamp", timestamp_str.as_str()),
+        ];
+
+        let query_string = serde_urlencoded::to_string(query_params).unwrap();
+
+        let method = "GET";
+        let path = format!("{}?{}", API_V1_REPORTS_BULK, query_string);
+        let body = b"";
+        let client_id = &self.config.api_key;
+        let user_secret = &self.config.api_secret;
+        let request_timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Error: Timestamp in the past")
+            .as_millis()
+            .try_into()
+            .unwrap();
+
+        let mut headers = HeaderMap::new();
+        generate_auth_headers(
+            &mut headers,
+            method,
+            &path,
+            body,
+            client_id,
+            user_secret,
+            request_timestamp,
+        )?;
+
+        // Make the GET request
+        let response = self
+            .http
+            .get(url)
+            .query(query_params)
+            .headers(headers)
+            .send()
+            .await?
+            .error_for_status()
+            .map_err(|e| ClientError::ApiError(e.to_string()))?;
+
+        // Optionally inspect the response
+        if let Some(ref inspect_fn) = self.config.inspect_http_response {
+            inspect_fn(&response);
+        }
+
+        let reports_response = response.json::<ReportsResponse>().await?;
+
+        let reports = reports_response.reports;
+
+        Ok(reports)
     }
 }

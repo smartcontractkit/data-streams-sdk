@@ -6,6 +6,7 @@
   - [Get Feeds](./examples/get_feeds.md)
   - [Get Latest Report](./examples/get_latest_report.md)
   - [Get Report](./examples/get_report.md)
+  - [Get Reports Bulk](./examples/get_reports_bulk.md)
 - [Guides](./guides/README.md)
   - [Foundry](./guides/foundry.md)
   - [EIP-7412](./guides/eip7412.md)
