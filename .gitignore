@@ -1,2 +1,6 @@
 # IDEs
 .idea
+
+# Rust
+target/
+book/
