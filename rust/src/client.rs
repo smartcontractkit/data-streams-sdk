@@ -1,4 +1,4 @@
-use crate::auth::generate_auth_headers;
+use crate::auth::{generate_auth_headers, HmacError};
 use crate::config::Config;
 use crate::endpoints::{
     API_V1_FEEDS, API_V1_REPORTS, API_V1_REPORTS_BULK, API_V1_REPORTS_LATEST, API_V1_REPORTS_PAGE,
@@ -19,7 +19,7 @@ pub enum ClientError {
     HttpRequestError(#[from] reqwest::Error),
 
     #[error("HMAC generation failed: {0}")]
-    HmacError(#[from] Box<dyn std::error::Error>),
+    HmacError(#[from] HmacError),
 
     #[error("Invalid response format: {0}")]
     InvalidResponseFormat(#[from] serde_json::Error),

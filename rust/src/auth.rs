@@ -1,12 +1,25 @@
 use crate::endpoints::{get_authz_header, get_authz_sig_header, get_authz_ts_header};
 
 use hmac::{Hmac, Mac};
-use reqwest::header::{HeaderMap, HeaderValue};
-use sha2::{Digest, Sha256};
-use std::error::Error;
+use reqwest::header::{HeaderMap, HeaderValue, InvalidHeaderValue};
+use sha2::{digest::InvalidLength, Digest, Sha256};
+use std::time::SystemTimeError;
+use thiserror::Error;
 
 /// Type alias for HMAC-SHA256.
 type HmacSha256 = Hmac<Sha256>;
+
+#[derive(Error, Debug)]
+pub enum HmacError {
+    #[error("Invalid key length: {0}")]
+    InvalidKeyLength(#[from] InvalidLength),
+
+    #[error("System time error: {0}")]
+    SystemTimeError(#[from] SystemTimeError),
+
+    #[error("Invalid header value: {0}")]
+    InvalidHeaderValue(#[from] InvalidHeaderValue),
+}
 
 /// Generates an HMAC-SHA256 signature based on the provided parameters.
 ///
@@ -26,9 +39,9 @@ type HmacSha256 = Hmac<Sha256>;
 /// # Examples
 ///
 /// ```rust
-/// use data_streams_sdk::auth::generate_hmac;
+/// use data_streams_sdk::auth::{generate_hmac, HmacError};
 ///
-/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// fn main() -> Result<(), HmacError> {
 ///     let method = "GET";
 ///     let path = "/api/v1/feeds";
 ///     let body = b"";
@@ -49,7 +62,7 @@ pub fn generate_hmac(
     client_id: &str,
     timestamp: u128,
     user_secret: &str,
-) -> Result<String, Box<dyn Error>> {
+) -> Result<String, HmacError> {
     let mut hasher = Sha256::new();
     hasher.update(body);
     let server_body_hash = hasher.finalize();
@@ -91,9 +104,9 @@ pub fn generate_hmac(
 ///
 /// ```rust
 /// use reqwest::header::HeaderMap;
-/// use data_streams_sdk::auth::generate_auth_headers;
+/// use data_streams_sdk::auth::{generate_auth_headers, HmacError};
 ///
-/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// fn main() -> Result<(), HmacError> {
 ///     let method = "GET";
 ///     let path = "/api/v1/feeds";
 ///     let body = b"";
@@ -128,7 +141,7 @@ pub fn generate_auth_headers(
     client_id: &str,
     user_secret: &str,
     timestamp: u128,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), HmacError> {
     let hmac_string = generate_hmac(method, path, body, client_id, timestamp, user_secret)?;
 
     headers.insert(get_authz_header(), HeaderValue::from_str(client_id)?);
