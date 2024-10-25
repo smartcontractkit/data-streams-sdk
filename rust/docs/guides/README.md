@@ -4,3 +4,4 @@ This section contains guides on how to integrate the Data Streams SDK library in
 
 - [Foundry](./foundry.md)
 - [EIP-7412](./eip7412.md)
+- [Solana](./solana.md)

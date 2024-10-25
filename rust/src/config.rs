@@ -13,6 +13,7 @@ pub enum ConfigError {
 }
 
 /// Config specifies the client configuration and dependencies.
+#[derive(Clone)]
 pub struct Config {
     /// Client API key
     pub api_key: String,

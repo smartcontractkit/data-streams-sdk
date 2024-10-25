@@ -24,4 +24,10 @@ serde_urlencoded = "0.7"
 byteorder = "1.4"
 thiserror = "1.0"
 zeroize = "1.5"
-tracing = "0.1.40"
+tracing = { version = "0.1.40", optional = true }
+
+[features]
+default = ["tracing"]
+
+[dev-dependencies]
+tracing-subscriber = { version = "0.3.18", features = ["time"] }

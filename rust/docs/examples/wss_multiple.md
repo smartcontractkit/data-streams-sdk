@@ -1,3 +1,59 @@
+# WSS: Multiple Streams in HA mode
+
+This example demonstrates how to connect to the Data Streams WebSocket server and subscribe to 2 streams of ETH/USD and BTC/USD Feed Reports on Arbitrum Sepolia.
+
+The Chainlink Data Streams SDK use the `tracing` crate for logging. It is optional. If you want to enable it, install the `tracing-subscriber` crate, and include the following code in your project:
+
+```rust
+use tracing_subscriber::fmt::time::UtcTime;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tracing_subscriber::fmt()
+        .with_timer(UtcTime::rfc_3339())
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
+}
+```
+
+## HA (High Availability) mode
+
+This example is safe for concurrent usage. When HA (High Availablity) mode is enabled and at least 2 origins are provided, the Stream will maintain at least 2 concurrent connections to different instances to ensure high availability, fault tolerance and minimize the risk of report gaps.
+
+To enable HA mode, set the `ws_ha` parameter to `true` in the `Config` struct and provide the list of Web Socket origins as the comma-separated string in the `ws_url` parameter.
+
+```rust
+    let ws_url = "wss://ws.testnet-dataengine.chain.link,wss://ws.testnet-dataengine.chain.link";
+
+    // Initialize the configuration
+    let config = Config::new(
+        api_key.to_string(),
+        user_secret.to_string(),
+        rest_url.to_string(),
+        ws_url.to_string(),
+        true,    // ws_ha
+        Some(5), // ws_max_reconnect
+        false,   // insecure_skip_verify
+        Some(Arc::new(|response: &Response| {
+            // Example: Log the response status
+            println!("Received response with status: {}", response.status());
+        })),
+    )?;
+```
+
+## Running the example
+
+Make sure you git cloned the [https://github.com/smartcontractkit/data-streams-sdk](https://github.com/smartcontractkit/data-streams-sdk) repository and navigated to the `rust` directory.
+
+```bash
+cargo run --example wss_multiple
+```
+
+## Examine the code
+
+The code for this example can be found in the `wss_multiple.rs` file in the `examples` directory of the `data-streams-sdk` repository. It will subscribe to the ETH/USD and BTC/USD feeds on Arbitrum Sepolia Stream and start reading reports. For each report it will log the feed ID, valid from timestamp, obesrvations timestamp and decode the report data to V3 Report, for 10 runs. After 5th run it will log current statistics. After 10th run it will exit the loop and gracefully close all streams. After that it will log the final statistics.
+
+```rust
 use data_streams_sdk::config::Config;
 use data_streams_sdk::feed::ID;
 use data_streams_sdk::report::decode_full_report;
@@ -107,3 +163,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+```
