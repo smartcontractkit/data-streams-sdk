@@ -1,10 +1,8 @@
-use data_streams_sdk::config::Config;
+use data_streams_sdk::config::{Config, WebSocketHighAvailability};
 use data_streams_sdk::feed::ID;
 use data_streams_sdk::report::decode_full_report;
 use data_streams_sdk::report::v3::ReportDataV3;
 use data_streams_sdk::stream::Stream;
-use reqwest::Response;
-use std::sync::Arc;
 use tracing_subscriber::fmt::time::UtcTime;
 
 #[tokio::main]
@@ -34,14 +32,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         user_secret.to_string(),
         rest_url.to_string(),
         ws_url.to_string(),
-        true,    // ws_ha
-        Some(5), // ws_max_reconnect
-        false,   // insecure_skip_verify
-        Some(Arc::new(|response: &Response| {
-            // Example: Log the response status
-            println!("Received response with status: {}", response.status());
-        })),
-    )?;
+    )
+    .with_ws_ha(WebSocketHighAvailability::Enabled) // Enable WebSocket High Availability Mode
+    .build()?;
 
     let mut stream = Stream::new(&config, feed_ids).await?;
 
@@ -51,38 +44,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut counter = 0;
 
     // Read reports in a loop
-    loop {
+    while counter < 10 {
         match stream.read().await {
             Ok(response) => {
                 counter += 1;
-                println!("Received report: {:?}", response);
-                // Process the report as needed
-                println!("Feed ID: {}", response.report.feed_id.to_hex_string());
-                println!(
-                    "Valid From Timestamp: {}",
-                    response.report.valid_from_timestamp
-                );
-                println!(
-                    "Observations Timestamp: {}",
-                    response.report.observations_timestamp
-                );
+                println!("Received raw report: {:?}", response);
 
-                let payload = hex::decode(&response.report.full_report[2..]).unwrap();
-                match decode_full_report(&payload) {
-                    Ok((_report_context, report_blob)) => {
-                        let report_data = ReportDataV3::decode(&report_blob);
+                // Process the report if needed
+                let report = response.report;
+                println!("Feed ID: {}", report.feed_id.to_hex_string());
+                println!("Valid From Timestamp: {}", report.valid_from_timestamp);
+                println!("Observations Timestamp: {}", report.observations_timestamp);
 
-                        match report_data {
-                            Ok(report_data) => {
-                                println!("{:#?}", report_data);
-                            }
-                            Err(e) => {
-                                println!("Error decoding report data: {}", e);
-                            }
-                        }
-                    }
-                    Err(e) => println!("Error decoding full report data: {}", e),
-                }
+                let full_report = hex::decode(&report.full_report[2..])?;
+                let (_report_context, report_blob) = decode_full_report(&full_report)?;
+
+                let report_data = ReportDataV3::decode(&report_blob)?;
+                println!("{:#?}", report_data);
             }
             Err(e) => {
                 eprintln!("Error reading report: {:?}", e);
@@ -93,10 +71,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if counter == 5 {
             let stats = stream.get_stats();
             println!("Current Stream stats: {:#?}", stats);
-        }
-
-        if counter >= 10 {
-            break;
         }
     }
 

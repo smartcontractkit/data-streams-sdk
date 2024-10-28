@@ -2,9 +2,7 @@ use data_streams_sdk::client::Client;
 use data_streams_sdk::config::Config;
 use data_streams_sdk::feed::ID;
 use data_streams_sdk::report::compress::compress_report;
-use reqwest::Response;
 use std::error::Error;
-use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -24,29 +22,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
         user_secret.to_string(),
         rest_url.to_string(),
         ws_url.to_string(),
-        false,   // ws_ha
-        Some(5), // ws_max_reconnect
-        false,   // insecure_skip_verify
-        Some(Arc::new(|response: &Response| {
-            // Example: Log the response status
-            println!("Received response with status: {}", response.status());
-        })),
-    )?;
+    )
+    .build()?;
 
     // Initialize the client
     let client = Client::new(config)?;
 
-    match client.get_report(eth_usd_feed_id, timestamp).await {
-        Ok(response) => match compress_report(response.report) {
-            Ok(compressed_report) => {
-                println!("Compressed Report: {:#?}", hex::encode(&compressed_report));
-            }
-            Err(e) => {
-                eprintln!("Error compressing report: {:#?}", e);
-            }
-        },
+    let response = client.get_report(eth_usd_feed_id, timestamp).await?;
+
+    match compress_report(response.report) {
+        Ok(compressed_report) => {
+            println!("Compressed Report: {:#?}", hex::encode(&compressed_report));
+        }
         Err(e) => {
-            eprintln!("Error fetching report: {}", e);
+            eprintln!("Error compressing report: {:#?}", e);
         }
     }
 

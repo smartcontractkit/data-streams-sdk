@@ -1,8 +1,6 @@
 use data_streams_sdk::client::Client;
 use data_streams_sdk::config::Config;
-use reqwest::Response;
 use std::error::Error;
-use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -17,29 +15,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
         user_secret.to_string(),
         rest_url.to_string(),
         ws_url.to_string(),
-        false,   // ws_ha
-        Some(5), // ws_max_reconnect
-        false,   // insecure_skip_verify
-        Some(Arc::new(|response: &Response| {
-            // Example: Log the response status
-            println!("Received response with status: {}", response.status());
-        })),
-    )?;
+    )
+    .build()?;
 
     // Initialize the client
     let client = Client::new(config)?;
 
     // Make a GET request to "/api/v1/feeds"
-    match client.get_feeds().await {
-        Ok(feeds) => {
-            println!("Available Feeds:");
-            for feed in feeds {
-                println!("{:#?}", feed.feed_id.to_hex_string());
-            }
-        }
-        Err(e) => {
-            eprintln!("Error fetching feeds: {}", e);
-        }
+    let feeds = client.get_feeds().await?;
+
+    println!("Available Feeds:");
+    for feed in feeds {
+        println!("{:#?}", feed.feed_id.to_hex_string());
     }
 
     Ok(())

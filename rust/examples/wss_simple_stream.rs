@@ -1,8 +1,6 @@
 use data_streams_sdk::config::Config;
 use data_streams_sdk::feed::ID;
 use data_streams_sdk::stream::Stream;
-use reqwest::Response;
-use std::sync::Arc;
 use tokio::signal;
 use tracing_subscriber::fmt::time::UtcTime;
 
@@ -33,14 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         user_secret.to_string(),
         rest_url.to_string(),
         ws_url.to_string(),
-        false,   // ws_ha
-        Some(5), // ws_max_reconnect
-        false,   // insecure_skip_verify
-        Some(Arc::new(|response: &Response| {
-            // Example: Log the response status
-            println!("Received response with status: {}", response.status());
-        })),
-    )?;
+    )
+    .build()?;
 
     let mut stream = Stream::new(&config, feed_ids).await?;
     stream.listen().await?;

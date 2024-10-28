@@ -1,5 +1,9 @@
 use crate::{
-    auth::generate_auth_headers, config::Config, endpoints::API_V1_WS, feed::ID, report::Report,
+    auth::generate_auth_headers,
+    config::{Config, WebSocketHighAvailability},
+    endpoints::API_V1_WS,
+    feed::ID,
+    report::Report,
 };
 
 use futures::SinkExt;
@@ -215,7 +219,7 @@ impl Stream {
     ) -> Result<WebSocketConnection, StreamError> {
         let origins = Self::parse_origins(&config.ws_url);
 
-        if config.ws_ha && origins.len() > 1 {
+        if config.ws_ha == WebSocketHighAvailability::Enabled && origins.len() > 1 {
             let mut streams = Vec::new();
 
             for origin in origins {
