@@ -186,9 +186,7 @@ impl Stream {
             .expect("System time error")
             .as_millis();
 
-        let mut headers = HeaderMap::new();
-        generate_auth_headers(
-            &mut headers,
+        let headers = generate_auth_headers(
             method,
             &path,
             body,

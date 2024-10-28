@@ -88,7 +88,6 @@ pub fn generate_hmac(
 ///
 /// # Arguments
 ///
-/// * `headers` - A mutable reference to a `HeaderMap` where headers will be inserted.
 /// * `method` - The HTTP method (e.g., "GET", "POST", etc.).
 /// * `path` - The API endpoint path (e.g., "/api/v1/feeds", "/api/v1/reports/bulk", etc.).
 /// * `body` - The request body as a byte slice.
@@ -98,7 +97,7 @@ pub fn generate_hmac(
 ///
 /// # Returns
 ///
-/// A `Result` indicating success or containing an error.
+/// A `HeaderMap` containing the authentication headers if successful, or an error.
 ///
 /// # Examples
 ///
@@ -114,9 +113,7 @@ pub fn generate_hmac(
 ///     let user_secret = "userSecret";
 ///     let timestamp = 1718885772; // Example timestamp
 ///
-///     let mut headers = HeaderMap::new();
-///     generate_auth_headers(
-///         &mut headers,
+///     let headers = generate_auth_headers(
 ///         method,
 ///         path,
 ///         body,
@@ -134,14 +131,14 @@ pub fn generate_hmac(
 /// }
 /// ```
 pub fn generate_auth_headers(
-    headers: &mut HeaderMap,
     method: &str,
     path: &str,
     body: &[u8],
     client_id: &str,
     user_secret: &str,
     timestamp: u128,
-) -> Result<(), HmacError> {
+) -> Result<HeaderMap, HmacError> {
+    let mut headers = HeaderMap::new();
     let hmac_string = generate_hmac(method, path, body, client_id, timestamp, user_secret)?;
 
     headers.insert(get_authz_header(), HeaderValue::from_str(client_id)?);
@@ -151,7 +148,7 @@ pub fn generate_auth_headers(
     );
     headers.insert(get_authz_sig_header(), HeaderValue::from_str(&hmac_string)?);
 
-    Ok(())
+    Ok(headers)
 }
 
 #[cfg(test)]
@@ -213,17 +210,8 @@ mod tests {
         let user_secret = "userSecret";
         let timestamp = 1718885772;
 
-        let mut headers = HeaderMap::new();
-        generate_auth_headers(
-            &mut headers,
-            method,
-            path,
-            body,
-            client_id,
-            user_secret,
-            timestamp,
-        )
-        .unwrap();
+        let headers =
+            generate_auth_headers(method, path, body, client_id, user_secret, timestamp).unwrap();
 
         let want_authz_header = HeaderValue::from_str(client_id).unwrap();
         let want_authz_ts_header = HeaderValue::from_str(&timestamp.to_string()).unwrap();
@@ -252,17 +240,8 @@ mod tests {
         let user_secret = "userSecret";
         let timestamp = 12000;
 
-        let mut headers = HeaderMap::new();
-        generate_auth_headers(
-            &mut headers,
-            method,
-            path,
-            body,
-            client_id,
-            user_secret,
-            timestamp,
-        )
-        .unwrap();
+        let headers =
+            generate_auth_headers(method, path, body, client_id, user_secret, timestamp).unwrap();
 
         let want_authz_header = HeaderValue::from_str(client_id).unwrap();
         let want_authz_ts_header = HeaderValue::from_str(&timestamp.to_string()).unwrap();
@@ -291,17 +270,8 @@ mod tests {
         let user_secret = "userSecret";
         let timestamp = 1718885772;
 
-        let mut headers = HeaderMap::new();
-        generate_auth_headers(
-            &mut headers,
-            method,
-            path,
-            body,
-            client_id,
-            user_secret,
-            timestamp,
-        )
-        .unwrap();
+        let headers =
+            generate_auth_headers(method, path, body, client_id, user_secret, timestamp).unwrap();
 
         let want_authz_header = HeaderValue::from_str(client_id).unwrap();
         let want_authz_ts_header = HeaderValue::from_str(&timestamp.to_string()).unwrap();

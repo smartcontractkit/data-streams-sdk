@@ -103,16 +103,7 @@ impl Client {
             .try_into()
             .unwrap();
 
-        let mut headers = HeaderMap::new();
-        generate_auth_headers(
-            &mut headers,
-            method,
-            path,
-            body,
-            client_id,
-            user_secret,
-            timestamp,
-        )?;
+        let headers = generate_auth_headers(method, path, body, client_id, user_secret, timestamp)?;
 
         // Make the GET request
         let response = self
@@ -188,16 +179,8 @@ impl Client {
             .try_into()
             .unwrap();
 
-        let mut headers = HeaderMap::new();
-        generate_auth_headers(
-            &mut headers,
-            method,
-            &path,
-            body,
-            client_id,
-            user_secret,
-            timestamp,
-        )?;
+        let headers =
+            generate_auth_headers(method, &path, body, client_id, user_secret, timestamp)?;
 
         // Make the GET request
         let response = self
@@ -282,9 +265,7 @@ impl Client {
             .try_into()
             .unwrap();
 
-        let mut headers = HeaderMap::new();
-        generate_auth_headers(
-            &mut headers,
+        let headers = generate_auth_headers(
             method,
             &path,
             body,
@@ -386,9 +367,7 @@ impl Client {
             .try_into()
             .unwrap();
 
-        let mut headers = HeaderMap::new();
-        generate_auth_headers(
-            &mut headers,
+        let headers = generate_auth_headers(
             method,
             &path,
             body,
@@ -485,9 +464,7 @@ impl Client {
             .try_into()
             .unwrap();
 
-        let mut headers = HeaderMap::new();
-        generate_auth_headers(
-            &mut headers,
+        let headers = generate_auth_headers(
             method,
             &path,
             body,
@@ -589,9 +566,7 @@ impl Client {
             .try_into()
             .unwrap();
 
-        let mut headers = HeaderMap::new();
-        generate_auth_headers(
-            &mut headers,
+        let headers = generate_auth_headers(
             method,
             &path,
             body,
