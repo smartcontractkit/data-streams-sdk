@@ -4,7 +4,7 @@ This example demonstrates how to get multiple sequential reports for a ETH/USD f
 
 ## Running the example
 
-Make sure you git cloned the https://github.com/smartcontractkit/data-streams-sdk repository and navigated to the `rust` directory.
+Make sure you git cloned the [https://github.com/smartcontractkit/data-streams-sdk](https://github.com/smartcontractkit/data-streams-sdk) repository and navigated to the `rust` directory.
 
 ```bash
 cargo run --example get_reports_page
@@ -19,9 +19,7 @@ use data_streams_sdk::client::Client;
 use data_streams_sdk::config::Config;
 use data_streams_sdk::feed::ID;
 use data_streams_sdk::report::{decode_full_report, v3::ReportDataV3};
-use reqwest::Response;
 use std::error::Error;
-use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -41,54 +39,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
         user_secret.to_string(),
         rest_url.to_string(),
         ws_url.to_string(),
-        false,   // ws_ha
-        Some(5), // ws_max_reconnect
-        false,   // insecure_skip_verify
-        Some(Arc::new(|response: &Response| {
-            // Example: Log the response status
-            println!("Received response with status: {}", response.status());
-        })),
-    )?;
+    )
+    .build()?;
 
     // Initialize the client
     let client = Client::new(config)?;
 
     // Make a GET request to "/api/v1/reports/page?feedID={FeedID}&startTimestamp={StartTimestamp}"
-    match client
+    let response = client
         .get_reports_page(eth_usd_feed_id, start_timestamp)
-        .await
-    {
-        Ok(response) => {
-            for (index, report) in response.iter().enumerate() {
-                println!("Report {}:", index);
-                println!("Feed ID: {}", report.feed_id.to_hex_string());
-                println!("Valid From Timestamp: {}", report.valid_from_timestamp);
-                println!("Observations Timestamp: {}", report.observations_timestamp);
+        .await?;
 
-                // Uncomment to print the raw report data
-                // println!("Raw Report data: {}", report.full_report);
+    for (index, report) in response.iter().enumerate() {
+        println!("Report {}:", index);
+        println!("Feed ID: {}", report.feed_id.to_hex_string());
+        println!("Valid From Timestamp: {}", report.valid_from_timestamp);
+        println!("Observations Timestamp: {}", report.observations_timestamp);
 
-                let payload = hex::decode(&report.full_report[2..]).unwrap();
-                match decode_full_report(&payload) {
-                    Ok((_report_context, report_blob)) => {
-                        let report_data = ReportDataV3::decode(&report_blob);
+        // Uncomment to print the raw report data
+        // println!("Raw Report data: {}", report.full_report);
 
-                        match report_data {
-                            Ok(report_data) => {
-                                println!("{:#?}", report_data);
-                            }
-                            Err(e) => {
-                                println!("Error decoding report data: {}", e);
-                            }
-                        }
-                    }
-                    Err(e) => println!("Error decoding full report data: {}", e),
-                }
-            }
-        }
-        Err(e) => {
-            eprintln!("Error fetching reports: {}", e);
-        }
+        let full_report = hex::decode(&report.full_report[2..])?;
+        let (_report_context, report_blob) = decode_full_report(&full_report)?;
+
+        let report_data = ReportDataV3::decode(&report_blob)?;
+        println!("{:#?}", report_data);
     }
 
     Ok(())

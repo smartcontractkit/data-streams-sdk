@@ -11,6 +11,7 @@
   - [Get Reports Page With Limit](./examples/get_reports_page_with_limit.md)
   - [WSS: Simple Stream](./examples/wss_simple_stream.md)
   - [WSS: Multiple Streams in HA mode](./examples/wss_multiple.md)
+  - [Compress Report](./examples/compress_report.md)
 - [Guides](./guides/README.md)
   - [Foundry](./guides/foundry.md)
   - [EIP-7412](./guides/eip7412.md)

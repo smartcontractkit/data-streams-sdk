@@ -185,14 +185,8 @@ async fn get_latest_eth_usd_report() -> Result<(), Box<dyn Error>> {
         user_secret.to_string(),
         rest_url.to_string(),
         ws_url.to_string(),
-        false,   // ws_ha
-        Some(5), // ws_max_reconnect
-        false,   // insecure_skip_verify
-        Some(Arc::new(|_response: &Response| {
-            // Example: Log the response status
-            // println!("Received response with status: {}", response.status());
-        })),
-    )?;
+    )
+    .build()?;
 
     // Initialize the client
     let client = Client::new(config)?;

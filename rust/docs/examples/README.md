@@ -11,3 +11,4 @@ This section contains examples of how to run the Data Streams SDK library exampl
 - [Get Reports Page With Limit](./get_reports_page_with_limit.md)
 - [WSS: Simple Stream](./wss_simple_stream.md)
 - [WSS: Multiple Streams in HA mode](./wss_multiple.md)
+- [Compress Report](./compress_report.md)
