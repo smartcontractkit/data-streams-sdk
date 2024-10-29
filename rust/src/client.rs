@@ -6,7 +6,7 @@ use crate::endpoints::{
 use crate::feed::{Feed, ID};
 use crate::report::Report;
 
-use reqwest::{header::HeaderMap, Client as HttpClient};
+use reqwest::Client as HttpClient;
 use serde::Deserialize;
 use serde_urlencoded;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -99,9 +99,7 @@ impl Client {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Error: Timestamp in the past")
-            .as_millis()
-            .try_into()
-            .unwrap();
+            .as_millis();
 
         let headers = generate_auth_headers(method, path, body, client_id, user_secret, timestamp)?;
 
@@ -175,9 +173,7 @@ impl Client {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Error: Timestamp in the past")
-            .as_millis()
-            .try_into()
-            .unwrap();
+            .as_millis();
 
         let headers =
             generate_auth_headers(method, &path, body, client_id, user_secret, timestamp)?;
@@ -261,9 +257,7 @@ impl Client {
         let request_timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Error: Timestamp in the past")
-            .as_millis()
-            .try_into()
-            .unwrap();
+            .as_millis();
 
         let headers = generate_auth_headers(
             method,
@@ -363,9 +357,7 @@ impl Client {
         let request_timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Error: Timestamp in the past")
-            .as_millis()
-            .try_into()
-            .unwrap();
+            .as_millis();
 
         let headers = generate_auth_headers(
             method,
@@ -460,9 +452,7 @@ impl Client {
         let request_timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Error: Timestamp in the past")
-            .as_millis()
-            .try_into()
-            .unwrap();
+            .as_millis();
 
         let headers = generate_auth_headers(
             method,
@@ -562,9 +552,7 @@ impl Client {
         let request_timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Error: Timestamp in the past")
-            .as_millis()
-            .try_into()
-            .unwrap();
+            .as_millis();
 
         let headers = generate_auth_headers(
             method,

@@ -24,7 +24,7 @@ use tokio::{
 };
 use tokio_tungstenite::{
     connect_async,
-    tungstenite::{client::IntoClientRequest, http::HeaderMap, Message},
+    tungstenite::{client::IntoClientRequest, Message},
     MaybeTlsStream, WebSocketStream as TungsteniteWebSocketStream,
 };
 use tracing::{error, info, warn};
@@ -145,7 +145,7 @@ impl Stream {
             active_connections: AtomicU64::new(0),
         });
 
-        let conn = Self::connect(&config, &feed_ids, stats.clone()).await?;
+        let conn = Self::connect(config, &feed_ids, stats.clone()).await?;
 
         let water_mark = Arc::new(Mutex::new(HashMap::new()));
 
@@ -221,7 +221,7 @@ impl Stream {
             let mut streams = Vec::new();
 
             for origin in origins {
-                match Self::connect_to_origin(&config, &origin, &feed_ids).await {
+                match Self::connect_to_origin(config, &origin, feed_ids).await {
                     Ok(stream) => {
                         streams.push(stream);
                         stats.configured_connections.fetch_add(1, Ordering::SeqCst);
@@ -245,7 +245,7 @@ impl Stream {
                 StreamError::ConnectionError("No WebSocket origin found in config".into())
             })?;
 
-            let stream = Self::connect_to_origin(&config, origin, &feed_ids).await?;
+            let stream = Self::connect_to_origin(config, origin, feed_ids).await?;
             stats.configured_connections.fetch_add(1, Ordering::SeqCst);
             stats.active_connections.fetch_add(1, Ordering::SeqCst);
 
