@@ -86,7 +86,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let client = Client::new(config)?;
 
     // Make a GET request to "/api/v1/reports/bulk?feedIDs={FeedID1},{FeedID2},...&timestamp={timestamp}"
-    let response = client.get_reports_bulk(feed_ids, timestamp).await?;
+    let response = client.get_reports_bulk(&feed_ids, timestamp).await?;
     for (index, report) in response.iter().enumerate() {
         println!("Report {}:", index);
         println!("Feed ID: {}", report.feed_id.to_hex_string());

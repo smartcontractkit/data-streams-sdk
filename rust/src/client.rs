@@ -332,7 +332,7 @@ impl Client {
     /// | **206 Missing Data** | Indicates that at least one feed ID data is missing from the report. E.g., you requested a report for feed IDs `<feedID1>`, `<feedID2>`, and `<feedID3>` at a given timestamp. If data for `<feedID2>` is missing from the report (not available yet at the specified timestamp), you get `[<feedID1 data>, <feedID3 data>]` and a 206 response. |
     pub async fn get_reports_bulk(
         &self,
-        feed_ids: Vec<ID>,
+        feed_ids: &[ID],
         timestamp: u128,
     ) -> Result<Vec<Report>, ClientError> {
         let url = format!("{}{}", self.config.rest_url, API_V1_REPORTS_BULK);
