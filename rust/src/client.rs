@@ -114,7 +114,7 @@ impl Client {
             .map_err(|e| ClientError::ApiError(e.to_string()))?;
 
         // Optionally inspect the response
-        if let Some(ref inspect_fn) = self.config.inspect_http_response {
+        if let Some(inspect_fn) = &self.config.inspect_http_response {
             inspect_fn(&response);
         }
 
@@ -190,7 +190,7 @@ impl Client {
             .map_err(|e| ClientError::ApiError(e.to_string()))?;
 
         // Optionally inspect the response
-        if let Some(ref inspect_fn) = self.config.inspect_http_response {
+        if let Some(inspect_fn) = &self.config.inspect_http_response {
             inspect_fn(&response);
         }
 
@@ -280,7 +280,7 @@ impl Client {
             .map_err(|e| ClientError::ApiError(e.to_string()))?;
 
         // Optionally inspect the response
-        if let Some(ref inspect_fn) = self.config.inspect_http_response {
+        if let Some(inspect_fn) = &self.config.inspect_http_response {
             inspect_fn(&response);
         }
 
@@ -380,7 +380,7 @@ impl Client {
             .map_err(|e| ClientError::ApiError(e.to_string()))?;
 
         // Optionally inspect the response
-        if let Some(ref inspect_fn) = self.config.inspect_http_response {
+        if let Some(inspect_fn) = &self.config.inspect_http_response {
             inspect_fn(&response);
         }
 
@@ -478,7 +478,7 @@ impl Client {
             .map_err(|e| ClientError::ApiError(e.to_string()))?;
 
         // Optionally inspect the response
-        if let Some(ref inspect_fn) = self.config.inspect_http_response {
+        if let Some(inspect_fn) = &self.config.inspect_http_response {
             inspect_fn(&response);
         }
 
@@ -579,7 +579,7 @@ impl Client {
             .map_err(|e| ClientError::ApiError(e.to_string()))?;
 
         // Optionally inspect the response
-        if let Some(ref inspect_fn) = self.config.inspect_http_response {
+        if let Some(inspect_fn) = &self.config.inspect_http_response {
             inspect_fn(&response);
         }
 
