@@ -1,5 +1,4 @@
 use reqwest::Response;
-use std::sync::Arc;
 use thiserror::Error;
 use zeroize::Zeroize;
 
@@ -60,14 +59,14 @@ pub struct Config {
 
     /// Function to inspect HTTP responses for REST requests.
     /// The response object must not be modified.
-    pub inspect_http_response: Option<Arc<dyn Fn(&Response) + Send + Sync>>,
+    pub inspect_http_response: Option<fn(&Response)>,
 }
 
 impl Config {
     const DEFAULT_WS_MAX_RECONNECT: u32 = 5;
     const DEFAULT_WS_HA: WebSocketHighAvailability = WebSocketHighAvailability::Disabled;
     const DEFAULT_INSECURE_SKIP_VERIFY: InsecureSkipVerify = InsecureSkipVerify::Disabled;
-    const DEFAULT_INSPECT_HTTP_RESPONSE: Option<Arc<dyn Fn(&Response) + Send + Sync>> = None;
+    const DEFAULT_INSPECT_HTTP_RESPONSE: Option<fn(&Response)> = None;
 
     /// Creates a new `Config` instance with the provided parameters. (Builder pattern)
     ///
@@ -91,8 +90,6 @@ impl Config {
     /// use data_streams_sdk::config::{Config, WebSocketHighAvailability, InsecureSkipVerify};
     ///
     /// use std::error::Error;
-    /// use std::sync::Arc;
-    /// use reqwest::Response;
     ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), Box<dyn Error>> {
@@ -122,10 +119,10 @@ impl Config {
     ///    .with_ws_ha(WebSocketHighAvailability::Enabled) // Enable WebSocket High Availability Mode
     ///    .with_ws_max_reconnect(10) // Set maximum reconnection attempts to 10, instead of the default 5.
     ///    .with_insecure_skip_verify(InsecureSkipVerify::Enabled) // Skip TLS certificate verification, use with caution. This is disabled by default.
-    ///    .with_inspect_http_response(Arc::new(|response| {
-    ///        // Custom logic to inspect the HTTP response here, for example:
-    ///        println!("Received response with status: {}", response.status());
-    ///    }))
+    ///    .with_inspect_http_response(|response| {
+    ///         // Custom logic to inspect the HTTP response here
+    ///         println!("Received response with status: {}", response.status());
+    ///     })
     ///    .build()?;
     ///
     ///    Ok(())
@@ -165,7 +162,7 @@ pub struct ConfigBuilder {
     ws_ha: WebSocketHighAvailability,
     ws_max_reconnect: u32,
     insecure_skip_verify: InsecureSkipVerify,
-    inspect_http_response: Option<Arc<dyn Fn(&Response) + Send + Sync>>,
+    inspect_http_response: Option<fn(&Response)>,
 }
 
 impl ConfigBuilder {
@@ -188,10 +185,7 @@ impl ConfigBuilder {
     }
 
     /// Sets the `inspect_http_response` parameter.
-    pub fn with_inspect_http_response(
-        mut self,
-        inspect_http_response: Arc<dyn Fn(&Response) + Send + Sync>,
-    ) -> Self {
+    pub fn with_inspect_http_response(mut self, inspect_http_response: fn(&Response)) -> Self {
         self.inspect_http_response = Some(inspect_http_response);
         self
     }
