@@ -58,7 +58,7 @@ impl Client {
     /// # Errors
     ///
     /// Returns an error if the HTTP client fails to initialize.
-    pub fn new(config: Config) -> Result<Self, reqwest::Error> {
+    pub fn new(config: Config) -> Result<Self, ClientError> {
         let http = HttpClient::builder()
             .danger_accept_invalid_certs(config.insecure_skip_verify.to_bool())
             .build()?;
