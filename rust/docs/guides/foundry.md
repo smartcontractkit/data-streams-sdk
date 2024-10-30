@@ -157,14 +157,12 @@ contract Example is OwnerIsCreator {
 In the root of the Foundry project create the new `get_latest_eth_usd_report.rs` file with the following content:
 
 ```rust
-use data_streams_sdk::client::{Client};
+use data_streams_sdk::client::Client;
 use data_streams_sdk::config::Config;
 use data_streams_sdk::feed::ID;
-use reqwest::Response;
-use std::error::Error;
-use std::sync::Arc;
 use dotenv::dotenv;
 use std::env;
+use std::error::Error;
 
 #[tokio::main]
 async fn get_latest_eth_usd_report() -> Result<(), Box<dyn Error>> {
@@ -205,7 +203,6 @@ async fn get_latest_eth_usd_report() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-
 fn main() {
     let _ = get_latest_eth_usd_report();
 }
@@ -220,9 +217,8 @@ version = "0.0.1"
 edition = "2021"
 
 [dependencies]
-data-streams-sdk = { path = "../data-streams-sdk/rust" } # Make sure to replace the path with the correct path if different
+data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", branch = "feat/rust" }
 dotenv = "0.15"
-reqwest = { version = "0.12.8", features = ["json", "rustls-tls"] }
 tokio = { version = "1", features = ["full"] }
 
 [[bin]]

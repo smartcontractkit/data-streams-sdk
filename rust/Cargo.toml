@@ -1,11 +1,13 @@
 [package]
 name = "data-streams-sdk"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 rust-version = "1.70"
 description = "Chainlink Data Streams client SDK"
 license = "MIT"
 repository = "https://github.com/smartcontractkit/data-streams-sdk/"
+readme = "README.md"
+exclude = ["/target/*", "examples/*", "tests/*", "docs/*", "book/*"]
 keywords = ["chainlink"]
 
 [dependencies]
@@ -27,8 +29,17 @@ thiserror = "1.0"
 zeroize = "1.5"
 tracing = { version = "0.1.40", optional = true }
 
-[features]
-default = ["tracing"]
-
 [dev-dependencies]
 tracing-subscriber = { version = "0.3.18", features = ["time"] }
+
+[features]
+default = ["full"]
+
+rest = ["reqwest/json", "reqwest/rustls-tls", "tokio/full"]
+websocket = ["tokio-tungstenite/rustls", "tokio/full"]
+tracing = ["dep:tracing"]
+
+full = ["rest", "websocket", "tracing"]
+
+[package.metadata.docs.rs]
+all-features = true
