@@ -35,27 +35,7 @@ pub enum HmacError {
 /// # Returns
 ///
 /// A `Result` containing the hex-encoded HMAC string if successful, or an error.
-///
-/// # Examples
-///
-/// ```rust
-/// use data_streams_sdk::auth::{generate_hmac, HmacError};
-///
-/// fn main() -> Result<(), HmacError> {
-///     let method = "GET";
-///     let path = "/api/v1/feeds";
-///     let body = b"";
-///     let client_id = "clientId";
-///     let user_secret = "userSecret";
-///     let timestamp = 1718885772; // Example timestamp
-///
-///     let hmac = generate_hmac(method, path, body, client_id, timestamp, user_secret)?;
-///     println!("Generated HMAC: {}", hmac);
-///
-///     Ok(())
-/// }
-/// ```
-pub fn generate_hmac(
+fn generate_hmac(
     method: &str,
     path: &str,
     body: &[u8],
@@ -98,39 +78,7 @@ pub fn generate_hmac(
 /// # Returns
 ///
 /// A `HeaderMap` containing the authentication headers if successful, or an error.
-///
-/// # Examples
-///
-/// ```rust
-/// use reqwest::header::HeaderMap;
-/// use data_streams_sdk::auth::{generate_auth_headers, HmacError};
-///
-/// fn main() -> Result<(), HmacError> {
-///     let method = "GET";
-///     let path = "/api/v1/feeds";
-///     let body = b"";
-///     let client_id = "clientId";
-///     let user_secret = "userSecret";
-///     let timestamp = 1718885772; // Example timestamp
-///
-///     let headers = generate_auth_headers(
-///         method,
-///         path,
-///         body,
-///         client_id,
-///         user_secret,
-///         timestamp,
-///     )?;
-///
-///     // Now `headers` contains the authentication headers.
-///     for (key, value) in headers.iter() {
-///         println!("{}: {:?}", key, value);
-///     }
-///
-///     Ok(())
-/// }
-/// ```
-pub fn generate_auth_headers(
+pub(crate) fn generate_auth_headers(
     method: &str,
     path: &str,
     body: &[u8],
