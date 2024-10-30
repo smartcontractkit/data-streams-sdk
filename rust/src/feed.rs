@@ -3,6 +3,19 @@ use hex::{FromHex, ToHex};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
+use thiserror::Error;
+
+#[derive(Debug, Error, PartialEq)]
+pub enum IDError {
+    #[error("Missing '0x' prefix")]
+    MissingPrefix,
+
+    #[error("Invalid length for FeedID")]
+    InvalidLength,
+
+    #[error("Failed to decode FeedID")]
+    DecodeError(#[from] hex::FromHexError),
+}
 
 /// Represents the feed report schema version.
 ///
@@ -47,7 +60,7 @@ impl ID {
     /// # Returns
     ///
     /// * `Ok(ID)` if parsing is successful.
-    /// * `Err(&'static str)` if the input string is invalid.
+    /// * `IDError` if the input string is invalid.
     ///
     /// # Errors
     ///
@@ -63,20 +76,20 @@ impl ID {
     ///
     /// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
     /// ```
-    pub fn from_hex_str(s: &str) -> Result<Self, &'static str> {
+    pub fn from_hex_str(s: &str) -> Result<Self, IDError> {
         let s = s.trim();
 
         if !s.starts_with("0x") && !s.starts_with("0X") {
-            return Err("Missing '0x' prefix");
+            return Err(IDError::MissingPrefix);
         }
 
         let hex_str = &s[2..];
 
         if hex_str.len() != 64 {
-            return Err("Invalid length for FeedID");
+            return Err(IDError::InvalidLength);
         }
 
-        let bytes = <[u8; 32]>::from_hex(hex_str).map_err(|_| "Failed to decode FeedID")?;
+        let bytes = <[u8; 32]>::from_hex(hex_str)?;
         Ok(ID(bytes))
     }
 
@@ -121,7 +134,7 @@ impl ID {
 }
 
 impl FromStr for ID {
-    type Err = &'static str;
+    type Err = IDError;
 
     /// Parses an `ID` from a string using `from_hex_str`.
     ///
@@ -132,7 +145,7 @@ impl FromStr for ID {
     /// # Returns
     ///
     /// * `Ok(ID)` if parsing is successful.
-    /// * `Err(&'static str)` if the input string is invalid.
+    /// * `IDError` if the input string is invalid.
     ///
     /// # Examples
     ///
@@ -330,18 +343,21 @@ mod tests {
     #[test]
     fn test_revert_if_missing_prefix() {
         let hex_str = &V1_FEED_ID_STR[2..];
-        assert_eq!(ID::from_hex_str(hex_str), Err("Missing '0x' prefix"));
+        let result = ID::from_hex_str(hex_str);
+        assert!(matches!(result, Err(IDError::MissingPrefix)));
     }
 
     #[test]
     fn test_revert_if_invalid_length() {
         let hex_str = "0x309";
-        assert_eq!(ID::from_hex_str(hex_str), Err("Invalid length for FeedID"));
+        let result = ID::from_hex_str(hex_str);
+        assert!(matches!(result, Err(IDError::InvalidLength)));
     }
 
     #[test]
     fn test_revert_if_failed_to_decode() {
         let hex_str = "0xZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
-        assert_eq!(ID::from_hex_str(hex_str), Err("Failed to decode FeedID"));
+        let result = ID::from_hex_str(hex_str);
+        assert!(matches!(result, Err(IDError::DecodeError(_))));
     }
 }
