@@ -33,6 +33,10 @@ type Client interface {
 
 	// Stream creates realtime report stream for the given feedIDs.
 	Stream(ctx context.Context, feedIDs []feed.ID) (Stream, error)
+
+	// Stream creates realtime report stream for the given feedIDs.
+	StreamWithStatusCallback(ctx context.Context, feedIDs []feed.ID,
+		connStatusCallback func(isConnected bool, host string, origin string)) (Stream, error)
 }
 
 // LogPrintf implements a LogFunction using fmt.Printf
@@ -96,6 +100,11 @@ type ReportPage struct {
 }
 
 func (c *client) Stream(ctx context.Context, ids []feed.ID) (s Stream, err error) {
+	return c.StreamWithStatusCallback(ctx, ids, nil)
+}
+
+func (c *client) StreamWithStatusCallback(ctx context.Context, ids []feed.ID,
+	connStatusCallback func(isConnected bool, host string, origin string)) (s Stream, err error) {
 	var origins []string
 
 	// Only fetch origins if websocket high availability mode is enabled
@@ -115,7 +124,7 @@ func (c *client) Stream(ctx context.Context, ids []feed.ID) (s Stream, err error
 		}
 	}
 
-	return c.newStream(ctx, c.http, ids, origins)
+	return c.newStream(ctx, c.http, ids, origins, connStatusCallback)
 }
 
 func (c *client) GetLatestReport(ctx context.Context, id feed.ID) (r *ReportResponse, err error) {
