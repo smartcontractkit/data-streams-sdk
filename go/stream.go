@@ -71,13 +71,14 @@ func (s Stats) String() (st string) {
 }
 
 type stream struct {
-	httpClient    *http.Client
-	customHeaders http.Header
-	config        Config
-	output        chan *ReportResponse
-	feedIDs       []feed.ID
-	conns         []*wsConn
-	closeError    atomic.Value
+	httpClient         *http.Client
+	customHeaders      http.Header
+	config             Config
+	output             chan *ReportResponse
+	feedIDs            []feed.ID
+	conns              []*wsConn
+	closeError         atomic.Value
+	connStatusCallback func(isConneccted bool, host string, origin string)
 
 	waterMarkMu sync.Mutex
 	waterMark   map[string]uint64
@@ -94,13 +95,15 @@ type stream struct {
 	closed atomic.Bool
 }
 
-func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs []feed.ID, origins []string) (s *stream, err error) {
+func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs []feed.ID,
+	origins []string, connStatusCallback func(isConnected bool, host string, origin string)) (s *stream, err error) {
 	s = &stream{
-		httpClient: httpClient,
-		config:     c.config,
-		output:     make(chan *ReportResponse, 1),
-		feedIDs:    feedIDs,
-		waterMark:  make(map[string]uint64),
+		httpClient:         httpClient,
+		connStatusCallback: connStatusCallback,
+		config:             c.config,
+		output:             make(chan *ReportResponse, 1),
+		feedIDs:            feedIDs,
+		waterMark:          make(map[string]uint64),
 	}
 
 	if value := ctx.Value(CustomHeadersCtxKey); value != nil {
@@ -166,6 +169,9 @@ func (s *stream) pingConn(ctx context.Context, conn *wsConn) {
 }
 
 func (s *stream) monitorConn(conn *wsConn) {
+	if s.connStatusCallback != nil {
+		go s.connStatusCallback(true, conn.host, conn.origin)
+	}
 	for !s.closed.Load() {
 		ctx, cancel := context.WithCancel(context.Background())
 
@@ -179,6 +185,11 @@ func (s *stream) monitorConn(conn *wsConn) {
 		// read blocks until conn is closed or errors out
 		err := conn.read(ctx, s.accept)
 		cancel()
+		// `Add(^uint64(0))` will decrement activeConnections
+		s.stats.activeConnections.Add(^uint64(0))
+		if s.connStatusCallback != nil {
+			go s.connStatusCallback(false, conn.host, conn.origin)
+		}
 
 		// stream closed
 		if s.closed.Load() {
@@ -186,8 +197,7 @@ func (s *stream) monitorConn(conn *wsConn) {
 		}
 
 		// reconnect protocol
-		// `Add(^uint64(0))` will decrement activeConnections
-		if s.stats.activeConnections.Add(^uint64(0)) == 0 {
+		if s.stats.activeConnections.Load() == 0 {
 			s.stats.fullReconnects.Add(1)
 		} else {
 			s.stats.partialReconnects.Add(1)
@@ -242,6 +252,9 @@ func (s *stream) monitorConn(conn *wsConn) {
 			}
 
 			conn.replace(re.conn)
+			if s.connStatusCallback != nil {
+				go s.connStatusCallback(true, conn.host, conn.origin)
+			}
 			s.config.logInfo(
 				"client: stream websocket %s: reconnected",
 				conn.origin,
@@ -322,6 +335,7 @@ func (s *stream) accept(ctx context.Context, m *message) (err error) {
 
 type wsConn struct {
 	mu     sync.Mutex
+	host   string
 	origin string
 	conn   *websocket.Conn
 }
@@ -391,6 +405,7 @@ func (s *stream) newWSconn(ctx context.Context, origin string) (ws *wsConn, err 
 	}
 
 	ws = &wsConn{
+		host:   reqURL.Host,
 		origin: origin,
 		conn:   conn,
 	}

@@ -103,8 +103,11 @@ func ExampleStream() {
 	}
 
 	ctx, cancel = context.WithTimeout(context.Background(), time.Second)
-	stream, err := client.Stream(
-		ctx, []feed.ID{availableFeeds[0].FeedID, availableFeeds[1].FeedID})
+	stream, err := client.StreamWithStatusCallback(
+		ctx, []feed.ID{availableFeeds[0].FeedID, availableFeeds[1].FeedID},
+		func(isConnected bool, host string, origin string) {
+			streams.LogPrintf("Host: %s, Origin: %s, isConnected: %s", host, origin, isConnected)
+		})
 	cancel()
 	if err != nil {
 		streams.LogPrintf("error subscribing: %s", err)

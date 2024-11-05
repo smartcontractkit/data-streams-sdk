@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -109,6 +110,106 @@ func TestClient_Subscribe(t *testing.T) {
 	// must be safe to close multiple times.
 	sub.Close()
 	sub.Close()
+}
+
+func TestClient_SubscribeWithCallback(t *testing.T) {
+	ms := newMockServer(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead {
+			return
+		}
+		if r.URL.Path != apiV1WS {
+			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		}
+		_, err := websocket.Accept(
+			w, r, &websocket.AcceptOptions{CompressionMode: websocket.CompressionContextTakeover},
+		)
+		if err != nil {
+			t.Fatalf("error accepting connection: %s", err)
+		}
+	})
+	defer ms.Close()
+
+	streamsClient, err := ms.Client()
+	if err != nil {
+		t.Fatalf("error creating client %s", err)
+	}
+
+	cc := streamsClient.(*client)
+	cc.config.Logger = LogPrintf
+	cc.config.LogDebug = true
+
+	callbackMu := sync.Mutex{}
+	callbackTriggerCount := atomic.Uint64{}
+	callbackConnected := false
+	callbackOrigin := "default"
+	expectedOrigin := ""
+	callbackHost := "default"
+	expectedHost := cc.config.wsURL.Host
+	statusCallbackFunc := func(connected bool, host string, origin string) {
+		callbackMu.Lock()
+		defer callbackMu.Unlock()
+		callbackConnected = connected
+		callbackHost = host
+		callbackOrigin = origin
+		callbackTriggerCount.Add(1)
+	}
+
+	sub, err := streamsClient.StreamWithStatusCallback(context.Background(), []feed.ID{feed1, feed2}, statusCallbackFunc)
+	if err != nil {
+		t.Fatalf("error subscribing %s", err)
+	}
+	defer sub.Close()
+
+	waitCount := 5
+	for callbackTriggerCount.Load() == 0 {
+		if waitCount == 0 {
+			t.Errorf("timed out waiting for callback call")
+		}
+		waitCount--
+		time.Sleep(100 * time.Millisecond)
+	}
+	stats := sub.Stats()
+	if stats.ActiveConnections != 1 {
+		t.Errorf("ActiveConnections = %v, want 1", stats.ActiveConnections)
+	}
+	callbackMu.Lock()
+	if !callbackConnected {
+		t.Errorf("callbackConnected = %v, want true", callbackConnected)
+	}
+	if callbackHost != expectedHost {
+		t.Errorf("callbackHost = %v, want %v", callbackHost, expectedHost)
+	}
+	if callbackOrigin != expectedOrigin {
+		t.Errorf("callbackOrigin = %v, want %v", callbackOrigin, expectedOrigin)
+	}
+	callbackMu.Unlock()
+
+	callbackOrigin = "default"
+	callbackHost = "default"
+	sub.Close()
+	waitCount = 5
+	for callbackTriggerCount.Load() == 1 {
+		if waitCount == 0 {
+			t.Errorf("timed out waiting for callback call")
+		}
+		waitCount--
+		time.Sleep(100 * time.Millisecond)
+	}
+	stats = sub.Stats()
+	if stats.ActiveConnections != 0 {
+		t.Errorf("ActiveConnections = %v, want 0", stats.ActiveConnections)
+	}
+	callbackMu.Lock()
+	if callbackConnected {
+		t.Errorf("callbackConnected = %v, want false", callbackConnected)
+	}
+	if callbackHost != expectedHost {
+		t.Errorf("callbackHost = %v, want %v", callbackHost, expectedHost)
+	}
+	if callbackOrigin != expectedOrigin {
+		t.Errorf("callbackOrigin = %v, want %v", callbackOrigin, expectedOrigin)
+	}
+	callbackMu.Unlock()
 }
 
 func TestClient_SubscribeCanceledContext(t *testing.T) {
