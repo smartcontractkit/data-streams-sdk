@@ -5,6 +5,7 @@ use crate::{
     config::{Config, WebSocketHighAvailability},
     endpoints::API_V1_WS,
     feed::ID,
+    stream::{DEFAULT_WS_CONNECT_TIMEOUT, MAX_WS_RECONNECT_INTERVAL, MIN_WS_RECONNECT_INTERVAL},
 };
 
 use std::{
@@ -13,17 +14,13 @@ use std::{
 };
 use tokio::{
     net::TcpStream,
-    time::{sleep, timeout, Duration},
+    time::{sleep, timeout},
 };
 use tokio_tungstenite::{
     connect_async, tungstenite::client::IntoClientRequest, MaybeTlsStream,
     WebSocketStream as TungsteniteWebSocketStream,
 };
 use tracing::{error, info};
-
-const DEFAULT_WS_CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
-const MIN_WS_RECONNECT_INTERVAL: Duration = Duration::from_millis(1000);
-const MAX_WS_RECONNECT_INTERVAL: Duration = Duration::from_millis(10000);
 
 fn parse_origins(ws_url: &str) -> Vec<String> {
     ws_url
@@ -95,14 +92,14 @@ pub(crate) async fn connect(
                     stats.active_connections.fetch_add(1, Ordering::SeqCst);
                 }
                 Err(e) => {
-                    error!("Failed to reconnect to origin {}: {:?}", origin, e);
+                    error!("Failed to connect to origin {}: {:?}", origin, e);
                 }
             }
         }
 
         if streams.is_empty() {
             return Err(StreamError::ConnectionError(
-                "Failed to reconnect to any WebSocket origins".into(),
+                "Failed to connect to any WebSocket origins".into(),
             ));
         }
 

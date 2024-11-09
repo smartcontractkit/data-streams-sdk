@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     sync::{
-        atomic::{AtomicU64, Ordering},
+        atomic::{AtomicUsize, Ordering},
         Arc,
     },
 };
@@ -20,7 +20,11 @@ use tokio::{
     time::{sleep, Duration},
 };
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream as TungsteniteWebSocketStream};
-use tracing::{error, info};
+use tracing::{debug, error, info};
+
+pub const DEFAULT_WS_CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
+pub const MIN_WS_RECONNECT_INTERVAL: Duration = Duration::from_millis(1000);
+pub const MAX_WS_RECONNECT_INTERVAL: Duration = Duration::from_millis(10000);
 
 #[derive(Debug, thiserror::Error)]
 pub enum StreamError {
@@ -47,17 +51,17 @@ pub struct WebSocketReport {
 
 struct Stats {
     /// Total number of accepted reports
-    accepted: AtomicU64,
+    accepted: AtomicUsize,
     /// Total number of deduplicated reports when in HA           
-    deduplicated: AtomicU64,
+    deduplicated: AtomicUsize,
     /// Total number of partial reconnects when in HA        
-    partial_reconnects: AtomicU64,
+    partial_reconnects: AtomicUsize,
     /// Total number of full reconnects    
-    full_reconnects: AtomicU64,
+    full_reconnects: AtomicUsize,
     /// Number of configured connections if in HA      
-    configured_connections: AtomicU64,
+    configured_connections: AtomicUsize,
     /// Current number of active connections     
-    active_connections: AtomicU64,
+    active_connections: AtomicUsize,
 }
 
 #[derive(Debug)]
@@ -126,12 +130,12 @@ impl Stream {
         let (shutdown_sender, _) = broadcast::channel(1);
 
         let stats = Arc::new(Stats {
-            accepted: AtomicU64::new(0),
-            deduplicated: AtomicU64::new(0),
-            partial_reconnects: AtomicU64::new(0),
-            full_reconnects: AtomicU64::new(0),
-            configured_connections: AtomicU64::new(0),
-            active_connections: AtomicU64::new(0),
+            accepted: AtomicUsize::new(0),
+            deduplicated: AtomicUsize::new(0),
+            partial_reconnects: AtomicUsize::new(0),
+            full_reconnects: AtomicUsize::new(0),
+            configured_connections: AtomicUsize::new(0),
+            active_connections: AtomicUsize::new(0),
         });
 
         let conn = connect(config, &feed_ids, stats.clone()).await?;
@@ -222,7 +226,7 @@ impl Stream {
 
         // Send shutdown signal
         if let Err(e) = self.shutdown_sender.send(()) {
-            error!("Error sending shutdown signal: {:?}", e);
+            debug!("Shutdown signal not sent (no active receivers). Stream may already be closed. Error received: {:?}", e);
         }
 
         // Allow tasks to shut down gracefully
@@ -263,17 +267,17 @@ impl Stream {
 #[derive(Debug, Clone)]
 pub struct StatsSnapshot {
     /// Total number of accepted reports
-    pub accepted: u64,
+    pub accepted: usize,
     /// Total number of deduplicated reports when in HA
-    pub deduplicated: u64,
+    pub deduplicated: usize,
     /// Total number of received reports
-    pub total_received: u64,
+    pub total_received: usize,
     /// Total number of partial reconnects when in HA
-    pub partial_reconnects: u64,
+    pub partial_reconnects: usize,
     /// Total number of full reconnects
-    pub full_reconnects: u64,
+    pub full_reconnects: usize,
     /// Number of configured connections if in HA
-    pub configured_connections: u64,
+    pub configured_connections: usize,
     /// Current number of active connections
-    pub active_connections: u64,
+    pub active_connections: usize,
 }

@@ -52,7 +52,7 @@ pub struct Config {
     pub ws_ha: WebSocketHighAvailability,
 
     /// Maximum number of reconnection attempts for underlying WebSocket connections
-    pub ws_max_reconnect: u32,
+    pub ws_max_reconnect: usize,
 
     /// Skip server certificate chain and host name verification
     pub insecure_skip_verify: InsecureSkipVerify,
@@ -63,7 +63,7 @@ pub struct Config {
 }
 
 impl Config {
-    const DEFAULT_WS_MAX_RECONNECT: u32 = 5;
+    const DEFAULT_WS_MAX_RECONNECT: usize = 5;
     const DEFAULT_WS_HA: WebSocketHighAvailability = WebSocketHighAvailability::Disabled;
     const DEFAULT_INSECURE_SKIP_VERIFY: InsecureSkipVerify = InsecureSkipVerify::Disabled;
     const DEFAULT_INSPECT_HTTP_RESPONSE: Option<fn(&Response)> = None;
@@ -160,7 +160,7 @@ pub struct ConfigBuilder {
     rest_url: String,
     ws_url: String,
     ws_ha: WebSocketHighAvailability,
-    ws_max_reconnect: u32,
+    ws_max_reconnect: usize,
     insecure_skip_verify: InsecureSkipVerify,
     inspect_http_response: Option<fn(&Response)>,
 }
@@ -173,7 +173,7 @@ impl ConfigBuilder {
     }
 
     // Sets the `ws_max_reconnect` parameter.
-    pub fn with_ws_max_reconnect(mut self, ws_max_reconnect: u32) -> Self {
+    pub fn with_ws_max_reconnect(mut self, ws_max_reconnect: usize) -> Self {
         self.ws_max_reconnect = ws_max_reconnect;
         self
     }

@@ -6,7 +6,10 @@ use futures::SinkExt;
 use futures_util::StreamExt;
 use std::{
     collections::HashMap,
-    sync::{atomic::Ordering, Arc},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
 };
 use tokio::{
     net::TcpStream,
@@ -26,6 +29,8 @@ pub(crate) async fn run_stream(
     config: Config,
     feed_ids: Vec<ID>,
 ) -> Result<(), StreamError> {
+    let shutdown_flag = Arc::new(AtomicBool::new(false));
+
     loop {
         tokio::select! {
             message = stream.next() => {
@@ -85,23 +90,25 @@ pub(crate) async fn run_stream(
                         error!("Error receiving message: {:?}", e);
                         stats.active_connections.fetch_sub(1, Ordering::SeqCst);
 
-                        if stats.active_connections.load(Ordering::SeqCst) == 0 {
-                            stats.full_reconnects.fetch_add(1, Ordering::SeqCst);
-                        } else {
-                            stats.partial_reconnects.fetch_add(1, Ordering::SeqCst);
-                        }
-
-                        stream = try_to_reconnect(stats.clone(), &config, &feed_ids).await?;
+                        stream = handle_reconnection(stats.clone(), &config, &feed_ids).await?;
                     }
                     None => {
                         info!("WebSocket stream closed.");
                         stats.active_connections.fetch_sub(1, Ordering::SeqCst);
-                        return Err(StreamError::StreamClosed);
+
+                        if shutdown_flag.load(Ordering::SeqCst) {
+                            info!("Stream closed gracefully after shutdown signal.");
+                            return Ok(());
+                        } else {
+                            stream = handle_reconnection(stats.clone(), &config, &feed_ids).await?;
+                        }
                     }
                 }
             }
             _ = shutdown_receiver.recv() => {
                 // Received shutdown signal
+                shutdown_flag.store(true, Ordering::SeqCst);
+
                 if let Err(e) = stream.close(None).await {
                     error!("Error closing stream: {:?}", e);
                     return Err(StreamError::WebSocketError(e));
@@ -112,4 +119,19 @@ pub(crate) async fn run_stream(
             }
         }
     }
+}
+
+async fn handle_reconnection(
+    stats: Arc<Stats>,
+    config: &Config,
+    feed_ids: &[ID],
+) -> Result<TungsteniteWebSocketStream<MaybeTlsStream<TcpStream>>, StreamError> {
+    if stats.active_connections.load(Ordering::SeqCst) == 0 {
+        stats.full_reconnects.fetch_add(1, Ordering::SeqCst);
+    } else {
+        stats.partial_reconnects.fetch_add(1, Ordering::SeqCst);
+    }
+
+    let new_stream = try_to_reconnect(stats.clone(), config, feed_ids).await?;
+    Ok(new_stream)
 }
