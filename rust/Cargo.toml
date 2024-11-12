@@ -31,6 +31,8 @@ tracing = { version = "0.1.40", optional = true }
 
 [dev-dependencies]
 tracing-subscriber = { version = "0.3.18", features = ["time"] }
+criterion = { version = "0.5", features = ["async_tokio"] }
+dotenv = "0.15"
 
 [features]
 default = ["full"]
@@ -43,3 +45,17 @@ full = ["rest", "websocket", "tracing"]
 
 [package.metadata.docs.rs]
 all-features = true
+
+[profile.release]
+debug = true
+
+[profile.bench]
+debug = true
+
+[[bench]]
+name = "rest_benchmark"
+harness = false
+
+[[bench]]
+name = "stream_benchmark"
+harness = false

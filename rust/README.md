@@ -207,3 +207,52 @@ To preview the Book locally, run:
 ```sh
 mdbook serve --open
 ```
+
+### Benchmarks
+
+Create an `.env` file in the root of the `rust/` directory with the following content:
+
+```sh
+API_KEY="YOUR_API_KEY_GOES_HERE"
+USER_SECRET="YOUR_USER_SECRET_GOES_HERE"
+```
+
+To run the benchmarks, run:
+
+```sh
+cargo bench
+```
+
+and then to view the results, run:
+
+```sh
+open target/criterion/report/index.html
+```
+
+### Flamegraphs
+
+To generate flamegraphs for each of the examples, run:
+
+```sh
+cargo flamegraph [--root] --example <example_name>
+```
+
+The `--root` flag is necessary for running on MacOS. Read more [here](https://github.com/flamegraph-rs/flamegraph?tab=readme-ov-file#dtrace-on-macos).
+
+The new `flamegraph.svg` file will be generated.
+
+To generate a flamegraph for integration tests, run:
+
+```sh
+cargo flamegraph --root --test stream_integration_tests
+```
+
+The `test_stream_ha_max_reconnection_attempts` test is ignored by default because it takes a while to complete. To generate a flamegraph with it included, remove the `#[ignore]` attribute from the test.
+
+To generate a flamegraph for benchmarks, run:
+
+```sh
+cargo flamegraph --bench <benchmark_name>
+```
+
+for example, `cargo flamegraph --root --bench rest_benchmark` or `cargo flamegraph --root --bench stream_benchmark`.

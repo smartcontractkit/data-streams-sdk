@@ -4,3 +4,11 @@
 # Rust
 target/
 book/
+
+# Flamegraph
+flamegraph.svg
+flamegraph-reports/
+
+# Environment variables
+.env
+.DS_Store
