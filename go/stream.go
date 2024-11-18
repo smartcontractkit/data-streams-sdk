@@ -308,7 +308,6 @@ func (s *stream) Close() (err error) {
 	s.closingMutex.Lock()
 	defer s.closingMutex.Unlock()
 
-	// mutex here to end of function
 	for x := 0; x < len(s.conns); x++ {
 		_ = s.conns[x].close()
 	}
