@@ -94,7 +94,8 @@ type stream struct {
 		configuredConnections atomic.Uint64
 	}
 
-	closed atomic.Bool
+	closed       atomic.Bool
+	closingMutex sync.RWMutex
 }
 
 func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs []feed.ID,
@@ -188,7 +189,7 @@ func (s *stream) monitorConn(conn *wsConn) {
 		s.stats.activeConnections.Add(1)
 
 		// read blocks until conn is closed or errors out
-		err := conn.read(ctx, s.accept)
+		err := conn.read(ctx, &s.closingMutex, s.accept)
 		cancel()
 		// `Add(^uint64(0))` will decrement activeConnections
 		s.stats.activeConnections.Add(^uint64(0))
@@ -303,12 +304,15 @@ func (s *stream) Close() (err error) {
 		return nil
 	}
 	s.streamCtxCancel()
-	defer close(s.output)
+	// this lock ensures websocket readers stop in a safe spot for closing
+	s.closingMutex.Lock()
+	defer s.closingMutex.Unlock()
 
+	// mutex here to end of function
 	for x := 0; x < len(s.conns); x++ {
 		_ = s.conns[x].close()
 	}
-
+	close(s.output)
 	// return a pending error
 	if err, ok := s.closeError.Load().(error); ok {
 		return err
@@ -352,22 +356,31 @@ func (ws *wsConn) close() (err error) {
 	return ws.conn.CloseNow()
 }
 
-func (ws *wsConn) read(ctx context.Context, accept func(context.Context, *message) error) (err error) {
+func (ws *wsConn) read(ctx context.Context, closingMutex *sync.RWMutex, accept func(context.Context, *message) error) (err error) {
+	var lastErr error
 	for {
+		// coordinates with a potential Close fucntion call from client
+		closingMutex.RLock()
 		_, b, err := ws.conn.Read(ctx)
 		if err != nil {
-			return err
+			lastErr = err
+			break
 		}
 
 		m := &message{}
 		if err = json.Unmarshal(b, m); err != nil {
-			return err
+			lastErr = err
+			break
 		}
 
 		if err = accept(ctx, m); err != nil {
-			return err
+			lastErr = err
+			break
 		}
+		closingMutex.RUnlock()
 	}
+	closingMutex.RUnlock()
+	return lastErr
 }
 
 func (ws *wsConn) replace(c *websocket.Conn) {
