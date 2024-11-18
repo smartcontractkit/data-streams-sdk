@@ -77,6 +77,8 @@ type stream struct {
 	output             chan *ReportResponse
 	feedIDs            []feed.ID
 	conns              []*wsConn
+	streamCtx          context.Context
+	streamCtxCancel    context.CancelFunc
 	closeError         atomic.Value
 	connStatusCallback func(isConneccted bool, host string, origin string)
 
@@ -97,6 +99,7 @@ type stream struct {
 
 func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs []feed.ID,
 	origins []string, connStatusCallback func(isConnected bool, host string, origin string)) (s *stream, err error) {
+	streamCtx, streamCtxCancel := context.WithCancel(ctx)
 	s = &stream{
 		httpClient:         httpClient,
 		connStatusCallback: connStatusCallback,
@@ -104,6 +107,8 @@ func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs
 		output:             make(chan *ReportResponse, 1),
 		feedIDs:            feedIDs,
 		waterMark:          make(map[string]uint64),
+		streamCtx:          streamCtx,
+		streamCtxCancel:    streamCtxCancel,
 	}
 
 	if value := ctx.Value(CustomHeadersCtxKey); value != nil {
@@ -173,7 +178,7 @@ func (s *stream) monitorConn(conn *wsConn) {
 		go s.connStatusCallback(true, conn.host, conn.origin)
 	}
 	for !s.closed.Load() {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(s.streamCtx)
 
 		// start pinging the server in the background and ensure we fail
 		// an unresponsive connection fast
@@ -297,6 +302,7 @@ func (s *stream) Close() (err error) {
 	if !s.closed.CompareAndSwap(false, true) {
 		return nil
 	}
+	s.streamCtxCancel()
 	defer close(s.output)
 
 	for x := 0; x < len(s.conns); x++ {
