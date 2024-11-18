@@ -358,7 +358,7 @@ func (ws *wsConn) close() (err error) {
 func (ws *wsConn) read(ctx context.Context, closingMutex *sync.RWMutex, accept func(context.Context, *message) error) (err error) {
 	var lastErr error
 	for {
-		// coordinates with a potential Close fucntion call from client
+		// coordinates with a potential Close function call from client
 		closingMutex.RLock()
 		_, b, err := ws.conn.Read(ctx)
 		if err != nil {
