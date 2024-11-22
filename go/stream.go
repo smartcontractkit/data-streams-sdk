@@ -71,13 +71,16 @@ func (s Stats) String() (st string) {
 }
 
 type stream struct {
-	httpClient    *http.Client
-	customHeaders http.Header
-	config        Config
-	output        chan *ReportResponse
-	feedIDs       []feed.ID
-	conns         []*wsConn
-	closeError    atomic.Value
+	httpClient         *http.Client
+	customHeaders      http.Header
+	config             Config
+	output             chan *ReportResponse
+	feedIDs            []feed.ID
+	conns              []*wsConn
+	streamCtx          context.Context
+	streamCtxCancel    context.CancelFunc
+	closeError         atomic.Value
+	connStatusCallback func(isConneccted bool, host string, origin string)
 
 	waterMarkMu sync.Mutex
 	waterMark   map[string]uint64
@@ -91,16 +94,22 @@ type stream struct {
 		configuredConnections atomic.Uint64
 	}
 
-	closed atomic.Bool
+	closed       atomic.Bool
+	closingMutex sync.RWMutex
 }
 
-func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs []feed.ID, origins []string) (s *stream, err error) {
+func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs []feed.ID,
+	origins []string, connStatusCallback func(isConnected bool, host string, origin string)) (s *stream, err error) {
+	streamCtx, streamCtxCancel := context.WithCancel(ctx)
 	s = &stream{
-		httpClient: httpClient,
-		config:     c.config,
-		output:     make(chan *ReportResponse, 1),
-		feedIDs:    feedIDs,
-		waterMark:  make(map[string]uint64),
+		httpClient:         httpClient,
+		connStatusCallback: connStatusCallback,
+		config:             c.config,
+		output:             make(chan *ReportResponse, 1),
+		feedIDs:            feedIDs,
+		waterMark:          make(map[string]uint64),
+		streamCtx:          streamCtx,
+		streamCtxCancel:    streamCtxCancel,
 	}
 
 	if value := ctx.Value(CustomHeadersCtxKey); value != nil {
@@ -166,8 +175,11 @@ func (s *stream) pingConn(ctx context.Context, conn *wsConn) {
 }
 
 func (s *stream) monitorConn(conn *wsConn) {
+	if s.connStatusCallback != nil {
+		go s.connStatusCallback(true, conn.host, conn.origin)
+	}
 	for !s.closed.Load() {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(s.streamCtx)
 
 		// start pinging the server in the background and ensure we fail
 		// an unresponsive connection fast
@@ -177,8 +189,13 @@ func (s *stream) monitorConn(conn *wsConn) {
 		s.stats.activeConnections.Add(1)
 
 		// read blocks until conn is closed or errors out
-		err := conn.read(ctx, s.accept)
+		err := conn.read(ctx, &s.closingMutex, s.accept)
 		cancel()
+		// `Add(^uint64(0))` will decrement activeConnections
+		s.stats.activeConnections.Add(^uint64(0))
+		if s.connStatusCallback != nil {
+			go s.connStatusCallback(false, conn.host, conn.origin)
+		}
 
 		// stream closed
 		if s.closed.Load() {
@@ -186,8 +203,7 @@ func (s *stream) monitorConn(conn *wsConn) {
 		}
 
 		// reconnect protocol
-		// `Add(^uint64(0))` will decrement activeConnections
-		if s.stats.activeConnections.Add(^uint64(0)) == 0 {
+		if s.stats.activeConnections.Load() == 0 {
 			s.stats.fullReconnects.Add(1)
 		} else {
 			s.stats.partialReconnects.Add(1)
@@ -242,6 +258,9 @@ func (s *stream) monitorConn(conn *wsConn) {
 			}
 
 			conn.replace(re.conn)
+			if s.connStatusCallback != nil {
+				go s.connStatusCallback(true, conn.host, conn.origin)
+			}
 			s.config.logInfo(
 				"client: stream websocket %s: reconnected",
 				conn.origin,
@@ -284,12 +303,15 @@ func (s *stream) Close() (err error) {
 	if !s.closed.CompareAndSwap(false, true) {
 		return nil
 	}
-	defer close(s.output)
+	s.streamCtxCancel()
+	// this lock ensures websocket readers stop in a safe spot for closing
+	s.closingMutex.Lock()
+	defer s.closingMutex.Unlock()
 
 	for x := 0; x < len(s.conns); x++ {
 		_ = s.conns[x].close()
 	}
-
+	close(s.output)
 	// return a pending error
 	if err, ok := s.closeError.Load().(error); ok {
 		return err
@@ -322,6 +344,7 @@ func (s *stream) accept(ctx context.Context, m *message) (err error) {
 
 type wsConn struct {
 	mu     sync.Mutex
+	host   string
 	origin string
 	conn   *websocket.Conn
 }
@@ -332,22 +355,31 @@ func (ws *wsConn) close() (err error) {
 	return ws.conn.CloseNow()
 }
 
-func (ws *wsConn) read(ctx context.Context, accept func(context.Context, *message) error) (err error) {
+func (ws *wsConn) read(ctx context.Context, closingMutex *sync.RWMutex, accept func(context.Context, *message) error) (err error) {
+	var lastErr error
 	for {
+		// coordinates with a potential Close function call from client
+		closingMutex.RLock()
 		_, b, err := ws.conn.Read(ctx)
 		if err != nil {
-			return err
+			lastErr = err
+			break
 		}
 
 		m := &message{}
 		if err = json.Unmarshal(b, m); err != nil {
-			return err
+			lastErr = err
+			break
 		}
 
 		if err = accept(ctx, m); err != nil {
-			return err
+			lastErr = err
+			break
 		}
+		closingMutex.RUnlock()
 	}
+	closingMutex.RUnlock()
+	return lastErr
 }
 
 func (ws *wsConn) replace(c *websocket.Conn) {
@@ -391,6 +423,7 @@ func (s *stream) newWSconn(ctx context.Context, origin string) (ws *wsConn, err 
 	}
 
 	ws = &wsConn{
+		host:   reqURL.Host,
 		origin: origin,
 		conn:   conn,
 	}
