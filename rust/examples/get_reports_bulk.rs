@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .unwrap();
 
     let feed_ids = vec![eth_usd_feed_id, btc_usd_feed_id];
-    let timestamp = 1729506909; // Example timestamp
+    let timestamp = 1732395909; // Example timestamp
 
     // Initialize the configuration
     let config = Config::new(
