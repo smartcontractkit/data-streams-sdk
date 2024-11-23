@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let eth_usd_feed_id =
         ID::from_hex_str("0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782")
             .unwrap();
-    let timestamp = 1729506909; // Example timestamp
+    let timestamp = 1732395909; // Example timestamp
 
     // Initialize the configuration
     let config = Config::new(

@@ -47,8 +47,8 @@ pub struct FeedVersion(pub u16);
 /// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
 /// println!("ID: {}", id);
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ID([u8; 32]);
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ID(pub [u8; 32]);
 
 impl ID {
     /// Parses an `ID` from a hexadecimal string with a "0x" prefix.
@@ -172,7 +172,23 @@ impl fmt::Display for ID {
     /// println!("{}", id); // Outputs: 0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472
     /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.to_hex_string().fmt(f)
+        f.write_str(&self.to_hex_string())
+    }
+}
+
+impl fmt::Debug for ID {
+    /// Formats the `ID` using its hexadecimal string representation.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use data_streams_sdk::feed::ID;
+    ///
+    /// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
+    /// println!("{:?}", id); // Outputs: 0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.to_hex_string())
     }
 }
 
@@ -242,33 +258,33 @@ pub struct Feed {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
 
-    const V1_FEED_ID: ID = ID([
+    pub const V1_FEED_ID: ID = ID([
         0, 1, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
         163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
     ]);
-    const V2_FEED_ID: ID = ID([
+    pub const V2_FEED_ID: ID = ID([
         00, 02, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
         163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
     ]);
-    const V3_FEED_ID: ID = ID([
+    pub const V3_FEED_ID: ID = ID([
         00, 03, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
         163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
     ]);
-    const V4_FEED_ID: ID = ID([
+    pub const V4_FEED_ID: ID = ID([
         00, 04, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
         163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
     ]);
 
-    const V1_FEED_ID_STR: &str =
+    pub const V1_FEED_ID_STR: &str =
         "0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472";
-    const V2_FEED_ID_STR: &str =
+    pub const V2_FEED_ID_STR: &str =
         "0x00026b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472";
-    const V3_FEED_ID_STR: &str =
+    pub const V3_FEED_ID_STR: &str =
         "0x00036b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472";
-    const V4_FEED_ID_STR: &str =
+    pub const V4_FEED_ID_STR: &str =
         "0x00046b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472";
 
     #[test]
