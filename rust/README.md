@@ -7,6 +7,13 @@ The Data Streams SDK is a Rust library that provides a convenient way to consume
 - Rust 1.70 or later
 - Valid Chainlink Data Streams credentials
 
+## Project Structure
+
+The project is organized into the following crates:
+
+- `data-streams-report` - The crate that provides the data structures for the reports.
+- `data-streams-sdk` - The main crate that provides the REST and WebSocket clients.
+
 ## Installation
 
 Add the following to your `Cargo.toml`:
@@ -32,8 +39,8 @@ Here is the basic example that demontstrates how to get the latest report for a 
 ```rust
 use data_streams_sdk::client::Client;
 use data_streams_sdk::config::Config;
-use data_streams_sdk::feed::ID;
-use data_streams_sdk::report::{decode_full_report, v3::ReportDataV3};
+use data_streams_report::feed_id::ID;
+use data_streams_report::report::{decode_full_report, v3::ReportDataV3};
 use std::error::Error;
 
 #[tokio::main]
@@ -88,7 +95,7 @@ Here is the basic example that demonstrates how to connect to the Data Streams W
 
 ```rust
 use data_streams_sdk::config::Config;
-use data_streams_sdk::feed::ID;
+use data_streams_report::feed_id::ID;
 use data_streams_sdk::stream::Stream;
 use tokio::signal;
 use tracing_subscriber::fmt::time::UtcTime;
@@ -210,7 +217,7 @@ mdbook serve --open
 
 ### Benchmarks
 
-Create an `.env` file in the root of the `rust/` directory with the following content:
+Create an `.env` file in the root of the `rust/crates/sdk` directory with the following content:
 
 ```sh
 API_KEY="YOUR_API_KEY_GOES_HERE"
