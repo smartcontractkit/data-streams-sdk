@@ -1,0 +1,18 @@
+[package]
+name = "data_streams_report"
+version = "0.0.1"
+edition = "2021"
+description = "Chainlink Data Streams Report"
+license = "MIT"
+repository = "https://github.com/smartcontractkit/data-streams-sdk"
+readme = "README.md"
+exclude = ["/target/*", "examples/*"]
+keywords = ["chainlink"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+hex = "0.4"
+num-bigint = "0.4"
+thiserror = "1.0"
+snap = "1"
