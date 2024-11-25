@@ -304,12 +304,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8566979429cf69b49a5c740c60791108e86440e8be149bbea4fe54d2c32d6e2"
 
 [[package]]
+name = "data-streams-report"
+version = "0.0.1"
+dependencies = [
+ "hex",
+ "num-bigint",
+ "serde",
+ "serde_json",
+ "snap",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "data-streams-report"
+version = "0.0.1"
+source = "git+https://github.com/smartcontractkit/data-streams-sdk.git?branch=feat/rust#0c31591133cdf02883a1d0d752bc8d379e4a822f"
+dependencies = [
+ "hex",
+ "num-bigint",
+ "serde",
+ "serde_json",
+ "snap",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "data-streams-sdk"
 version = "0.0.1"
 dependencies = [
  "byteorder",
  "criterion",
- "data_streams_report",
+ "data-streams-report 0.0.1 (git+https://github.com/smartcontractkit/data-streams-sdk.git?branch=feat/rust)",
  "dotenv",
  "futures",
  "futures-util",
@@ -326,18 +351,6 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "zeroize",
-]
-
-[[package]]
-name = "data_streams_report"
-version = "0.0.1"
-dependencies = [
- "hex",
- "num-bigint",
- "serde",
- "serde_json",
- "snap",
- "thiserror 1.0.69",
 ]
 
 [[package]]
