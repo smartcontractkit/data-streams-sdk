@@ -12,13 +12,13 @@ cargo run --example get_latest_report
 
 ## Examine the code
 
-The code for this example can be found in the `get_latest_report.rs` file in the `examples` directory of the `data-streams-sdk` repository.
+The code for this example can be found in the `get_latest_report.rs` file in the `crates/sdk/examples` directory of the `data-streams-sdk` repository.
 
 ```rust
+use data_streams_report::feed_id::ID;
+use data_streams_report::report::{decode_full_report, v3::ReportDataV3};
 use data_streams_sdk::client::Client;
 use data_streams_sdk::config::Config;
-use data_streams_sdk::feed::ID;
-use data_streams_sdk::report::{decode_full_report, v3::ReportDataV3};
 use std::error::Error;
 
 #[tokio::main]

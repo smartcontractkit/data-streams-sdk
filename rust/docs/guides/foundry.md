@@ -157,9 +157,9 @@ contract Example is OwnerIsCreator {
 In the root of the Foundry project create the new `get_latest_eth_usd_report.rs` file with the following content:
 
 ```rust
+use data_streams_report::feed_id::ID;
 use data_streams_sdk::client::Client;
 use data_streams_sdk::config::Config;
-use data_streams_sdk::feed::ID;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -217,7 +217,8 @@ version = "0.0.1"
 edition = "2021"
 
 [dependencies]
-data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", branch = "feat/rust" }
+data-streams-report = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", subdir = "rust/crates/report" }
+data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", subdir = "rust/crates/sdk", features = ["rest"] }
 dotenv = "0.15"
 tokio = { version = "1", features = ["full"] }
 

@@ -46,13 +46,13 @@ cargo run --example wss_multiple
 
 ## Examine the code
 
-The code for this example can be found in the `wss_multiple.rs` file in the `examples` directory of the `data-streams-sdk` repository. It will subscribe to the ETH/USD and BTC/USD feeds on Arbitrum Sepolia Stream and start reading reports. For each report it will log the feed ID, valid from timestamp, obesrvations timestamp and decode the report data to V3 Report, for 10 runs. After 5th run it will log current statistics. After 10th run it will exit the loop and gracefully close all streams. After that it will log the final statistics.
+The code for this example can be found in the `wss_multiple.rs` file in the `crates/sdk/examples` directory of the `data-streams-sdk` repository. It will subscribe to the ETH/USD and BTC/USD feeds on Arbitrum Sepolia Stream and start reading reports. For each report it will log the feed ID, valid from timestamp, obesrvations timestamp and decode the report data to V3 Report, for 10 runs. After 5th run it will log current statistics. After 10th run it will exit the loop and gracefully close all streams. After that it will log the final statistics.
 
 ```rust
+use data_streams_report::feed_id::ID;
+use data_streams_report::report::decode_full_report;
+use data_streams_report::report::v3::ReportDataV3;
 use data_streams_sdk::config::{Config, WebSocketHighAvailability};
-use data_streams_sdk::feed::ID;
-use data_streams_sdk::report::decode_full_report;
-use data_streams_sdk::report::v3::ReportDataV3;
 use data_streams_sdk::stream::Stream;
 use tracing_subscriber::fmt::time::UtcTime;
 

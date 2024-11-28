@@ -26,11 +26,11 @@ cargo run --example wss_simple_stream
 
 ## Examine the code
 
-The code for this example can be found in the `wss_simple_stream.rs` file in the `examples` directory of the `data-streams-sdk` repository. It will subscribe to the ETH/USD feed on Arbitrum Sepolia Stream and read & log RAW Reports. To terminate its execution press `Ctrl+C`.
+The code for this example can be found in the `wss_simple_stream.rs` file in the `crates/sdk/examples` directory of the `data-streams-sdk` repository. It will subscribe to the ETH/USD feed on Arbitrum Sepolia Stream and read & log RAW Reports. To terminate its execution press `Ctrl+C`.
 
 ```rust
+use data_streams_report::feed_id::ID;
 use data_streams_sdk::config::Config;
-use data_streams_sdk::feed::ID;
 use data_streams_sdk::stream::Stream;
 use tokio::signal;
 use tracing_subscriber::fmt::time::UtcTime;

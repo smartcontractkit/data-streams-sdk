@@ -20,7 +20,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", branch = "feat/rust" }
+data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", subdir = "rust/crates/sdk" }
 ```
 
 #### Features
@@ -37,10 +37,10 @@ data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk
 Here is the basic example that demontstrates how to get the latest report for a ETH/USD feed on Arbitrum Sepolia:
 
 ```rust
-use data_streams_sdk::client::Client;
-use data_streams_sdk::config::Config;
 use data_streams_report::feed_id::ID;
 use data_streams_report::report::{decode_full_report, v3::ReportDataV3};
+use data_streams_sdk::client::Client;
+use data_streams_sdk::config::Config;
 use std::error::Error;
 
 #[tokio::main]
@@ -94,8 +94,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 Here is the basic example that demonstrates how to connect to the Data Streams WebSocket server and subscribe to a single stream of ETH/USD Feed Reports on Arbitrum Sepolia:
 
 ```rust
-use data_streams_sdk::config::Config;
 use data_streams_report::feed_id::ID;
+use data_streams_sdk::config::Config;
 use data_streams_sdk::stream::Stream;
 use tokio::signal;
 use tracing_subscriber::fmt::time::UtcTime;

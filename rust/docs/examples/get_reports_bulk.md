@@ -15,45 +15,45 @@ cargo run --example get_reports_bulk
 ```bash
 Report 0:
 Feed ID: 0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782
-Valid From Timestamp: 1729506909
-Observations Timestamp: 1729506909
+Valid From Timestamp: 1732395909
+Observations Timestamp: 1732395909
 ReportDataV3 {
-    feedId: 0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782,
-    validFromTimestamp: 1729506909,
-    observationsTimestamp: 1729506909,
-    nativeFee: 36940126380400,
-    linkFee: 8490469890258900,
-    expiresAt: 1729593309,
-    benchmarkPrice: 2707083321000000000000,
-    bid: 2707040224000000000000,
-    ask: 2707132663418226000000,
+    feed_id: 0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782,
+    valid_from_timestamp: 1732395909,
+    observations_timestamp: 1732395909,
+    native_fee: 29340742848900,
+    link_fee: 5755723635476200,
+    expires_at: 1732482309,
+    benchmark_price: 3408230000000000000000,
+    bid: 3408068208000000000000,
+    ask: 3408391255216988000000,
 }
 Report 1:
 Feed ID: 0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439
-Valid From Timestamp: 1729506909
-Observations Timestamp: 1729506909
+Valid From Timestamp: 1732395909
+Observations Timestamp: 1732395909
 ReportDataV3 {
-    feedId: 0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439,
-    validFromTimestamp: 1729506909,
-    observationsTimestamp: 1729506909,
-    nativeFee: 36938874359400,
-    linkFee: 8490443733792400,
-    expiresAt: 1729593309,
-    benchmarkPrice: 68366578060671980000000,
-    bid: 68365711259711160000000,
-    ask: 68367314517132790000000,
+    feed_id: 0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439,
+    valid_from_timestamp: 1732395909,
+    observations_timestamp: 1732395909,
+    native_fee: 29343723231300,
+    link_fee: 5755723635476200,
+    expires_at: 1732482309,
+    benchmark_price: 97731000145427245000000,
+    bid: 97728886718324385000000,
+    ask: 97736225246500000000000,
 }
 ```
 
 ## Examine the code
 
-The code for this example can be found in the `get_reports_bulk.rs` file in the `examples` directory of the `data-streams-sdk` repository.
+The code for this example can be found in the `get_reports_bulk.rs` file in the `crates/sdk/examples` directory of the `data-streams-sdk` repository.
 
 ```rust
+use data_streams_report::feed_id::ID;
+use data_streams_report::report::{decode_full_report, v3::ReportDataV3};
 use data_streams_sdk::client::Client;
 use data_streams_sdk::config::Config;
-use data_streams_sdk::feed::ID;
-use data_streams_sdk::report::{decode_full_report, v3::ReportDataV3};
 use std::error::Error;
 
 #[tokio::main]
@@ -71,7 +71,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .unwrap();
 
     let feed_ids = vec![eth_usd_feed_id, btc_usd_feed_id];
-    let timestamp = 1729506909; // Example timestamp
+    let timestamp = 1732395909; // Example timestamp
 
     // Initialize the configuration
     let config = Config::new(
@@ -107,33 +107,33 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //
     // Report 0:
     // Feed ID: 0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782
-    // Valid From Timestamp: 1729506909
-    // Observations Timestamp: 1729506909
+    // Valid From Timestamp: 1732395909
+    // Observations Timestamp: 1732395909
     // ReportDataV3 {
-    //     feedId: 0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782,
-    //     validFromTimestamp: 1729506909,
-    //     observationsTimestamp: 1729506909,
-    //     nativeFee: 36940126380400,
-    //     linkFee: 8490469890258900,
-    //     expiresAt: 1729593309,
-    //     benchmarkPrice: 2707083321000000000000,
-    //     bid: 2707040224000000000000,
-    //     ask: 2707132663418226000000,
+    //     feed_id: 0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782,
+    //     valid_from_timestamp: 1732395909,
+    //     observations_timestamp: 1732395909,
+    //     native_fee: 29340742848900,
+    //     link_fee: 5755723635476200,
+    //     expires_at: 1732482309,
+    //     benchmark_price: 3408230000000000000000,
+    //     bid: 3408068208000000000000,
+    //     ask: 3408391255216988000000,
     // }
     // Report 1:
     // Feed ID: 0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439
-    // Valid From Timestamp: 1729506909
-    // Observations Timestamp: 1729506909
+    // Valid From Timestamp: 1732395909
+    // Observations Timestamp: 1732395909
     // ReportDataV3 {
-    //     feedId: 0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439,
-    //     validFromTimestamp: 1729506909,
-    //     observationsTimestamp: 1729506909,
-    //     nativeFee: 36938874359400,
-    //     linkFee: 8490443733792400,
-    //     expiresAt: 1729593309,
-    //     benchmarkPrice: 68366578060671980000000,
-    //     bid: 68365711259711160000000,
-    //     ask: 68367314517132790000000,
+    //     feed_id: 0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439,
+    //     valid_from_timestamp: 1732395909,
+    //     observations_timestamp: 1732395909,
+    //     native_fee: 29343723231300,
+    //     link_fee: 5755723635476200,
+    //     expires_at: 1732482309,
+    //     benchmark_price: 97731000145427245000000,
+    //     bid: 97728886718324385000000,
+    //     ask: 97736225246500000000000,
     // }
 
     Ok(())

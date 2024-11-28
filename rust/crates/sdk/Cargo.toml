@@ -11,8 +11,7 @@ exclude = ["/target/*", "examples/*", "tests/*", "docs/*", "book/*"]
 keywords = ["chainlink"]
 
 [dependencies]
-# data_streams_report = { path = "../report" }
-data-streams-report = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", branch = "feat/rust", subdir = "rust/crates/report" }
+data-streams-report = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", subdir = "rust/crates/report" }
 reqwest = { version = "0.12.8", features = ["json", "rustls-tls"] }
 tokio = { version = "1.4", features = ["full"] }
 tokio-tungstenite = { version = "0.24.0", features = [

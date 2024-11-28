@@ -7,13 +7,20 @@ The Data Streams SDK is a Rust library that provides a convenient way to consume
 - Rust 1.70 or later
 - Valid Chainlink Data Streams credentials
 
+## Project Structure
+
+The project is organized into the following crates:
+
+- `data-streams-report` - The crate that provides the data structures for the reports.
+- `data-streams-sdk` - The main crate that provides the REST and WebSocket clients.
+
 ## Installation
 
 Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", branch = "feat/rust" }
+data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", subdir = "rust/crates/sdk" }
 ```
 
 #### Features
@@ -30,10 +37,10 @@ data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk
 Here is the basic example that demontstrates how to get the latest report for a ETH/USD feed on Arbitrum Sepolia:
 
 ```rust
+use data_streams_report::feed_id::ID;
+use data_streams_report::report::{decode_full_report, v3::ReportDataV3};
 use data_streams_sdk::client::Client;
 use data_streams_sdk::config::Config;
-use data_streams_sdk::feed::ID;
-use data_streams_sdk::report::{decode_full_report, v3::ReportDataV3};
 use std::error::Error;
 
 #[tokio::main]
@@ -87,8 +94,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 Here is the basic example that demonstrates how to connect to the Data Streams WebSocket server and subscribe to a single stream of ETH/USD Feed Reports on Arbitrum Sepolia:
 
 ```rust
+use data_streams_report::feed_id::ID;
 use data_streams_sdk::config::Config;
-use data_streams_sdk::feed::ID;
 use data_streams_sdk::stream::Stream;
 use tokio::signal;
 use tracing_subscriber::fmt::time::UtcTime;
@@ -186,3 +193,52 @@ To preview the Book locally, run:
 ```sh
 mdbook serve --open
 ```
+
+### Benchmarks
+
+Create an `.env` file in the root of the `rust/crates/sdk` directory with the following content:
+
+```sh
+API_KEY="YOUR_API_KEY_GOES_HERE"
+USER_SECRET="YOUR_USER_SECRET_GOES_HERE"
+```
+
+To run the benchmarks, run:
+
+```sh
+cargo bench
+```
+
+and then to view the results, run:
+
+```sh
+open target/criterion/report/index.html
+```
+
+### Flamegraphs
+
+To generate flamegraphs for each of the examples, run:
+
+```sh
+cargo flamegraph [--root] --example <example_name>
+```
+
+The `--root` flag is necessary for running on MacOS. Read more [here](https://github.com/flamegraph-rs/flamegraph?tab=readme-ov-file#dtrace-on-macos).
+
+The new `flamegraph.svg` file will be generated.
+
+To generate a flamegraph for integration tests, run:
+
+```sh
+cargo flamegraph --root --test stream_integration_tests
+```
+
+The `test_stream_ha_max_reconnection_attempts` test is ignored by default because it takes a while to complete. To generate a flamegraph with it included, remove the `#[ignore]` attribute from the test.
+
+To generate a flamegraph for benchmarks, run:
+
+```sh
+cargo flamegraph --bench <benchmark_name>
+```
+
+for example, `cargo flamegraph --root --bench rest_benchmark` or `cargo flamegraph --root --bench stream_benchmark`.

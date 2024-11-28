@@ -12,7 +12,7 @@ cargo run --example get_feeds
 
 ## Examine the code
 
-The code for this example can be found in the `get_feeds.rs` file in the `examples` directory of the `data-streams-sdk` repository.
+The code for this example can be found in the `get_feeds.rs` file in the `crates/sdk/examples` directory of the `data-streams-sdk` repository.
 
 ```rust
 use data_streams_sdk::client::Client;
