@@ -204,7 +204,6 @@ func (s *stream) monitorConn(conn *wsConn) {
 					"client: stream websocket %s context done: %s",
 					conn.origin, s.streamCtx.Err(),
 				)
-			} else {
 				conn.close()
 			}
 			return
