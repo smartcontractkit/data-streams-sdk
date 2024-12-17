@@ -197,8 +197,15 @@ func (s *stream) monitorConn(conn *wsConn) {
 			go s.connStatusCallback(false, conn.host, conn.origin)
 		}
 
-		// stream closed
-		if s.closed.Load() {
+		// check for stream close conditions before reconnect attempts
+		if ctxErr := s.streamCtx.Err(); ctxErr != nil || s.closed.Load() {
+			if ctxErr != nil {
+				s.config.logInfo(
+					"client: stream websocket %s context done: %s",
+					conn.origin, s.streamCtx.Err(),
+				)
+				conn.close()
+			}
 			return
 		}
 
