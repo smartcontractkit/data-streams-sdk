@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -141,6 +142,9 @@ func (c *client) GetLatestReport(ctx context.Context, id feed.ID) (r *ReportResp
 		},
 	}
 	err = c.rest(ctx, req, resp)
+	if err == nil && resp.Report == nil {
+		err = errors.New("client: response data error: latest report object not found")
+	}
 	return resp.Report, err
 }
 
@@ -217,6 +221,9 @@ func (c *client) GetReports(ctx context.Context, ids []feed.ID, ts uint64) (r []
 	}
 
 	err = c.rest(ctx, req, &rs)
+	if err == nil && rs.Reports == nil {
+		err = errors.New("client: response data error: reports list not found")
+	}
 	return rs.Reports, err
 }
 
@@ -231,6 +238,9 @@ func (c *client) GetReportPage(ctx context.Context, id feed.ID, pageTS uint64) (
 		},
 	}
 	err = c.rest(ctx, req, r)
+	if err == nil && r.Reports == nil {
+		err = errors.New("client: response data error: reports page list not found")
+	}
 	return r, err
 }
 
@@ -246,6 +256,9 @@ func (c *client) GetFeeds(ctx context.Context) (r []*feed.Feed, err error) {
 		path:   apiV1Feeds,
 	}
 	err = c.rest(ctx, req, resp)
+	if err == nil && resp.Feeds == nil {
+		err = errors.New("client: response data error: feeds list not found")
+	}
 	return resp.Feeds, err
 }
 
