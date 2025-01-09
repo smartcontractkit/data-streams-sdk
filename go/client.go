@@ -241,6 +241,10 @@ func (c *client) GetReportPage(ctx context.Context, id feed.ID, pageTS uint64) (
 	if err == nil && r.Reports == nil {
 		err = errors.New("client: response data error: reports page list not found")
 	}
+	r.NextPageTS = 0
+	if len(r.Reports) > 0 {
+		r.NextPageTS = r.Reports[len(r.Reports)-1].ObservationsTimestamp + 1
+	}
 	return r, err
 }
 
