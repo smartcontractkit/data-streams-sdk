@@ -11,8 +11,8 @@ The Data Streams SDK is a Rust library that provides a convenient way to consume
 
 The project is organized into the following crates:
 
-- `data-streams-report` - The crate that provides the data structures for the reports.
-- `data-streams-sdk` - The main crate that provides the REST and WebSocket clients.
+- `chainlink-data-streams-report` - The crate that provides the data structures for the reports.
+- `chainlink-data-streams-sdk` - The main crate that provides the REST and WebSocket clients.
 
 ## Installation
 
@@ -20,7 +20,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", subdir = "rust/crates/sdk" }
+chainlink-data-streams-sdk = { version = "0.1.0", features = ["full"] }
 ```
 
 #### Features
@@ -37,10 +37,10 @@ data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk
 Here is the basic example that demontstrates how to get the latest report for a ETH/USD feed on Arbitrum Sepolia:
 
 ```rust
-use data_streams_report::feed_id::ID;
-use data_streams_report::report::{decode_full_report, v3::ReportDataV3};
-use data_streams_sdk::client::Client;
-use data_streams_sdk::config::Config;
+use chainlink_data_streams_report::feed_id::ID;
+use chainlink_data_streams_report::report::{decode_full_report, v3::ReportDataV3};
+use chainlink_data_streams_sdk::client::Client;
+use chainlink_data_streams_sdk::config::Config;
 use std::error::Error;
 
 #[tokio::main]
@@ -94,9 +94,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 Here is the basic example that demonstrates how to connect to the Data Streams WebSocket server and subscribe to a single stream of ETH/USD Feed Reports on Arbitrum Sepolia:
 
 ```rust
-use data_streams_report::feed_id::ID;
-use data_streams_sdk::config::Config;
-use data_streams_sdk::stream::Stream;
+use chainlink_data_streams_report::feed_id::ID;
+use chainlink_data_streams_sdk::config::Config;
+use chainlink_data_streams_sdk::stream::Stream;
 use tokio::signal;
 use tracing_subscriber::fmt::time::UtcTime;
 

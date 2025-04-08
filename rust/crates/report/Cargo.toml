@@ -1,6 +1,6 @@
 [package]
-name = "data-streams-report"
-version = "0.0.1"
+name = "chainlink-data-streams-report"
+version = "0.1.0"
 edition = "2021"
 description = "Chainlink Data Streams Report"
 license = "MIT"

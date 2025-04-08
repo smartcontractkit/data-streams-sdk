@@ -1,0 +1,29 @@
+name: Manual Chainlink Data Streams SDK Crate Publish
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: publish
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup crates.io authentication
+        run: cargo login ${{ secrets.CARGO_DATA_STREAMS_SDK }}
+
+      - name: Publish chainlink-data-streams-sdk
+        run: |
+          cd rust/crates/sdk
+          cargo publish
+          if cargo owner --list | grep -q "github:smartcontractkit:RustCrates"; then
+            echo "github:smartcontractkit:RustCrates is already set as an owner."
+          else
+            cargo owner --add github:smartcontractkit:RustCrates
+          fi
