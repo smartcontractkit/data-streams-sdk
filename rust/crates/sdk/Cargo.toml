@@ -1,6 +1,6 @@
 [package]
 name = "chainlink-data-streams-sdk"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 rust-version = "1.70"
 description = "Chainlink Data Streams client SDK"
@@ -11,7 +11,7 @@ exclude = ["/target/*", "examples/*", "tests/*", "docs/*", "book/*"]
 keywords = ["chainlink"]
 
 [dependencies]
-chainlink-data-streams-report = "0.1.0"
+chainlink-data-streams-report = "0.0.1"
 reqwest = { version = "0.11.20", features = ["json", "rustls-tls"] }
 tokio = { version = "1.29.1", features = ["full"] }
 tokio-tungstenite = { version = "0.20.1", features = [
