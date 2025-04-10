@@ -1,0 +1,38 @@
+name: Publish Chainlink Data Streams SDK Crate
+
+on:
+  push:
+    tags:
+      - "rust/chainlink-data-streams-sdk-v*"
+  workflow_dispatch: # Keeping manual trigger as fallback
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: publish
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify tag matches version
+        run: |
+          VERSION=$(grep '^version = "' rust/crates/sdk/Cargo.toml | cut -d '"' -f2)
+          TAG_VERSION=${GITHUB_REF#refs/tags/rust/chainlink-data-streams-sdk-v}
+          if [ "$VERSION" != "$TAG_VERSION" ]; then
+            echo "Version mismatch: Cargo.toml ($VERSION) != tag ($TAG_VERSION)"
+            exit 1
+          fi
+
+      - name: Publish chainlink-data-streams-sdk
+        run: |
+          cd rust/crates/sdk
+          cargo publish --token ${CARGO_DATA_STREAMS_SDK}
+          if ! cargo owner --list | grep -q "github:smartcontractkit:RustCrates"; then
+            cargo owner --add github:smartcontractkit:RustCrates
+          fi
+        env:
+          CARGO_DATA_STREAMS_SDK: ${{ secrets.CARGO_DATA_STREAMS_SDK }}

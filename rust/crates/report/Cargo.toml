@@ -1,5 +1,5 @@
 [package]
-name = "data-streams-report"
+name = "chainlink-data-streams-report"
 version = "0.0.1"
 edition = "2021"
 description = "Chainlink Data Streams Report"

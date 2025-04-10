@@ -126,6 +126,43 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "chainlink-data-streams-report"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "num-bigint",
+ "serde",
+ "serde_json",
+ "snap",
+ "thiserror",
+]
+
+[[package]]
+name = "chainlink-data-streams-sdk"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "criterion",
+ "data-streams-report",
+ "dotenv",
+ "futures",
+ "futures-util",
+ "hex",
+ "hmac",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "sha2",
+ "thiserror",
+ "tokio",
+ "tokio-tungstenite",
+ "tracing",
+ "tracing-subscriber",
+ "zeroize",
+]
+
+[[package]]
 name = "ciborium"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -290,18 +327,6 @@ checksum = "e8566979429cf69b49a5c740c60791108e86440e8be149bbea4fe54d2c32d6e2"
 [[package]]
 name = "data-streams-report"
 version = "0.0.1"
-dependencies = [
- "hex",
- "num-bigint",
- "serde",
- "serde_json",
- "snap",
- "thiserror",
-]
-
-[[package]]
-name = "data-streams-report"
-version = "0.0.1"
 source = "git+https://github.com/smartcontractkit/data-streams-sdk.git#4d7f381d0aab89f6611303e8a0d961afb5210b78"
 dependencies = [
  "hex",
@@ -310,31 +335,6 @@ dependencies = [
  "serde_json",
  "snap",
  "thiserror",
-]
-
-[[package]]
-name = "data-streams-sdk"
-version = "0.0.1"
-dependencies = [
- "byteorder",
- "criterion",
- "data-streams-report 0.0.1 (git+https://github.com/smartcontractkit/data-streams-sdk.git)",
- "dotenv",
- "futures",
- "futures-util",
- "hex",
- "hmac",
- "reqwest",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "sha2",
- "thiserror",
- "tokio",
- "tokio-tungstenite",
- "tracing",
- "tracing-subscriber",
- "zeroize",
 ]
 
 [[package]]
