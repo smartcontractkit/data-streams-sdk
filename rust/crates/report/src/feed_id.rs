@@ -25,7 +25,7 @@ pub enum IDError {
 /// # Examples
 ///
 /// ```rust
-/// use data_streams_report::feed_id::ID;
+/// use chainlink_data_streams_report::feed_id::ID;
 ///
 /// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
 /// println!("ID: {}", id);
@@ -55,7 +55,7 @@ impl ID {
     /// # Examples
     ///
     /// ```rust
-    /// use data_streams_report::feed_id::ID;
+    /// use chainlink_data_streams_report::feed_id::ID;
     ///
     /// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
     /// ```
@@ -85,7 +85,7 @@ impl ID {
     /// # Examples
     ///
     /// ```rust
-    /// use data_streams_report::feed_id::ID;
+    /// use chainlink_data_streams_report::feed_id::ID;
     ///
     /// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
     /// let hex_string = id.to_hex_string();
@@ -113,7 +113,7 @@ impl FromStr for ID {
     /// # Examples
     ///
     /// ```rust
-    /// use data_streams_report::feed_id::ID;
+    /// use chainlink_data_streams_report::feed_id::ID;
     /// use std::str::FromStr;
     ///
     /// let id = ID::from_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
@@ -129,7 +129,7 @@ impl fmt::Display for ID {
     /// # Examples
     ///
     /// ```rust
-    /// use data_streams_report::feed_id::ID;
+    /// use chainlink_data_streams_report::feed_id::ID;
     ///
     /// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
     /// println!("{}", id); // Outputs: 0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472
@@ -145,7 +145,7 @@ impl fmt::Debug for ID {
     /// # Examples
     ///
     /// ```rust
-    /// use data_streams_report::feed_id::ID;
+    /// use chainlink_data_streams_report::feed_id::ID;
     ///
     /// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
     /// println!("{:?}", id); // Outputs: 0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472
@@ -163,7 +163,7 @@ impl Serialize for ID {
     /// # Examples
     ///
     /// ```rust
-    /// use data_streams_report::feed_id::ID;
+    /// use chainlink_data_streams_report::feed_id::ID;
     /// use serde_json;
     ///
     /// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
@@ -185,7 +185,7 @@ impl<'de> Deserialize<'de> for ID {
     /// # Examples
     ///
     /// ```rust
-    /// use data_streams_report::feed_id::ID;
+    /// use chainlink_data_streams_report::feed_id::ID;
     /// use serde_json;
     ///
     /// let json = "\"0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472\"";

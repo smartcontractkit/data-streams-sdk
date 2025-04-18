@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Running the example
 
-Make sure you git cloned the [https://github.com/smartcontractkit/data-streams-sdk](https://github.com/smartcontractkit/data-streams-sdk) repository and navigated to the `rust` directory.
+Make sure you git cloned the [https://github.com/smartcontractkit/data-streams-sdk](https://github.com/smartcontractkit/data-streams-sdk) repository and navigated to the `rust/crates/sdk` directory.
 
 ```bash
 cargo run --example wss_simple_stream
@@ -29,9 +29,9 @@ cargo run --example wss_simple_stream
 The code for this example can be found in the `wss_simple_stream.rs` file in the `crates/sdk/examples` directory of the `data-streams-sdk` repository. It will subscribe to the ETH/USD feed on Arbitrum Sepolia Stream and read & log RAW Reports. To terminate its execution press `Ctrl+C`.
 
 ```rust
-use data_streams_report::feed_id::ID;
-use data_streams_sdk::config::Config;
-use data_streams_sdk::stream::Stream;
+use chainlink_data_streams_report::feed_id::ID;
+use chainlink_data_streams_sdk::config::Config;
+use chainlink_data_streams_sdk::stream::Stream;
 use tokio::signal;
 use tracing_subscriber::fmt::time::UtcTime;
 

@@ -1,11 +1,11 @@
-use data_streams_report::{
+use chainlink_data_streams_report::{
     feed_id::ID,
     report::{
         compress::{compress_report, compress_report_raw},
         decode_full_report,
     },
 };
-use data_streams_sdk::{client::Client, config::Config};
+use chainlink_data_streams_sdk::{client::Client, config::Config};
 
 use criterion::{criterion_group, criterion_main, Criterion};
 use dotenv::dotenv;

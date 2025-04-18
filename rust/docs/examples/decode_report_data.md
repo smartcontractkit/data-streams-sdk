@@ -4,7 +4,7 @@ This example demonstrates how to decode a signed report payload from a Data Stre
 
 ## Running the example
 
-Make sure you git cloned the [https://github.com/smartcontractkit/data-streams-sdk](https://github.com/smartcontractkit/data-streams-sdk) repository and navigated to the `rust` directory.
+Make sure you git cloned the [https://github.com/smartcontractkit/data-streams-sdk](https://github.com/smartcontractkit/data-streams-sdk) repository and navigated to the `rust/crates/sdk` directory.
 
 ```bash
 cargo run --example decode_report_data
@@ -31,7 +31,7 @@ ReportDataV3 {
 The code for this example can be found in the `decode_report_data.rs` file in the `crates/report/examples` directory of the `data-streams-sdk` repository.
 
 ```rust
-use data_streams_report::report::{decode_full_report, v3::ReportDataV3};
+use chainlink_data_streams_report::report::{decode_full_report, v3::ReportDataV3};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {

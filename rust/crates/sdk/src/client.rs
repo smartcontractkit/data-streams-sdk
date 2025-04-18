@@ -5,8 +5,8 @@ use crate::endpoints::{
 };
 use crate::feed::Feed;
 
-use data_streams_report::feed_id::ID;
-use data_streams_report::report::Report;
+use chainlink_data_streams_report::feed_id::ID;
+use chainlink_data_streams_report::report::Report;
 
 use reqwest::Client as HttpClient;
 use serde::Deserialize;

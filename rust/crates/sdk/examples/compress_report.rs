@@ -1,7 +1,7 @@
-use data_streams_report::feed_id::ID;
-use data_streams_report::report::compress::compress_report;
-use data_streams_sdk::client::Client;
-use data_streams_sdk::config::Config;
+use chainlink_data_streams_report::feed_id::ID;
+use chainlink_data_streams_report::report::compress::compress_report;
+use chainlink_data_streams_sdk::client::Client;
+use chainlink_data_streams_sdk::config::Config;
 use std::error::Error;
 
 #[tokio::main]

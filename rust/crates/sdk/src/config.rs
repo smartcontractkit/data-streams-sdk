@@ -87,7 +87,7 @@ impl Config {
     ///
     /// # Example
     /// ```rust
-    /// use data_streams_sdk::config::{Config, WebSocketHighAvailability, InsecureSkipVerify};
+    /// use chainlink_data_streams_sdk::config::{Config, WebSocketHighAvailability, InsecureSkipVerify};
     ///
     /// use std::error::Error;
     ///

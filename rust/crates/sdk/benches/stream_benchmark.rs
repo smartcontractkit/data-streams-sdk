@@ -1,5 +1,5 @@
-use data_streams_report::feed_id::ID;
-use data_streams_sdk::{
+use chainlink_data_streams_report::feed_id::ID;
+use chainlink_data_streams_sdk::{
     config::{Config, WebSocketHighAvailability},
     stream::Stream,
 };

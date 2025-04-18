@@ -6,8 +6,8 @@ use monitor_connection::run_stream;
 
 use crate::config::Config;
 
-use data_streams_report::feed_id::ID;
-use data_streams_report::report::Report;
+use chainlink_data_streams_report::feed_id::ID;
+use chainlink_data_streams_report::report::Report;
 
 use serde::{Deserialize, Serialize};
 use std::{

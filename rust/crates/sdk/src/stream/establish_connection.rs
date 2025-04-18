@@ -7,7 +7,7 @@ use crate::{
     stream::{DEFAULT_WS_CONNECT_TIMEOUT, MAX_WS_RECONNECT_INTERVAL, MIN_WS_RECONNECT_INTERVAL},
 };
 
-use data_streams_report::feed_id::ID;
+use chainlink_data_streams_report::feed_id::ID;
 
 use std::{
     sync::{atomic::Ordering, Arc},
