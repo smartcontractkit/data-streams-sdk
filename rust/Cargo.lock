@@ -127,7 +127,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chainlink-data-streams-report"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "hex",
  "num-bigint",
@@ -139,7 +139,7 @@ dependencies = [
 
 [[package]]
 name = "chainlink-data-streams-sdk"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "byteorder",
  "chainlink-data-streams-report",
