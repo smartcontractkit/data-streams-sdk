@@ -4,7 +4,7 @@ This example demontstrates how to get the latest report for a ETH/USD feed on Ar
 
 ## Running the example
 
-Make sure you git cloned the [https://github.com/smartcontractkit/data-streams-sdk](https://github.com/smartcontractkit/data-streams-sdk) repository and navigated to the `rust` directory.
+Make sure you git cloned the [https://github.com/smartcontractkit/data-streams-sdk](https://github.com/smartcontractkit/data-streams-sdk) repository and navigated to the `rust/crates/sdk` directory.
 
 ```bash
 cargo run --example get_latest_report
@@ -15,10 +15,10 @@ cargo run --example get_latest_report
 The code for this example can be found in the `get_latest_report.rs` file in the `crates/sdk/examples` directory of the `data-streams-sdk` repository.
 
 ```rust
-use data_streams_report::feed_id::ID;
-use data_streams_report::report::{decode_full_report, v3::ReportDataV3};
-use data_streams_sdk::client::Client;
-use data_streams_sdk::config::Config;
+use chainlink_data_streams_report::feed_id::ID;
+use chainlink_data_streams_report::report::{decode_full_report, v3::ReportDataV3};
+use chainlink_data_streams_sdk::client::Client;
+use chainlink_data_streams_sdk::config::Config;
 use std::error::Error;
 
 #[tokio::main]

@@ -1,5 +1,5 @@
-use data_streams_sdk::client::Client;
-use data_streams_sdk::config::Config;
+use chainlink_data_streams_sdk::client::Client;
+use chainlink_data_streams_sdk::config::Config;
 use std::error::Error;
 
 #[tokio::main]

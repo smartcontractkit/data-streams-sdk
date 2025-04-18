@@ -22,8 +22,8 @@ use serde::{Deserialize, Serialize};
 /// # Examples
 ///
 /// ```rust
-/// use data_streams_report::report::Report;
-/// use data_streams_report::feed_id::ID;
+/// use chainlink_data_streams_report::report::Report;
+/// use chainlink_data_streams_report::feed_id::ID;
 ///
 /// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
 /// let report = Report {

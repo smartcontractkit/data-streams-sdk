@@ -2,7 +2,7 @@ use super::{Stats, StreamError, WebSocketReport};
 
 use crate::{config::Config, stream::establish_connection::try_to_reconnect};
 
-use data_streams_report::feed_id::ID;
+use chainlink_data_streams_report::feed_id::ID;
 
 use futures::SinkExt;
 use futures_util::StreamExt;

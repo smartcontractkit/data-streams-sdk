@@ -1,8 +1,8 @@
-use data_streams_report::feed_id::ID;
-use data_streams_report::report::decode_full_report;
-use data_streams_report::report::v3::ReportDataV3;
-use data_streams_sdk::config::{Config, WebSocketHighAvailability};
-use data_streams_sdk::stream::Stream;
+use chainlink_data_streams_report::feed_id::ID;
+use chainlink_data_streams_report::report::decode_full_report;
+use chainlink_data_streams_report::report::v3::ReportDataV3;
+use chainlink_data_streams_sdk::config::{Config, WebSocketHighAvailability};
+use chainlink_data_streams_sdk::stream::Stream;
 use tracing_subscriber::fmt::time::UtcTime;
 
 #[tokio::main]

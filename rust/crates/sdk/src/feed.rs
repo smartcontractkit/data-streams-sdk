@@ -1,4 +1,4 @@
-use data_streams_report::feed_id::ID;
+use chainlink_data_streams_report::feed_id::ID;
 
 use byteorder::{BigEndian, ByteOrder};
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 /// # Examples
 ///
 /// ```rust
-/// use data_streams_sdk::feed::FeedVersion;
+/// use chainlink_data_streams_sdk::feed::FeedVersion;
 ///
 /// let version = FeedVersion(1);
 /// println!("Feed version: {}", version.0);
@@ -26,8 +26,8 @@ pub struct FeedVersion(pub u16);
 /// # Examples
 ///
 /// ```rust
-/// use data_streams_sdk::feed::Feed;
-/// use data_streams_report::feed_id::ID;
+/// use chainlink_data_streams_sdk::feed::Feed;
+/// use chainlink_data_streams_report::feed_id::ID;
 ///
 /// let id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
 /// let feed = Feed { feed_id: id };
@@ -49,8 +49,8 @@ impl Feed {
     /// # Examples
     ///
     /// ```rust
-    /// use data_streams_report::feed_id::ID;
-    /// use data_streams_sdk::feed::{Feed, FeedVersion};
+    /// use chainlink_data_streams_report::feed_id::ID;
+    /// use chainlink_data_streams_sdk::feed::{Feed, FeedVersion};
     ///
     /// let feed_id = ID::from_hex_str("0x00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472").unwrap();
     /// let feed = Feed { feed_id };

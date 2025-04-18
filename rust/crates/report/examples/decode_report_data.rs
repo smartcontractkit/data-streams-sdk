@@ -1,4 +1,4 @@
-use data_streams_report::report::{decode_full_report, v3::ReportDataV3};
+use chainlink_data_streams_report::report::{decode_full_report, v3::ReportDataV3};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {

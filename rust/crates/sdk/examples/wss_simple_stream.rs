@@ -1,6 +1,6 @@
-use data_streams_report::feed_id::ID;
-use data_streams_sdk::config::Config;
-use data_streams_sdk::stream::Stream;
+use chainlink_data_streams_report::feed_id::ID;
+use chainlink_data_streams_sdk::config::Config;
+use chainlink_data_streams_sdk::stream::Stream;
 use tokio::signal;
 use tracing_subscriber::fmt::time::UtcTime;
 

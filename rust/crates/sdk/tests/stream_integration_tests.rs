@@ -2,8 +2,10 @@
 mod mock_websocket_server;
 use mock_websocket_server::MockWebSocketServer;
 
-use data_streams_sdk::config::{Config, WebSocketHighAvailability};
-use data_streams_sdk::stream::{Stream, MAX_WS_RECONNECT_INTERVAL, MIN_WS_RECONNECT_INTERVAL};
+use chainlink_data_streams_sdk::config::{Config, WebSocketHighAvailability};
+use chainlink_data_streams_sdk::stream::{
+    Stream, MAX_WS_RECONNECT_INTERVAL, MIN_WS_RECONNECT_INTERVAL,
+};
 
 use std::iter::repeat;
 use tokio::time::{sleep, Duration};
