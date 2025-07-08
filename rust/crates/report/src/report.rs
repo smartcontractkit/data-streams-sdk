@@ -4,6 +4,8 @@ pub mod v1;
 pub mod v2;
 pub mod v3;
 pub mod v4;
+pub mod v8;
+pub mod v9;
 
 use base::{ReportBase, ReportError};
 
@@ -117,7 +119,7 @@ pub fn decode_full_report(payload: &[u8]) -> Result<(Vec<[u8; 32]>, Vec<u8>), Re
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::report::{v1::ReportDataV1, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4};
+    use crate::report::{v1::ReportDataV1, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v8::ReportDataV8, v9::ReportDataV9};
     use num_bigint::BigInt;
 
     const V1_FEED_ID: ID = ID([
@@ -136,10 +138,19 @@ mod tests {
         00, 04, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
         163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
     ]);
+    const V8_FEED_ID: ID = ID([
+        00, 08, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
+        163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
+    ]);
+    const V9_FEED_ID: ID = ID([
+        00, 09, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
+        163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
+    ]);
 
     pub const MOCK_TIMESTAMP: u32 = 1718885772;
     pub const MOCK_FEE: usize = 10;
     pub const MOCK_PRICE: isize = 100;
+    pub const MARKET_STATUS_OPEN: u32 = 2;
 
     pub fn generate_mock_report_data_v1() -> ReportDataV1 {
         let report_data = ReportDataV1 {
@@ -193,8 +204,6 @@ mod tests {
     }
 
     pub fn generate_mock_report_data_v4() -> ReportDataV4 {
-        const MARKET_STATUS_OPEN: u32 = 2;
-
         let report_data = ReportDataV4 {
             feed_id: V4_FEED_ID,
             valid_from_timestamp: MOCK_TIMESTAMP,
@@ -204,6 +213,43 @@ mod tests {
             expires_at: MOCK_TIMESTAMP + 100,
             price: BigInt::from(MOCK_PRICE),
             market_status: MARKET_STATUS_OPEN,
+        };
+
+        report_data
+    }
+
+    pub fn generate_mock_report_data_v8() -> ReportDataV8 {
+        let report_data = ReportDataV8 {
+            feed_id: V8_FEED_ID,
+            valid_from_timestamp: MOCK_TIMESTAMP,
+            observations_timestamp: MOCK_TIMESTAMP,
+            native_fee: BigInt::from(MOCK_FEE),
+            link_fee: BigInt::from(MOCK_FEE),
+            expires_at: MOCK_TIMESTAMP + 100,
+            last_update_timestamp: MOCK_TIMESTAMP as u64,
+            mid_price: BigInt::from(MOCK_PRICE),
+            market_status: MARKET_STATUS_OPEN as u8,
+        };
+
+        report_data
+    }
+
+    pub fn generate_mock_report_data_v9() -> ReportDataV9 {
+        const MOCK_NAV_PER_SHARE: isize = 1;
+        const MOCK_AUM: isize = 1000;
+        const RIPCORD_NORMAL: u32 = 0; 
+
+        let report_data = ReportDataV9 {
+            feed_id: V9_FEED_ID,
+            valid_from_timestamp: MOCK_TIMESTAMP,
+            observations_timestamp: MOCK_TIMESTAMP,
+            native_fee: BigInt::from(MOCK_FEE),
+            link_fee: BigInt::from(MOCK_FEE),
+            expires_at: MOCK_TIMESTAMP + 100,
+            nav_per_share: BigInt::from(MOCK_NAV_PER_SHARE),
+            nav_date: MOCK_TIMESTAMP as u64,
+            aum: BigInt::from(MOCK_AUM),
+            ripcord: RIPCORD_NORMAL,
         };
 
         report_data
@@ -366,5 +412,68 @@ mod tests {
         let decoded_report = ReportDataV4::decode(&report_blob).unwrap();
 
         assert_eq!(decoded_report.feed_id, V4_FEED_ID);
+    }
+
+    #[test]
+    fn test_decode_report_v8() {
+        let report_data = generate_mock_report_data_v8();
+        let encoded_report_data = report_data.abi_encode().unwrap();
+
+        let report = generate_mock_report(&encoded_report_data);
+
+        let (_report_context, report_blob) = decode_full_report(&report).unwrap();
+
+        let expected_report_blob = vec![
+            "00086b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
+            "0000000000000000000000000000000000000000000000000000000066741d8c",
+            "0000000000000000000000000000000000000000000000000000000066741d8c",
+            "000000000000000000000000000000000000000000000000000000000000000a",
+            "000000000000000000000000000000000000000000000000000000000000000a",
+            "0000000000000000000000000000000000000000000000000000000066741df0",
+            "0000000000000000000000000000000000000000000000000000000066741d8c",
+            "0000000000000000000000000000000000000000000000000000000000000064",
+            "0000000000000000000000000000000000000000000000000000000000000002", // Market status: Open
+        ];
+
+        assert_eq!(
+            report_blob,
+            bytes(&format!("0x{}", expected_report_blob.join("")))
+        );
+
+        let decoded_report = ReportDataV8::decode(&report_blob).unwrap();
+
+        assert_eq!(decoded_report.feed_id, V8_FEED_ID);
+    }
+
+    #[test]
+    fn test_decode_report_v9() {
+        let report_data = generate_mock_report_data_v9();
+        let encoded_report_data = report_data.abi_encode().unwrap();
+
+        let report = generate_mock_report(&encoded_report_data);
+
+        let (_report_context, report_blob) = decode_full_report(&report).unwrap();
+
+        let expected_report_blob = vec![
+            "00096b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
+            "0000000000000000000000000000000000000000000000000000000066741d8c",
+            "0000000000000000000000000000000000000000000000000000000066741d8c",
+            "000000000000000000000000000000000000000000000000000000000000000a",
+            "000000000000000000000000000000000000000000000000000000000000000a",
+            "0000000000000000000000000000000000000000000000000000000066741df0",
+            "0000000000000000000000000000000000000000000000000000000000000001", // NAV per share
+            "0000000000000000000000000000000000000000000000000000000066741d8c",
+            "00000000000000000000000000000000000000000000000000000000000003e8", // AUM
+            "0000000000000000000000000000000000000000000000000000000000000000", // Ripcord: Normal
+        ];
+
+        assert_eq!(
+            report_blob,
+            bytes(&format!("0x{}", expected_report_blob.join("")))
+        );
+
+        let decoded_report = ReportDataV9::decode(&report_blob).unwrap();
+
+        assert_eq!(decoded_report.feed_id, V9_FEED_ID);
     }
 }
