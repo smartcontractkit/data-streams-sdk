@@ -97,4 +97,22 @@ impl ReportBase {
         buffer[24..32].copy_from_slice(&bytes_value); // Place at the end of the 32 bytes word
         Ok(buffer)
     }
+
+    pub(crate) fn read_uint8(data: &[u8], offset: usize) -> Result<u8, ReportError> {
+        if offset + Self::WORD_SIZE > data.len() {
+            return Err(ReportError::DataTooShort("uint8"));
+        }
+        let value_bytes = &data[offset + 31..offset + 32];
+        Ok(u8::from_be_bytes(
+            value_bytes
+                .try_into()
+                .map_err(|_| ReportError::InvalidLength("uint8"))?,
+        ))
+    }
+
+    pub(crate) fn encode_uint8(value: u8) -> Result<[u8; 32], ReportError> {
+        let mut buffer = [0u8; 32];
+        buffer[31] = value; // Place at the end of the 32 bytes word
+        Ok(buffer)
+    }
 }
