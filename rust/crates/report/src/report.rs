@@ -228,7 +228,7 @@ mod tests {
             expires_at: MOCK_TIMESTAMP + 100,
             last_update_timestamp: MOCK_TIMESTAMP as u64,
             mid_price: BigInt::from(MOCK_PRICE),
-            market_status: MARKET_STATUS_OPEN as u8,
+            market_status: MARKET_STATUS_OPEN,
         };
 
         report_data
