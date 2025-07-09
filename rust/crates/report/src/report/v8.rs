@@ -27,7 +27,7 @@ use num_bigint::BigInt;
 ///     uint32 expiresAt;
 ///     uint64 lastUpdateTimestamp;
 ///     int192 midPrice;
-///     uint8 marketStatus;
+///     uint32 marketStatus;
 /// }
 /// ```
 #[derive(Debug)]
@@ -40,7 +40,7 @@ pub struct ReportDataV8 {
     pub expires_at: u32,
     pub last_update_timestamp: u64,
     pub mid_price: BigInt,
-    pub market_status: u8,
+    pub market_status: u32,
 }
 
 impl ReportDataV8 {
@@ -73,7 +73,7 @@ impl ReportDataV8 {
         let expires_at = ReportBase::read_uint32(data, 5 * ReportBase::WORD_SIZE)?;
         let last_update_timestamp = ReportBase::read_uint64(data, 6 * ReportBase::WORD_SIZE)?;
         let mid_price = ReportBase::read_int192(data, 7 * ReportBase::WORD_SIZE)?;
-        let market_status = ReportBase::read_uint8(data, 8 * ReportBase::WORD_SIZE)?;
+        let market_status = ReportBase::read_uint32(data, 8 * ReportBase::WORD_SIZE)?;
 
         Ok(Self {
             feed_id,
@@ -108,7 +108,7 @@ impl ReportDataV8 {
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.expires_at)?);
         buffer.extend_from_slice(&ReportBase::encode_uint64(self.last_update_timestamp)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.mid_price)?);
-        buffer.extend_from_slice(&ReportBase::encode_uint8(self.market_status)?);
+        buffer.extend_from_slice(&ReportBase::encode_uint32(self.market_status)?);
 
         Ok(buffer)
     }
@@ -134,7 +134,7 @@ mod tests {
         let expected_timestamp: u32 = MOCK_TIMESTAMP;
         let expected_fee = BigInt::from(MOCK_FEE);
         let expected_price = BigInt::from(MOCK_PRICE);
-        let expected_market_status: u8 = MARKET_STATUS_OPEN as u8;
+        let expected_market_status: u32 = MARKET_STATUS_OPEN;
 
         assert_eq!(decoded.feed_id, expected_feed_id);
         assert_eq!(decoded.valid_from_timestamp, expected_timestamp);
