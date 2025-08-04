@@ -20,7 +20,7 @@ use num_bigint::BigInt;
 /// - `current_multiplier`: Currently applied multiplier accounting for past corporate actions.
 /// - `new_multiplier`: Multiplier to be applied at the `activation_date_time` (set to 0 if none is scheduled).
 /// - `activation_date_time`: When the next corporate action takes effect (set to 0 if none is scheduled).
-/// - `tokenized_price`: 24/7 tokenized equity price as traded on Kraken.
+/// - `tokenized_price`: 24/7 tokenized equity price.
 ///
 /// # Solidity Equivalent
 /// ```solidity
