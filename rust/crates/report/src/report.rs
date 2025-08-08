@@ -6,6 +6,7 @@ pub mod v3;
 pub mod v4;
 pub mod v5;
 pub mod v6;
+pub mod v7;
 pub mod v8;
 pub mod v9;
 pub mod v10;
@@ -122,7 +123,7 @@ pub fn decode_full_report(payload: &[u8]) -> Result<(Vec<[u8; 32]>, Vec<u8>), Re
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::report::{v1::ReportDataV1, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5, v6::ReportDataV6, v8::ReportDataV8, v9::ReportDataV9, v10::ReportDataV10};
+    use crate::report::{v1::ReportDataV1, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5, v6::ReportDataV6, v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9, v10::ReportDataV10};
     use num_bigint::BigInt;
 
     const V1_FEED_ID: ID = ID([
@@ -147,6 +148,10 @@ mod tests {
     ]);
     const V6_FEED_ID: ID = ID([
         00, 06, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
+        163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
+    ]);
+    const V7_FEED_ID: ID = ID([
+        00, 07, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
         163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
     ]);
     const V8_FEED_ID: ID = ID([
@@ -264,6 +269,20 @@ mod tests {
             price3: BigInt::from(MOCK_PRICE + 20),
             price4: BigInt::from(MOCK_PRICE + 30),
             price5: BigInt::from(MOCK_PRICE + 40),
+        };
+
+        report_data
+    }
+
+    pub fn generate_mock_report_data_v7() -> ReportDataV7 {
+        let report_data = ReportDataV7 {
+            feed_id: V7_FEED_ID,
+            valid_from_timestamp: MOCK_TIMESTAMP,
+            observations_timestamp: MOCK_TIMESTAMP,
+            native_fee: BigInt::from(MOCK_FEE),
+            link_fee: BigInt::from(MOCK_FEE),
+            expires_at: MOCK_TIMESTAMP + 100,
+            exchange_rate: BigInt::from(MOCK_PRICE),
         };
 
         report_data
@@ -549,6 +568,35 @@ mod tests {
         let decoded_report = ReportDataV6::decode(&report_blob).unwrap();
 
         assert_eq!(decoded_report.feed_id, V6_FEED_ID);
+    }
+
+    #[test]
+    fn test_decode_report_v7() {
+        let report_data = generate_mock_report_data_v7();
+        let encoded_report_data = report_data.abi_encode().unwrap();
+
+        let report = generate_mock_report(&encoded_report_data);
+
+        let (_report_context, report_blob) = decode_full_report(&report).unwrap();
+
+        let expected_report_blob = vec![
+            "00076b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
+            "0000000000000000000000000000000000000000000000000000000066741d8c",
+            "0000000000000000000000000000000000000000000000000000000066741d8c",
+            "000000000000000000000000000000000000000000000000000000000000000a",
+            "000000000000000000000000000000000000000000000000000000000000000a",
+            "0000000000000000000000000000000000000000000000000000000066741df0",
+            "0000000000000000000000000000000000000000000000000000000000000064", // Exchange Rate: 100
+        ];
+
+        assert_eq!(
+            report_blob,
+            bytes(&format!("0x{}", expected_report_blob.join("")))
+        );
+
+        let decoded_report = ReportDataV7::decode(&report_blob).unwrap();
+
+        assert_eq!(decoded_report.feed_id, V7_FEED_ID);
     }
 
     #[test]
