@@ -9,9 +9,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	v1 "github.com/smartcontractkit/data-streams-sdk/go/report/v1"
+	v10 "github.com/smartcontractkit/data-streams-sdk/go/report/v10"
 	v2 "github.com/smartcontractkit/data-streams-sdk/go/report/v2"
 	v3 "github.com/smartcontractkit/data-streams-sdk/go/report/v3"
 	v4 "github.com/smartcontractkit/data-streams-sdk/go/report/v4"
+	v5 "github.com/smartcontractkit/data-streams-sdk/go/report/v5"
+	v6 "github.com/smartcontractkit/data-streams-sdk/go/report/v6"
+	v7 "github.com/smartcontractkit/data-streams-sdk/go/report/v7"
 	v8 "github.com/smartcontractkit/data-streams-sdk/go/report/v8"
 	v9 "github.com/smartcontractkit/data-streams-sdk/go/report/v9"
 )
@@ -73,6 +77,48 @@ func TestReport(t *testing.T) {
 		t.Errorf("expected: %#v, got: %#v", v4Report, rv4)
 	}
 
+	b, err = schema.Pack(v5Report.ReportContext, v5Report.ReportBlob, v5Report.RawRs, v5Report.RawSs, v5Report.RawVs)
+	if err != nil {
+		t.Errorf("failed to encode report: %s", err)
+	}
+
+	rv5, err := Decode[v5.Data](b)
+	if err != nil {
+		t.Errorf("failed to decode report: %s", err)
+	}
+
+	if !reflect.DeepEqual(v5Report, rv5) {
+		t.Errorf("expected: %#v, got: %#v", v5Report, rv5)
+	}
+
+	b, err = schema.Pack(v6Report.ReportContext, v6Report.ReportBlob, v6Report.RawRs, v6Report.RawSs, v6Report.RawVs)
+	if err != nil {
+		t.Errorf("failed to encode report: %s", err)
+	}
+
+	rv6, err := Decode[v6.Data](b)
+	if err != nil {
+		t.Errorf("failed to decode report: %s", err)
+	}
+
+	if !reflect.DeepEqual(v6Report, rv6) {
+		t.Errorf("expected: %#v, got: %#v", v6Report, rv6)
+	}
+
+	b, err = schema.Pack(v7Report.ReportContext, v7Report.ReportBlob, v7Report.RawRs, v7Report.RawSs, v7Report.RawVs)
+	if err != nil {
+		t.Errorf("failed to encode report: %s", err)
+	}
+
+	rv7, err := Decode[v7.Data](b)
+	if err != nil {
+		t.Errorf("failed to decode report: %s", err)
+	}
+
+	if !reflect.DeepEqual(v7Report, rv7) {
+		t.Errorf("expected: %#v, got: %#v", v7Report, rv7)
+	}
+
 	b, err = schema.Pack(v8Report.ReportContext, v8Report.ReportBlob, v8Report.RawRs, v8Report.RawSs, v8Report.RawVs)
 	if err != nil {
 		t.Errorf("failed to encode report: %s", err)
@@ -97,8 +143,22 @@ func TestReport(t *testing.T) {
 		t.Errorf("failed to decode report: %s", err)
 	}
 
-	if !reflect.DeepEqual(v8Report, rv8) {
+	if !reflect.DeepEqual(v9Report, rv9) {
 		t.Errorf("expected: %#v, got: %#v", v9Report, rv9)
+	}
+
+	b, err = schema.Pack(v10Report.ReportContext, v10Report.ReportBlob, v10Report.RawRs, v10Report.RawSs, v10Report.RawVs)
+	if err != nil {
+		t.Errorf("failed to encode report: %s", err)
+	}
+
+	rv10, err := Decode[v10.Data](b)
+	if err != nil {
+		t.Errorf("failed to decode report: %s", err)
+	}
+
+	if !reflect.DeepEqual(v10Report, rv10) {
+		t.Errorf("expected: %#v, got: %#v", v10Report, rv10)
 	}
 }
 
@@ -138,6 +198,33 @@ var v4Report = &Report[v4.Data]{
 	RawVs:         [32]uint8{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14},
 }
 
+var v5Report = &Report[v5.Data]{
+	Data:          v5Data,
+	ReportContext: [3][32]uint8{},
+	ReportBlob:    mustPackData(v5Data),
+	RawRs:         [][32]uint8{{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14}},
+	RawSs:         [][32]uint8{{01, 02, 10, 73, 65, 19, 14, 27, 42, 48, 52, 18, 39, 116, 67, 85, 13, 82, 33, 48, 23, 33, 49, 32, 67, 50, 37, 32, 63, 77, 14, 64}},
+	RawVs:         [32]uint8{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14},
+}
+
+var v6Report = &Report[v6.Data]{
+	Data:          v6Data,
+	ReportContext: [3][32]uint8{},
+	ReportBlob:    mustPackData(v6Data),
+	RawRs:         [][32]uint8{{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14}},
+	RawSs:         [][32]uint8{{01, 02, 10, 73, 65, 19, 14, 27, 42, 48, 52, 18, 39, 116, 67, 85, 13, 82, 33, 48, 23, 33, 49, 32, 67, 50, 37, 32, 63, 77, 14, 64}},
+	RawVs:         [32]uint8{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14},
+}
+
+var v7Report = &Report[v7.Data]{
+	Data:          v7Data,
+	ReportContext: [3][32]uint8{},
+	ReportBlob:    mustPackData(v7Data),
+	RawRs:         [][32]uint8{{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14}},
+	RawSs:         [][32]uint8{{01, 02, 10, 73, 65, 19, 14, 27, 42, 48, 52, 18, 39, 116, 67, 85, 13, 82, 33, 48, 23, 33, 49, 32, 67, 50, 37, 32, 63, 77, 14, 64}},
+	RawVs:         [32]uint8{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14},
+}
+
 var v8Report = &Report[v8.Data]{
 	Data:          v8Data,
 	ReportContext: [3][32]uint8{},
@@ -151,6 +238,15 @@ var v9Report = &Report[v9.Data]{
 	Data:          v9Data,
 	ReportContext: [3][32]uint8{},
 	ReportBlob:    mustPackData(v9Data),
+	RawRs:         [][32]uint8{{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14}},
+	RawSs:         [][32]uint8{{01, 02, 10, 73, 65, 19, 14, 27, 42, 48, 52, 18, 39, 116, 67, 85, 13, 82, 33, 48, 23, 33, 49, 32, 67, 50, 37, 32, 63, 77, 14, 64}},
+	RawVs:         [32]uint8{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14},
+}
+
+var v10Report = &Report[v10.Data]{
+	Data:          v10Data,
+	ReportContext: [3][32]uint8{},
+	ReportBlob:    mustPackData(v10Data),
 	RawRs:         [][32]uint8{{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14}},
 	RawSs:         [][32]uint8{{01, 02, 10, 73, 65, 19, 14, 27, 42, 48, 52, 18, 39, 116, 67, 85, 13, 82, 33, 48, 23, 33, 49, 32, 67, 50, 37, 32, 63, 77, 14, 64}},
 	RawVs:         [32]uint8{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14},
@@ -201,6 +297,42 @@ var v4Data = v4.Data{
 	MarketStatus:          v4.MarketStatusOpen,
 }
 
+var v5Data = v5.Data{
+	FeedID:                [32]uint8{00, 5, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114},
+	ValidFromTimestamp:    uint32(time.Now().Unix()),
+	ObservationsTimestamp: uint32(time.Now().Unix()),
+	NativeFee:             big.NewInt(10),
+	LinkFee:               big.NewInt(10),
+	ExpiresAt:             uint32(time.Now().Unix()) + 100,
+	Rate:                  big.NewInt(550),
+	Timestamp:             uint32(time.Now().Unix()),
+	Duration:              uint32(86400),
+}
+
+var v6Data = v6.Data{
+	FeedID:                [32]uint8{00, 6, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114},
+	ValidFromTimestamp:    uint32(time.Now().Unix()),
+	ObservationsTimestamp: uint32(time.Now().Unix()),
+	NativeFee:             big.NewInt(10),
+	LinkFee:               big.NewInt(10),
+	ExpiresAt:             uint32(time.Now().Unix()) + 100,
+	Price:                 big.NewInt(600),
+	Price2:                big.NewInt(601),
+	Price3:                big.NewInt(602),
+	Price4:                big.NewInt(603),
+	Price5:                big.NewInt(604),
+}
+
+var v7Data = v7.Data{
+	FeedID:                [32]uint8{00, 7, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114},
+	ValidFromTimestamp:    uint32(time.Now().Unix()),
+	ObservationsTimestamp: uint32(time.Now().Unix()),
+	NativeFee:             big.NewInt(10),
+	LinkFee:               big.NewInt(10),
+	ExpiresAt:             uint32(time.Now().Unix()) + 100,
+	ExchangeRate:          big.NewInt(700),
+}
+
 var v8Data = v8.Data{
 	FeedID:                [32]uint8{00, 8, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114},
 	ValidFromTimestamp:    uint32(time.Now().Unix()),
@@ -224,6 +356,22 @@ var v9Data = v9.Data{
 	NavDate:               uint64(time.Now().UnixNano()) - 100,
 	Aum:                   big.NewInt(11009),
 	Ripcord:               108,
+}
+
+var v10Data = v10.Data{
+	FeedID:                [32]uint8{00, 10, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114},
+	ValidFromTimestamp:    uint32(time.Now().Unix()),
+	ObservationsTimestamp: uint32(time.Now().Unix()),
+	NativeFee:             big.NewInt(10),
+	LinkFee:               big.NewInt(10),
+	ExpiresAt:             uint32(time.Now().Unix()) + 100,
+	LastUpdateTimestamp:   uint64(time.Now().UnixNano() - int64(10*time.Second)),
+	Price:                 big.NewInt(1000),
+	MarketStatus:          1,
+	CurrentMultiplier:     big.NewInt(100),
+	NewMultiplier:         big.NewInt(101),
+	ActivationDateTime:    uint32(time.Now().Unix()) + 200,
+	TokenizedPrice:        big.NewInt(1001),
 }
 
 func mustPackData(d interface{}) []byte {
@@ -280,6 +428,45 @@ func mustPackData(d interface{}) []byte {
 			v.BenchmarkPrice,
 			v.MarketStatus,
 		}
+	case v5.Data:
+		dataSchema = v5.Schema()
+		args = []interface{}{
+			v.FeedID,
+			v.ValidFromTimestamp,
+			v.ObservationsTimestamp,
+			v.NativeFee,
+			v.LinkFee,
+			v.ExpiresAt,
+			v.Rate,
+			v.Timestamp,
+			v.Duration,
+		}
+	case v6.Data:
+		dataSchema = v6.Schema()
+		args = []interface{}{
+			v.FeedID,
+			v.ValidFromTimestamp,
+			v.ObservationsTimestamp,
+			v.NativeFee,
+			v.LinkFee,
+			v.ExpiresAt,
+			v.Price,
+			v.Price2,
+			v.Price3,
+			v.Price4,
+			v.Price5,
+		}
+	case v7.Data:
+		dataSchema = v7.Schema()
+		args = []interface{}{
+			v.FeedID,
+			v.ValidFromTimestamp,
+			v.ObservationsTimestamp,
+			v.NativeFee,
+			v.LinkFee,
+			v.ExpiresAt,
+			v.ExchangeRate,
+		}
 	case v8.Data:
 		dataSchema = v8.Schema()
 		args = []interface{}{
@@ -306,6 +493,23 @@ func mustPackData(d interface{}) []byte {
 			v.NavDate,
 			v.Aum,
 			v.Ripcord,
+		}
+	case v10.Data:
+		dataSchema = v10.Schema()
+		args = []interface{}{
+			v.FeedID,
+			v.ValidFromTimestamp,
+			v.ObservationsTimestamp,
+			v.NativeFee,
+			v.LinkFee,
+			v.ExpiresAt,
+			v.LastUpdateTimestamp,
+			v.Price,
+			v.MarketStatus,
+			v.CurrentMultiplier,
+			v.NewMultiplier,
+			v.ActivationDateTime,
+			v.TokenizedPrice,
 		}
 	default:
 		panic(fmt.Sprintf("invalid type to pack: %#v", v))
