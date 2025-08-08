@@ -17,6 +17,7 @@ const (
 	FeedVersion4
 	FeedVersion5
 	FeedVersion6
+	FeedVersion7
 	FeedVersion8
 	FeedVersion9
 	FeedVersion10
