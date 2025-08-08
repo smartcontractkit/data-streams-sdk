@@ -12,7 +12,7 @@ use num_bigint::BigInt;
 /// - `native_fee`: Base cost to validate a transaction using the report, denominated in the chain's native token (e.g., WETH/ETH).
 /// - `link_fee`: Base cost to validate a transaction using the report, denominated in LINK.
 /// - `expires_at`: Latest timestamp where the report can be verified onchain.
-/// - `rate`: The interest rate or yield (18 decimal precision).
+/// - `rate`: The interest rate.
 /// - `timestamp`: Timestamp when the rate was observed.
 /// - `duration`: Duration for which the rate is applicable.
 ///
