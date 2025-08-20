@@ -5,6 +5,11 @@
 target/
 book/
 
+# TypeScript
+/typescript/node_modules
+/typescript/dist
+/typescript/coverage
+
 # Flamegraph
 flamegraph.svg
 flamegraph-reports/

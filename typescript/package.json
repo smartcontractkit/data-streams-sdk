@@ -1,0 +1,91 @@
+{
+  "name": "@chainlink/data-streams-sdk",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for Chainlink Data Streams",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "npm run clean && tsc",
+    "test": "jest",
+    "test:ci": "jest --ci --coverage --watchAll=false",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "clean": "rimraf dist",
+    "prepare": "husky",
+    "prepublishOnly": "npm run build && npm run test:ci && npm run lint",
+    "format": "prettier --write \"src/**/*.ts\" \"examples/**/*.ts\" \"tests/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"examples/**/*.ts\" \"tests/**/*.ts\"",
+    "size-check": "npm run build && du -sh dist/",
+    "audit:fix": "npm audit fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smartcontractkit/data-streams-sdk.git",
+    "directory": "typescript"
+  },
+  "keywords": [
+    "chainlink",
+    "data-streams",
+    "sdk",
+    "typescript"
+  ],
+  "author": "Chainlink",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/smartcontractkit/data-streams-sdk/issues"
+  },
+  "homepage": "https://github.com/smartcontractkit/data-streams-sdk/tree/main/typescript#readme",
+  "dependencies": {
+    "ethers": "^6.15.0",
+    "ws": "^8.18.3"
+  },
+  "peerDependencies": {
+    "dotenv": "^16.6.1"
+  },
+  "peerDependenciesMeta": {
+    "dotenv": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.10.4",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "@typescript-eslint/parser": "^8.39.0",
+    "dotenv": "^16.6.1",
+    "eslint": "^9.32.0",
+    "husky": "^9.1.7",
+    "jest": "^30.0.5",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.6.2",
+    "rimraf": "^5.0.5",
+    "ts-jest": "^29.4.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
