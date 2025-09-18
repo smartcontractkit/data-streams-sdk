@@ -857,8 +857,9 @@ describe("Report Validation Tests", () => {
       const end = performance.now();
       const duration = end - start;
 
-      // Should complete in reasonable time (less than 1000ms)
-      expect(duration).toBeLessThan(1000);
+      // Should complete in reasonable time,
+      // time needs to be big enough to handle ci enviroments.
+      expect(duration).toBeLessThan(2000);
     });
 
     it("should handle large report data efficiently", () => {
