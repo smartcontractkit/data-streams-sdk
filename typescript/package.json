@@ -1,6 +1,6 @@
 {
   "name": "@chainlink/data-streams-sdk",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "TypeScript SDK for Chainlink Data Streams",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
