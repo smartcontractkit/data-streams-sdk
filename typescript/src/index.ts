@@ -68,6 +68,15 @@ export type { MetricsSnapshot } from "./types/metrics";
 export { ConnectionStatus } from "./types/metrics";
 export * from "./types/errors";
 
+// Utility Functions
+export { 
+  // Report utilities 
+  getReportVersion, 
+  formatReport,
+  // Time utilities
+  getCurrentTimestamp,
+} from "./utils";
+
 // Constants
 export { DEFAULT_CONFIG } from "./defaultConfig";
 export { DEFAULT_TIMEOUT, DEFAULT_RETRY_ATTEMPTS, DEFAULT_RETRY_DELAY } from "./utils/constants";
