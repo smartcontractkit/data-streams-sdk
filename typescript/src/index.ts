@@ -69,12 +69,14 @@ export { ConnectionStatus } from "./types/metrics";
 export * from "./types/errors";
 
 // Utility Functions
-export { 
-  // Report utilities 
-  getReportVersion, 
+export {
+  // Report utilities
+  getReportVersion,
   formatReport,
   // Time utilities
   getCurrentTimestamp,
+  // Authentication Headers
+  generateAuthHeaders,
 } from "./utils";
 
 // Constants
