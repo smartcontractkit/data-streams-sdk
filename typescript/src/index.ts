@@ -75,6 +75,8 @@ export {
   formatReport,
   // Time utilities
   getCurrentTimestamp,
+  // Authentication Headers
+  generateAuthHeaders,
 } from "./utils";
 
 // Constants
