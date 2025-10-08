@@ -123,15 +123,24 @@ func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs
 	// and ws ha is enabled
 	if len(origins) > 0 && c.config.WsHA {
 		c.config.logDebug("client: attempting to connect websockets in HA mode")
+		var errs []error
 		for x := 0; x < len(origins); x++ {
+			s.stats.configuredConnections.Add(1)
 			conn, err := s.newWSconn(ctx, origins[x])
 			if err != nil {
-				return nil, err
+				c.config.logInfo("client: failed to connect to origin %s: %s", origins[x], err)
+				errs = append(errs, fmt.Errorf("origin %s: %w", origins[x], err))
+				continue
 			}
 			go s.monitorConn(conn)
 			s.conns = append(s.conns, conn)
-			s.stats.configuredConnections.Add(1)
 		}
+
+		// Only fail if we couldn't connect to ANY origins
+		if len(s.conns) == 0 {
+			return nil, fmt.Errorf("failed to connect to any origins in HA mode: %v", errs)
+		}
+		c.config.logInfo("client: connected to %d out of %d origins in HA mode", len(s.conns), len(origins))
 	} else {
 		conn, err := s.newWSconn(ctx, "")
 		if err != nil {
