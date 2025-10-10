@@ -33,8 +33,8 @@ async function main() {
     const client = createClient({
       apiKey: process.env.API_KEY || "YOUR_API_KEY",
       userSecret: process.env.USER_SECRET || "YOUR_USER_SECRET",
-      endpoint: "https://api.dataengine.chain.link",
-      wsEndpoint: "wss://ws.dataengine.chain.link",
+      endpoint: process.env.REST_URL || "https://api.dataengine.chain.link",
+      wsEndpoint: process.env.WS_URL || "wss://ws.dataengine.chain.link",
       haMode,
 
       // Comment to disable SDK logging:

@@ -717,3 +717,87 @@ func TestClient_StreamCustomHeader(t *testing.T) {
 	}
 
 }
+
+// TestClient_StreamHA_OneOriginDown tests that when in HA mode with multiple origins,
+// if one origin is down during initial connection, the stream should still be created
+func TestClient_StreamHA_OneOriginDown(t *testing.T) {
+	connectAttempts := &atomic.Uint64{}
+
+	ms := newMockServer(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead {
+			w.Header().Add(cllAvailOriginsHeader, "{001,002}")
+			w.WriteHeader(200)
+			return
+		}
+
+		if r.URL.Path != apiV1WS {
+			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		}
+
+		origin := r.Header.Get(cllOriginHeader)
+		connectAttempts.Add(1)
+
+		// Simulate origin 002 being down by timing out the connection
+		if origin == "002" {
+			w.WriteHeader(http.StatusGatewayTimeout)
+			return
+		}
+
+		// Origin 001 works fine
+		conn, err := websocket.Accept(
+			w, r, &websocket.AcceptOptions{CompressionMode: websocket.CompressionContextTakeover},
+		)
+
+		if err != nil {
+			t.Fatalf("error accepting connection: %s", err)
+		}
+		defer func() { _ = conn.CloseNow() }()
+
+		// Keep the connection alive for testing
+		for conn.Ping(context.Background()) == nil {
+			time.Sleep(100 * time.Millisecond)
+		}
+	})
+	defer ms.Close()
+
+	streamsClient, err := ms.Client()
+	if err != nil {
+		t.Fatalf("error creating client %s", err)
+	}
+
+	cc := streamsClient.(*client)
+	cc.config.Logger = LogPrintf
+	cc.config.LogDebug = true
+	cc.config.WsHA = true
+
+	// Attempt to create a stream - this should succeed with origin 001 even though 002 is down
+	sub, err := streamsClient.Stream(context.Background(), []feed.ID{feed1, feed2})
+
+	// In HA mode, the stream should succeed even if one origin is down
+	if err != nil {
+		t.Errorf("Stream creation failed: %v", err)
+		t.Errorf("BUG DETECTED: In HA mode, stream should succeed with available origins")
+		t.Errorf("Connect attempts made: %d", connectAttempts.Load())
+		t.Errorf("Expected: Stream should succeed with 1 active connection from origin 001")
+		t.Errorf("Actual: Stream creation failed completely when origin 002 was unavailable")
+		t.Fatalf("Test reveals bug: HA mode is not resilient to individual origin failures during initial connection")
+	}
+	defer sub.Close()
+
+	// Give connections time to establish
+	time.Sleep(200 * time.Millisecond)
+
+	stats := sub.Stats()
+
+	// In HA mode with 2 origins configured but 1 down, we should have:
+	// - ConfiguredConnections: 2 (we tried to connect to both)
+	// - ActiveConnections: 1 (only origin 001 is up)
+	if stats.ConfiguredConnections != 2 {
+		t.Errorf("expected 2 configured connections, got %d", stats.ConfiguredConnections)
+	}
+
+	if stats.ActiveConnections != 1 {
+		t.Errorf("expected 1 active connection, got %d", stats.ActiveConnections)
+	}
+
+}
