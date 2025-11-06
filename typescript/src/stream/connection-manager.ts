@@ -251,6 +251,22 @@ export class ConnectionManager extends EventEmitter {
    */
   private async establishConnection(connection: ManagedConnection): Promise<void> {
     return new Promise((resolve, reject) => {
+      // Clean up any existing WebSocket before creating a new one
+      // This prevents resource leaks from event listeners on old connections
+      this.cleanupWebSocket(connection);
+
+      // Stop health monitoring if it's still running (shouldn't be, but be safe)
+      this.stopHealthMonitoring(connection);
+
+      let connectTimeout: NodeJS.Timeout | null = null;
+
+      const cleanupTimeout = () => {
+        if (connectTimeout) {
+          clearTimeout(connectTimeout);
+          connectTimeout = null;
+        }
+      };
+
       try {
         this.updateConnectionState(connection, ConnectionState.CONNECTING, "WebSocket connection initiated");
 
@@ -280,10 +296,10 @@ export class ConnectionManager extends EventEmitter {
         }
 
         // Create WebSocket with timeout
-        const connectTimeout = setTimeout(() => {
-          if (connection.ws) {
-            connection.ws.terminate();
-          }
+        connectTimeout = setTimeout(() => {
+          cleanupTimeout();
+          // Clean up WebSocket to remove all event listeners
+          this.cleanupWebSocket(connection);
           reject(new WebSocketError(`Connection timeout after ${this.managerConfig.connectTimeout}ms`));
         }, this.managerConfig.connectTimeout);
 
@@ -292,7 +308,9 @@ export class ConnectionManager extends EventEmitter {
         // Handle connection events
         // Surface clearer auth errors on handshake (401/403)
         connection.ws.once("unexpected-response", (_req: unknown, res: { statusCode?: number }) => {
-          clearTimeout(connectTimeout);
+          cleanupTimeout();
+          // Clean up WebSocket to remove all event listeners
+          this.cleanupWebSocket(connection);
           const status = res?.statusCode;
           if (status === 401 || status === 403) {
             reject(
@@ -304,7 +322,15 @@ export class ConnectionManager extends EventEmitter {
         });
 
         connection.ws.on("open", () => {
-          clearTimeout(connectTimeout);
+          cleanupTimeout();
+
+          // Clear any pending reconnection timeout since connection succeeded
+          const existingReconnectTimeout = this.reconnectTimeouts.get(connection.id);
+          if (existingReconnectTimeout) {
+            clearTimeout(existingReconnectTimeout);
+            this.reconnectTimeouts.delete(connection.id);
+          }
+
           this.updateConnectionState(connection, ConnectionState.CONNECTED, "WebSocket connection established");
           connection.connectedAt = Date.now();
           connection.reconnectAttempts = 0; // Reset on successful connection
@@ -326,15 +352,17 @@ export class ConnectionManager extends EventEmitter {
         });
 
         connection.ws.on("close", () => {
-          clearTimeout(connectTimeout);
+          cleanupTimeout();
           this.handleConnectionLoss(connection);
         });
 
         connection.ws.on("error", error => {
-          clearTimeout(connectTimeout);
+          cleanupTimeout();
           connection.lastError = error;
 
           if (connection.state === ConnectionState.CONNECTING) {
+            // Clean up WebSocket before rejecting during connection attempt
+            this.cleanupWebSocket(connection);
             const message = /401|403/.test(error.message)
               ? `Authentication failed during WebSocket handshake. Check API key/secret. (${error.message})`
               : `Failed to connect to ${connection.origin}: ${error.message}`;
@@ -361,6 +389,12 @@ export class ConnectionManager extends EventEmitter {
           this.handlePongReceived(connection);
         });
       } catch (error) {
+        // Ensure timeout is cleared in case of error during setup
+        cleanupTimeout();
+        // Clean up WebSocket if it was created before the error
+        if (connection.ws) {
+          this.cleanupWebSocket(connection);
+        }
         reject(error);
       }
     });
@@ -385,6 +419,10 @@ export class ConnectionManager extends EventEmitter {
     // Stop health monitoring
     this.stopHealthMonitoring(connection);
 
+    // Clean up WebSocket to remove all event listeners and prevent memory leaks
+    // This is safe even if the WebSocket is already closed
+    this.cleanupWebSocket(connection);
+
     // Notify status callback
     if (this.managerConfig.statusCallback && wasConnected) {
       this.managerConfig.statusCallback(false, connection.host, connection.origin);
@@ -408,6 +446,14 @@ export class ConnectionManager extends EventEmitter {
   private scheduleReconnection(connection: ManagedConnection): void {
     if (this.isShuttingDown) {
       return;
+    }
+
+    // Clear any existing reconnection timeout for this connection
+    // This prevents multiple reconnection attempts from being scheduled
+    const existingTimeout = this.reconnectTimeouts.get(connection.id);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+      this.reconnectTimeouts.delete(connection.id);
     }
 
     connection.reconnectAttempts++;
@@ -605,6 +651,39 @@ export class ConnectionManager extends EventEmitter {
   }
 
   /**
+   * Clean up a WebSocket instance by removing all event listeners and closing it
+   * This prevents resource leaks when replacing WebSocket connections
+   */
+  private cleanupWebSocket(connection: ManagedConnection): void {
+    if (!connection.ws) {
+      return;
+    }
+
+    const ws = connection.ws;
+
+    // Remove all event listeners to prevent memory leaks
+    ws.removeAllListeners("open");
+    ws.removeAllListeners("message");
+    ws.removeAllListeners("close");
+    ws.removeAllListeners("error");
+    ws.removeAllListeners("ping");
+    ws.removeAllListeners("pong");
+    ws.removeAllListeners("unexpected-response");
+
+    // Close or terminate the WebSocket if it's still open
+    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+      try {
+        ws.terminate();
+      } catch {
+        // Ignore errors during cleanup
+      }
+    }
+
+    // Clear the reference
+    connection.ws = null;
+  }
+
+  /**
    * Gracefully shutdown all connections
    */
   async shutdown(): Promise<void> {
@@ -627,31 +706,42 @@ export class ConnectionManager extends EventEmitter {
    * Close a single connection gracefully
    */
   private async closeConnection(connection: ManagedConnection): Promise<void> {
+    // Clear any pending reconnection timeout for this connection
+    const existingTimeout = this.reconnectTimeouts.get(connection.id);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+      this.reconnectTimeouts.delete(connection.id);
+    }
+
+    // Stop health monitoring
+    this.stopHealthMonitoring(connection);
+
+    if (!connection.ws) {
+      return;
+    }
+
     return new Promise<void>(resolve => {
-      if (!connection.ws) {
-        resolve();
-        return;
-      }
-
-      const ws = connection.ws;
+      const ws = connection.ws!;
       this.updateConnectionState(connection, ConnectionState.DISCONNECTED, "Graceful shutdown initiated");
-
-      // Stop health monitoring
-      this.stopHealthMonitoring(connection);
 
       if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
         const timeout = setTimeout(() => {
-          ws.terminate();
+          // Use cleanup method to ensure all listeners are removed
+          this.cleanupWebSocket(connection);
           resolve();
         }, 1000);
 
         ws.once("close", () => {
           clearTimeout(timeout);
+          // Ensure all listeners are removed
+          this.cleanupWebSocket(connection);
           resolve();
         });
 
         ws.close();
       } else {
+        // Use cleanup method to ensure all listeners are removed
+        this.cleanupWebSocket(connection);
         resolve();
       }
     });
