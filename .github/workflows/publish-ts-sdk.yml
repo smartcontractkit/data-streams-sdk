@@ -6,26 +6,54 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    environment: publish-npm
-
+    environment: publish
     defaults:
       run:
         working-directory: ./typescript
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
-          registry-url: "https://registry.npmjs.org"
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
-        run: npm ci
+      #################################
+      # npm
+      #################################
 
-      - name: Publish to NPM
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_DATA_STREAMS_SDK }}
+      # Ensure npm 11.5.1 or later is installed
+      # - name: Update npm
+      #   run: npm install -g npm@latest
+
+      # - name: Publish
+      #   run: npm publish
+
+      #################################
+      # yarn
+      #################################
+
+      # - name: Install yarn
+      #   run: npm install --global yarn && yarn --version
+
+      # - name: Publish
+      #   run: yarn publish
+
+      #################################
+      # pnpm
+      #################################
+
+      # - name: Install pnpm
+      #   run: npm install -g pnpm@latest-10
+
+      # - name: Publish
+      #   run: pnpm publish --no-git-checks
+
+      #################################
+      # composite action
+      #################################
+
+      - name: Publish
+        uses: smartcontractkit/.github/actions/ci-publish-npm@5cf24eba2fef708acd6050f0f9a0397b2dabbfb8
+        with:
+          publish-command: npm publish
