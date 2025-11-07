@@ -14,7 +14,7 @@
  * Goals:
  * - Ensure robust feed ID validation that prevents invalid data
  * - Test all edge cases and error scenarios comprehensively
- * - Support feed versions V2, V3, V4, V5, V6, V7, V8, V9, V10
+ * - Support feed versions V2, V3, V4, V5, V6, V7, V8, V9, V10, V13
  * - Provide clear, helpful error messages for developers
  * - Build the best possible TypeScript feed ID validation
  */
@@ -36,6 +36,7 @@ describe("Feed ID Validation Tests", () => {
     V8: "0x00086b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
     V9: "0x00096b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
     V10: "0x000a6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
+    V13: "0x000d13a9b9c5e37a099f374e92c37914af5c268f3a8a9721f1725135bfb4cbb8",
   };
 
   const REAL_WORLD_FEED_IDS = {
@@ -84,6 +85,10 @@ describe("Feed ID Validation Tests", () => {
 
     it("should accept valid V10 feed ID", () => {
       expect(() => validateFeedId(VALID_FEED_IDS.V10)).not.toThrow();
+    });
+
+    it("should accept valid V13 feed ID", () => {
+      expect(() => validateFeedId(VALID_FEED_IDS.V13)).not.toThrow();
     });
 
     it("should accept real-world feed IDs", () => {
@@ -388,6 +393,7 @@ describe("Feed ID Validation Tests", () => {
       expect(() => validateFeedId(VALID_FEED_IDS.V8)).not.toThrow();
       expect(() => validateFeedId(VALID_FEED_IDS.V9)).not.toThrow();
       expect(() => validateFeedId(VALID_FEED_IDS.V10)).not.toThrow();
+      expect(() => validateFeedId(VALID_FEED_IDS.V13)).not.toThrow();
       expect(() => validateFeedId(VALID_FEED_IDS.V1)).toThrow(); // V1 not supported in our implementation
     });
   });

@@ -38,7 +38,7 @@ use serde::{Deserialize, Serialize};
 ///    observations_timestamp: 1718885772,
 ///    full_report: "00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b84720000000000000000000000000000000000000000000000000000000066741d8c00000000000000000000000000000000000000000000000000000000000000640000000000000000000000000000000000000000000000000000000000000064000000000000000000000000000000000000000000000000000000000000006400000000000000000000000000000000000000000000000000000000000000640000070407020401522602090605060802080505a335ef7fae696b663f1b840100000000000000000000000000000000000000000000000000000000000bbbda0000000000000000000000000000000000000000000000000000000066741d8c".to_string(),
 /// };
-/// ```    
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Report {
     #[serde(rename = "feedID")]
@@ -307,7 +307,7 @@ mod tests {
     pub fn generate_mock_report_data_v9() -> ReportDataV9 {
         const MOCK_NAV_PER_SHARE: isize = 1;
         const MOCK_AUM: isize = 1000;
-        const RIPCORD_NORMAL: u32 = 0; 
+        const RIPCORD_NORMAL: u32 = 0;
 
         let report_data = ReportDataV9 {
             feed_id: V9_FEED_ID,
@@ -342,6 +342,27 @@ mod tests {
             new_multiplier: BigInt::from(MOCK_MULTIPLIER),
             activation_date_time: MOCK_TIMESTAMP + 200,
             tokenized_price: BigInt::from(MOCK_PRICE * 2),
+        };
+
+        report_data
+    }
+
+    pub fn generate_mock_report_data_v13() -> ReportDataV10 {
+        const MOCK_MULTIPLIER: isize = 1000000000000000000; // 1.0 with 18 decimals
+
+        let report_data = ReportDataV10 {
+            feed_id: V10_FEED_ID,
+            valid_from_timestamp: MOCK_TIMESTAMP,
+            observations_timestamp: MOCK_TIMESTAMP,
+            native_fee: BigInt::from(MOCK_FEE),
+            link_fee: BigInt::from(MOCK_FEE),
+            expires_at: MOCK_TIMESTAMP + 100,
+            last_update_timestamp: MOCK_TIMESTAMP as u64,
+            best_ask: BigInt::from(MOCK_BEST_ASK),
+            best_bid: BigInt::from(MOCK_BEST_BID),
+            ask_volume: MARKET_ASK_VOLUME,
+            bid_volume: MARKET_BID_VOLUME,
+            last_traded_price: BigInt::from(MOCK_LAST_TRADED_PRICE),
         };
 
         report_data

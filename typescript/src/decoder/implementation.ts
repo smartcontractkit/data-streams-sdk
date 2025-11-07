@@ -10,6 +10,7 @@ import {
   DecodedV8Report,
   DecodedV9Report,
   DecodedV10Report,
+  DecodedV13Report,
   MarketStatus,
 } from "../types";
 
@@ -128,6 +129,21 @@ const reportSchemaV10 = [
   { type: "int192", name: "tokenizedPrice" },
 ];
 
+const reportSchemaV13 = [
+  { type: "bytes32", name: "feedId" },
+  { type: "uint32", name: "validFromTimestamp" },
+  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint192", name: "nativeFee" },
+  { type: "uint192", name: "linkFee" },
+  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "lastUpdateTimestamp" },
+  { type: "int192", name: "bestAsk" },
+  { type: "int192", name: "bestBid" },
+  { type: "uint64", name: "askVolume" },
+  { type: "uint64", name: "bidVolume" },
+  { type: "int192", name: "lastTradedPrice" },
+];
+
 /**
  * Decode a report from its hex string representation
  * @param reportHex The hex string representation of the report
@@ -148,7 +164,8 @@ export function decodeReport(
   | DecodedV7Report
   | DecodedV8Report
   | DecodedV9Report
-  | DecodedV10Report {
+  | DecodedV10Report
+  | DecodedV13Report {
   logger?.debug(`Decoding report for feed ${feedId}`);
 
   try {
@@ -196,6 +213,8 @@ export function decodeReport(
         return decodeV9Report(reportBlob);
       case "000a":
         return decodeV10Report(reportBlob);
+      case "000d":
+        return decodeV13Report(reportBlob);
       default:
         throw new ReportDecodingError(`Unknown report version: 0x${version}`);
     }
@@ -444,6 +463,32 @@ function decodeV10Report(reportBlob: string): DecodedV10Report {
   } catch (error) {
     throw new ReportDecodingError(
       `Failed to decode V10 report: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+function decodeV13Report(reportBlob: string): DecodedV13Report {
+  try {
+    const decoded = globalAbiCoder.decode(
+      reportSchemaV13.map(item => item.type),
+      getBytes(reportBlob)
+    );
+
+    return {
+      version: "V13",
+      nativeFee: decoded[3],
+      linkFee: decoded[4],
+      expiresAt: Number(decoded[5]),
+      lastUpdateTimestamp: Number(decoded[6]),
+      bestAsk: decoded[7],
+      bestBid: decoded[8],
+      askVolume: Number(decoded[9]),
+      bidVolume: Number(decoded[10]),
+      lastTradedPrice: decoded[11],
+    };
+  } catch (error) {
+    throw new ReportDecodingError(
+      `Failed to decode V13 report: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
