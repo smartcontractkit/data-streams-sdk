@@ -22,6 +22,9 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Install dependencies
+        run: npm ci
+
       #################################
       # npm
       #################################
@@ -61,3 +64,4 @@ jobs:
         uses: smartcontractkit/.github/actions/ci-publish-npm@5cf24eba2fef708acd6050f0f9a0397b2dabbfb8
         with:
           publish-command: npm publish
+          package-json-directory: ./typescript
