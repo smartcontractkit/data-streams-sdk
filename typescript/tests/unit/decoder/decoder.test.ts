@@ -232,7 +232,6 @@ const mockV13ReportBlob = abiCoder.encode(
     1000000000000000000n, // 1 native token
     2000000000000000000n, // 2 LINK
     Math.floor(Date.now() / 1000) + 3600, // expires in 1 hour
-    BigInt(Math.floor(Date.now() / 1000)), // lastUpdateTimestamp
     75000000000000000000n, // best ask $75
     78000000000000000000n, // best bid $78
     10000, // ask volume
@@ -683,7 +682,6 @@ describe("Report Decoder", () => {
       expect(decoded.nativeFee).toBeDefined();
       expect(decoded.linkFee).toBeDefined();
       expect(decoded.expiresAt).toBeDefined();
-      expect(decoded.lastUpdateTimestamp).toBeDefined();
       expect(decoded.bestAsk).toBeDefined();
       expect(decoded.bestBid).toBeDefined();
       expect(decoded.askVolume).toBeDefined();

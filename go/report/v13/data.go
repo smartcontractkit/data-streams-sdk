@@ -20,20 +20,19 @@ func Schema() abi.Arguments {
 		}
 		return result
 	}
-	return abi.Arguments([]abi.Argument{
+	return []abi.Argument{
 		{Name: "feedId", Type: mustNewType("bytes32")},
 		{Name: "validFromTimestamp", Type: mustNewType("uint32")},
 		{Name: "observationsTimestamp", Type: mustNewType("uint32")},
 		{Name: "nativeFee", Type: mustNewType("uint192")},
 		{Name: "linkFee", Type: mustNewType("uint192")},
 		{Name: "expiresAt", Type: mustNewType("uint32")},
-		{Name: "lastUpdateTimestamp", Type: mustNewType("uint64")},
 		{Name: "bestAsk", Type: mustNewType("int192")},
 		{Name: "bestBid", Type: mustNewType("int192")},
 		{Name: "askVolume", Type: mustNewType("uint64")},
 		{Name: "bidVolume", Type: mustNewType("uint64")},
 		{Name: "lastTradedPrice", Type: mustNewType("int192")},
-	})
+	}
 }
 
 // Data is the container for this schema's attributes
@@ -44,7 +43,6 @@ type Data struct {
 	NativeFee             *big.Int
 	LinkFee               *big.Int
 	ExpiresAt             uint32
-	LastUpdateTimestamp   uint64
 	BestAsk               *big.Int
 	BestBid               *big.Int
 	AskVolume             uint64

@@ -357,7 +357,6 @@ mod tests {
             native_fee: BigInt::from(MOCK_FEE),
             link_fee: BigInt::from(MOCK_FEE),
             expires_at: MOCK_TIMESTAMP + 100,
-            last_update_timestamp: MOCK_TIMESTAMP as u64,
             best_ask: BigInt::from(MOCK_BEST_ASK),
             best_bid: BigInt::from(MOCK_BEST_BID),
             ask_volume: MARKET_ASK_VOLUME,

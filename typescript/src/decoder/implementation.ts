@@ -136,7 +136,6 @@ const reportSchemaV13 = [
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
   { type: "uint32", name: "expiresAt" },
-  { type: "uint64", name: "lastUpdateTimestamp" },
   { type: "int192", name: "bestAsk" },
   { type: "int192", name: "bestBid" },
   { type: "uint64", name: "askVolume" },
@@ -479,12 +478,11 @@ function decodeV13Report(reportBlob: string): DecodedV13Report {
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
-      lastUpdateTimestamp: Number(decoded[6]),
-      bestAsk: decoded[7],
-      bestBid: decoded[8],
-      askVolume: Number(decoded[9]),
-      bidVolume: Number(decoded[10]),
-      lastTradedPrice: decoded[11],
+      bestAsk: decoded[6],
+      bestBid: decoded[7],
+      askVolume: Number(decoded[8]),
+      bidVolume: Number(decoded[9]),
+      lastTradedPrice: decoded[10],
     };
   } catch (error) {
     throw new ReportDecodingError(

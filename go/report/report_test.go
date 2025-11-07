@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+
 	v1 "github.com/smartcontractkit/data-streams-sdk/go/report/v1"
 	v10 "github.com/smartcontractkit/data-streams-sdk/go/report/v10"
+	v13 "github.com/smartcontractkit/data-streams-sdk/go/report/v13"
 	v2 "github.com/smartcontractkit/data-streams-sdk/go/report/v2"
 	v3 "github.com/smartcontractkit/data-streams-sdk/go/report/v3"
 	v4 "github.com/smartcontractkit/data-streams-sdk/go/report/v4"
@@ -160,6 +162,20 @@ func TestReport(t *testing.T) {
 	if !reflect.DeepEqual(v10Report, rv10) {
 		t.Errorf("expected: %#v, got: %#v", v10Report, rv10)
 	}
+
+	b, err = schema.Pack(v13Report.ReportContext, v13Report.ReportBlob, v13Report.RawRs, v13Report.RawSs, v13Report.RawVs)
+	if err != nil {
+		t.Errorf("failed to encode report: %s", err)
+	}
+
+	rv13, err := Decode[v13.Data](b)
+	if err != nil {
+		t.Errorf("failed to decode report: %s", err)
+	}
+
+	if !reflect.DeepEqual(v13Report, rv13) {
+		t.Errorf("expected: %#v, got: %#v", v13Report, rv13)
+	}
 }
 
 var v1Report = &Report[v1.Data]{
@@ -247,6 +263,15 @@ var v10Report = &Report[v10.Data]{
 	Data:          v10Data,
 	ReportContext: [3][32]uint8{},
 	ReportBlob:    mustPackData(v10Data),
+	RawRs:         [][32]uint8{{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14}},
+	RawSs:         [][32]uint8{{01, 02, 10, 73, 65, 19, 14, 27, 42, 48, 52, 18, 39, 116, 67, 85, 13, 82, 33, 48, 23, 33, 49, 32, 67, 50, 37, 32, 63, 77, 14, 64}},
+	RawVs:         [32]uint8{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14},
+}
+
+var v13Report = &Report[v13.Data]{
+	Data:          v13Data,
+	ReportContext: [3][32]uint8{},
+	ReportBlob:    mustPackData(v13Data),
 	RawRs:         [][32]uint8{{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14}},
 	RawSs:         [][32]uint8{{01, 02, 10, 73, 65, 19, 14, 27, 42, 48, 52, 18, 39, 116, 67, 85, 13, 82, 33, 48, 23, 33, 49, 32, 67, 50, 37, 32, 63, 77, 14, 64}},
 	RawVs:         [32]uint8{00, 01, 10, 74, 67, 29, 24, 17, 12, 18, 22, 11, 69, 11, 63, 86, 12, 86, 23, 58, 13, 53, 29, 12, 17, 10, 17, 12, 63, 27, 12, 14},
@@ -372,6 +397,20 @@ var v10Data = v10.Data{
 	NewMultiplier:         big.NewInt(101),
 	ActivationDateTime:    uint32(time.Now().Unix()) + 200,
 	TokenizedPrice:        big.NewInt(1001),
+}
+
+var v13Data = v13.Data{
+	FeedID:                [32]uint8{00, 13, 19, 169, 185, 197, 227, 122, 9, 159, 55, 78, 146, 195, 121, 20, 175, 92, 38, 143, 58, 138, 151, 33, 241, 114, 81, 53, 191, 180, 203, 184},
+	ValidFromTimestamp:    uint32(time.Now().Unix()),
+	ObservationsTimestamp: uint32(time.Now().Unix()),
+	NativeFee:             big.NewInt(10),
+	LinkFee:               big.NewInt(10),
+	ExpiresAt:             uint32(time.Now().Unix()) + 100,
+	BestAsk:               big.NewInt(75),
+	BestBid:               big.NewInt(78),
+	AskVolume:             10000,
+	BidVolume:             11000,
+	LastTradedPrice:       big.NewInt(76),
 }
 
 func mustPackData(d interface{}) []byte {
@@ -510,6 +549,21 @@ func mustPackData(d interface{}) []byte {
 			v.NewMultiplier,
 			v.ActivationDateTime,
 			v.TokenizedPrice,
+		}
+	case v13.Data:
+		dataSchema = v13.Schema()
+		args = []interface{}{
+			v.FeedID,
+			v.ValidFromTimestamp,
+			v.ObservationsTimestamp,
+			v.NativeFee,
+			v.LinkFee,
+			v.ExpiresAt,
+			v.BestAsk,
+			v.BestBid,
+			v.AskVolume,
+			v.BidVolume,
+			v.LastTradedPrice,
 		}
 	default:
 		panic(fmt.Sprintf("invalid type to pack: %#v", v))

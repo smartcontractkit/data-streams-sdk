@@ -137,7 +137,6 @@ export function formatReport(
     }
     case "V13": {
       const r = report as DecodedV13Report;
-      output += `Last Update: ${r.lastUpdateTimestamp}\n`;
       output += `Best Ask: ${r.bestAsk.toString()}\n`;
       output += `Best Bid: ${r.bestBid.toString()}\n`;
       output += `Ask Volume: ${r.askVolume.toString()}\n`;

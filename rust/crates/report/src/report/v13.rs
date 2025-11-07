@@ -14,7 +14,6 @@ use num_bigint::BigInt;
 /// - `native_fee`: Base cost to validate a transaction using the report, denominated in the chain's native token (e.g., WETH/ETH).
 /// - `link_fee`: Base cost to validate a transaction using the report, denominated in LINK.
 /// - `expires_at`: Latest timestamp where the report can be verified onchain.
-/// - `last_update_timestamp`: Timestamp of the last valid price update.
 /// - `best_ask`: The best (lowest) ask price (18 decimal precision).
 /// - `best_bid`: The best (highest) bid price (18 decimal precision).
 /// - `ask_volume`: Total volume of current ask positions.
@@ -30,7 +29,6 @@ use num_bigint::BigInt;
 ///     uint192 nativeFee;
 ///     uint192 linkFee;
 ///     uint32 expiresAt;
-///     uint64 lastUpdateTimestamp;
 ///     int192 best_ask;
 ///     int192 best_bid;
 ///     uint64 ask_volume;
@@ -82,7 +80,6 @@ impl ReportDataV13 {
         let native_fee = ReportBase::read_uint192(data, 3 * ReportBase::WORD_SIZE)?;
         let link_fee = ReportBase::read_uint192(data, 4 * ReportBase::WORD_SIZE)?;
         let expires_at = ReportBase::read_uint32(data, 5 * ReportBase::WORD_SIZE)?;
-        let last_update_timestamp = ReportBase::read_uint64(data, 6 * ReportBase::WORD_SIZE)?;
         let best_ask = ReportBase::read_int192(data, 7 * ReportBase::WORD_SIZE)?;
         let best_bid = ReportBase::read_int192(data, 8 * ReportBase::WORD_SIZE)?;
         let ask_volume = ReportBase::read_uint64(data, 9 * ReportBase::WORD_SIZE)?;
@@ -96,7 +93,6 @@ impl ReportDataV13 {
             native_fee,
             link_fee,
             expires_at,
-            last_update_timestamp,
             best_ask,
             best_bid,
             ask_volume,
@@ -168,7 +164,6 @@ mod tests {
         assert_eq!(decoded.native_fee, expected_fee);
         assert_eq!(decoded.link_fee, expected_fee);
         assert_eq!(decoded.expires_at, expected_timestamp + 100);
-        assert_eq!(decoded.last_update_timestamp, expected_timestamp as u64);
         assert_eq!(decoded.best_ask, expected_best_ask);
         assert_eq!(decoded.best_bid, expected_best_bid);
         assert_eq!(decoded.ask_volume, expected_ask_volume);

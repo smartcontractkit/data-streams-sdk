@@ -176,7 +176,6 @@ export interface DecodedV10Report extends DecodedReportFields {
  */
 export interface DecodedV13Report extends DecodedReportFields {
   version: "V13";
-  lastUpdateTimestamp: number;
   bestAsk: bigint;
   bestBid: bigint;
   askVolume: number;
