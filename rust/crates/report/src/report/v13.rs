@@ -44,7 +44,6 @@ pub struct ReportDataV13 {
     pub native_fee: BigInt,
     pub link_fee: BigInt,
     pub expires_at: u32,
-    pub last_update_timestamp: u64,
     pub best_ask: BigInt,
     pub best_bid: BigInt,
     pub ask_volume: u64,
@@ -67,7 +66,7 @@ impl ReportDataV13 {
     ///
     /// Returns a `ReportError` if the data is too short or if the data is invalid.
     pub fn decode(data: &[u8]) -> Result<Self, ReportError> {
-        if data.len() < 12 * ReportBase::WORD_SIZE {
+        if data.len() < 10 * ReportBase::WORD_SIZE {
             return Err(ReportError::DataTooShort("ReportDataV13"));
         }
 
@@ -80,11 +79,11 @@ impl ReportDataV13 {
         let native_fee = ReportBase::read_uint192(data, 3 * ReportBase::WORD_SIZE)?;
         let link_fee = ReportBase::read_uint192(data, 4 * ReportBase::WORD_SIZE)?;
         let expires_at = ReportBase::read_uint32(data, 5 * ReportBase::WORD_SIZE)?;
-        let best_ask = ReportBase::read_int192(data, 7 * ReportBase::WORD_SIZE)?;
-        let best_bid = ReportBase::read_int192(data, 8 * ReportBase::WORD_SIZE)?;
-        let ask_volume = ReportBase::read_uint64(data, 9 * ReportBase::WORD_SIZE)?;
-        let bid_volume = ReportBase::read_uint64(data, 10 * ReportBase::WORD_SIZE)?;
-        let last_traded_price = ReportBase::read_int192(data, 11 * ReportBase::WORD_SIZE)?;
+        let best_ask = ReportBase::read_int192(data, 6 * ReportBase::WORD_SIZE)?;
+        let best_bid = ReportBase::read_int192(data, 7 * ReportBase::WORD_SIZE)?;
+        let ask_volume = ReportBase::read_uint64(data, 8 * ReportBase::WORD_SIZE)?;
+        let bid_volume = ReportBase::read_uint64(data, 9 * ReportBase::WORD_SIZE)?;
+        let last_traded_price = ReportBase::read_int192(data, 10 * ReportBase::WORD_SIZE)?;
 
         Ok(Self {
             feed_id,
@@ -119,7 +118,6 @@ impl ReportDataV13 {
         buffer.extend_from_slice(&ReportBase::encode_uint192(&self.native_fee)?);
         buffer.extend_from_slice(&ReportBase::encode_uint192(&self.link_fee)?);
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.expires_at)?);
-        buffer.extend_from_slice(&ReportBase::encode_uint64(self.last_update_timestamp)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.best_ask)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.best_bid)?);
         buffer.extend_from_slice(&ReportBase::encode_uint64(self.ask_volume)?);
@@ -146,8 +144,6 @@ mod tests {
         let report_data = generate_mock_report_data_v13();
         let encoded = report_data.abi_encode().unwrap();
         let decoded = ReportDataV13::decode(&encoded).unwrap();
-
-        const MOCK_MULTIPLIER: isize = 1000000000000000000;
 
         let expected_feed_id = ID::from_hex_str(V13_FEED_ID_STR).unwrap();
         let expected_timestamp: u32 = MOCK_TIMESTAMP;
