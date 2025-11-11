@@ -332,7 +332,7 @@ describe("Feed ID Validation Tests", () => {
 
     it("should provide specific error for unsupported version", () => {
       expect(() => validateFeedId(VALID_FEED_IDS.V1)).toThrow(
-        "Invalid feed ID version. Must start with 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, or 0x000a"
+        "Invalid feed ID version. Must start with 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a or 0x000d"
       );
     });
 

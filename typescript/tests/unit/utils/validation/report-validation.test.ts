@@ -268,7 +268,6 @@ describe("Report Validation Tests", () => {
         "uint192",
         "uint192",
         "uint32",
-        "uint64",
         "int192",
         "int192",
         "uint64",
@@ -282,7 +281,6 @@ describe("Report Validation Tests", () => {
         "1000000000000000000",
         "500000000000000000",
         1640995400,
-        1640995250,
         "75000000000000000000",
         "78000000000000000000",
         10000,
@@ -384,6 +382,7 @@ describe("Report Validation Tests", () => {
       expect(decoded.version).toBe("V13");
       expect((decoded as any).bestAsk).toBe(75000000000000000000n);
       expect((decoded as any).bestBid).toBe(78000000000000000000n);
+      expect((decoded as any).lastTradedPrice).toBe(76000000000000000000n);
     });
 
     it("should handle reports without 0x prefix", () => {

@@ -212,18 +212,17 @@ const mockV10ReportBlob = abiCoder.encode(
 // Create V13 report blob
 const mockV13ReportBlob = abiCoder.encode(
   [
-    "bytes32",
-    "uint32",
-    "uint32",
-    "uint192",
-    "uint192",
-    "uint32",
-    "uint64",
-    "int192",
-    "int192",
-    "uint64",
-    "uint64",
-    "int192",
+    "bytes32", // feed id
+    "uint32",  // valid from ts
+    "uint32",  // observation ts
+    "uint192", // native fee
+    "uint192", // link fee
+    "uint32",  // expires at
+    "int192",  // best ask
+    "int192",  // best bid
+    "uint64",  // ask volume
+    "uint64",  // bid volume
+    "int192",  // last traded price
   ],
   [
     mockV13FeedId,
@@ -694,58 +693,10 @@ describe("Report Decoder", () => {
       expect(() => decodeReport(malformedReport, mockV13FeedId)).toThrow();
     });
 
-    it("should validate market status for v13 reports", () => {
-      // Create invalid market status blob
-      const invalidMarketStatusBlob = abiCoder.encode(
-        [
-          "bytes32",
-          "uint32",
-          "uint32",
-          "uint192",
-          "uint192",
-          "uint32",
-          "uint64",
-          "int192",
-          "int192",
-          "uint64",
-          "uint64",
-          "int192",
-        ],
-        [
-          mockV13FeedId,
-          Math.floor(Date.now() / 1000),
-          Math.floor(Date.now() / 1000),
-          1000000000000000000n,
-          2000000000000000000n,
-          Math.floor(Date.now() / 1000) + 3600,
-          BigInt(Math.floor(Date.now() / 1000)),
-          75000000000000000000n, // best ask $75
-          78000000000000000000n, // best bid $78
-          10000, // ask volume
-          11000, // bid volume
-          76000000000000000000n, // last traded price $76
-        ]
-      );
-
-      const invalidFullReport = abiCoder.encode(
-        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
-        [
-          mockReportContext,
-          invalidMarketStatusBlob,
-          ["0x0000000000000000000000000000000000000000000000000000000000000010"],
-          ["0x0000000000000000000000000000000000000000000000000000000000000011"],
-          "0x0000000000000000000000000000000000000000000000000000000000000012",
-        ]
-      );
-
-      expect(() => decodeReport(invalidFullReport, mockV13FeedId)).toThrow("Invalid market status");
-    });
-
     it("should decode all v13 fields correctly", () => {
       const decoded = decodeReport(mockV13FullReport, mockV13FeedId) as DecodedV13Report;
 
       // Verify all numeric fields are properly parsed
-      expect(typeof decoded.lastUpdateTimestamp).toBe("number");
       expect(typeof decoded.bestAsk).toBe("bigint");
       expect(typeof decoded.bestBid).toBe("bigint");
       expect(typeof decoded.askVolume).toBe("number");
