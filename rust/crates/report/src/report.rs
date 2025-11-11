@@ -125,7 +125,7 @@ pub fn decode_full_report(payload: &[u8]) -> Result<(Vec<[u8; 32]>, Vec<u8>), Re
 mod tests {
     use super::*;
     use crate::report::{v1::ReportDataV1, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5, v6::ReportDataV6, v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9, v10::ReportDataV10, v13::ReportDataV13};
-    use num_bigint::BigInt;
+    use num_bigint::{BigInt};
 
     const V1_FEED_ID: ID = ID([
         0, 1, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
@@ -358,6 +358,8 @@ mod tests {
     }
 
     pub fn generate_mock_report_data_v13() -> ReportDataV13 {
+        let multiplier: BigInt = "1000000000000000000".parse::<BigInt>().unwrap(); // 1.0 with 18 decimals
+
         let report_data = ReportDataV13 {
             feed_id: V13_FEED_ID,
             valid_from_timestamp: MOCK_TIMESTAMP,
@@ -365,11 +367,11 @@ mod tests {
             native_fee: BigInt::from(MOCK_FEE),
             link_fee: BigInt::from(MOCK_FEE),
             expires_at: MOCK_TIMESTAMP + 100,
-            best_ask: BigInt::from(MOCK_BEST_ASK),
-            best_bid: BigInt::from(MOCK_BEST_BID),
+            best_ask: BigInt::from(MOCK_BEST_ASK).checked_mul(&multiplier).unwrap(),
+            best_bid: BigInt::from(MOCK_BEST_BID).checked_mul(&multiplier).unwrap(),
             ask_volume: MOCK_ASK_VOLUME,
             bid_volume: MOCK_BID_VOLUME,
-            last_traded_price: BigInt::from(MOCK_LAST_TRADED_PRICE),
+            last_traded_price: BigInt::from(MOCK_LAST_TRADED_PRICE).checked_mul(&multiplier).unwrap(),
         };
 
         report_data
@@ -735,17 +737,17 @@ mod tests {
         let (_report_context, report_blob) = decode_full_report(&report).unwrap();
 
         let expected_report_blob = vec![
-            "000d13a9b9c5e37a099f374e92c37914af5c268f3a8a9721f1725135bfb4cbb8",
-            "0000000000000000000000000000000000000000000000000000000066741d8c",
-            "0000000000000000000000000000000000000000000000000000000066741d8c",
-            "000000000000000000000000000000000000000000000000000000000000000a",
-            "000000000000000000000000000000000000000000000000000000000000000a",
-            "0000000000000000000000000000000000000000000000000000000066741df0",
-            "00000000000000000000000000000000000000000000000000000000000000e3",
-            "00000000000000000000000000000000000000000000000000000000000000e5",
-            "00000000000000000000000000000000000000000000000000000000000005dc",
-            "00000000000000000000000000000000000000000000000000000000000004b0",
-            "00000000000000000000000000000000000000000000000000000000000000e4",
+            "000d13a9b9c5e37a099f374e92c37914af5c268f3a8a9721f1725135bfb4cbb8", // feed_id
+            "0000000000000000000000000000000000000000000000000000000066741d8c", // valid_from_timestamp
+            "0000000000000000000000000000000000000000000000000000000066741d8c", // observations_timestamp
+            "000000000000000000000000000000000000000000000000000000000000000a", // native_fee
+            "000000000000000000000000000000000000000000000000000000000000000a", // link_fee
+            "0000000000000000000000000000000000000000000000000000000066741df0", // expires_at
+            "00000000000000000000000000000000000000000000000c4e42014d6dac0000", // best_ask: 227 * 10^18
+            "00000000000000000000000000000000000000000000000c6a036eb4bc740000", // best_bid: 229 * 10^18
+            "00000000000000000000000000000000000000000000000000000000000005dc", // ask_volume: 1500
+            "00000000000000000000000000000000000000000000000000000000000004b0", // bid_volume: 1200
+            "00000000000000000000000000000000000000000000000c5c22b80115100000", // last_traded_price: 228 * 10^18
         ];
 
         let expected = bytes(&format!("0x{}", expected_report_blob.join("")));

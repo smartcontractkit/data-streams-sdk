@@ -141,6 +141,8 @@ mod tests {
 
     #[test]
     fn test_decode_report_data_v13() {
+        let multiplier: BigInt = "1000000000000000000".parse::<BigInt>().unwrap(); // 1.0 with 18 decimals
+
         let report_data = generate_mock_report_data_v13();
         let encoded = report_data.abi_encode().unwrap();
         let decoded = ReportDataV13::decode(&encoded).unwrap();
@@ -148,11 +150,11 @@ mod tests {
         let expected_feed_id = ID::from_hex_str(V13_FEED_ID_STR).unwrap();
         let expected_timestamp: u32 = MOCK_TIMESTAMP;
         let expected_fee = BigInt::from(MOCK_FEE);
-        let expected_best_ask = BigInt::from(MOCK_BEST_ASK);
-        let expected_best_bid = BigInt::from(MOCK_BEST_BID);
+        let expected_best_ask = BigInt::from(MOCK_BEST_ASK).checked_mul(&multiplier).unwrap();
+        let expected_best_bid = BigInt::from(MOCK_BEST_BID).checked_mul(&multiplier).unwrap();
         let expected_ask_volume: u64 = MOCK_ASK_VOLUME;
         let expected_bid_volume: u64 = MOCK_BID_VOLUME;
-        let expected_last_traded_price = BigInt::from(MOCK_LAST_TRADED_PRICE);
+        let expected_last_traded_price = BigInt::from(MOCK_LAST_TRADED_PRICE).checked_mul(&multiplier).unwrap();
 
         assert_eq!(decoded.feed_id, expected_feed_id);
         assert_eq!(decoded.valid_from_timestamp, expected_timestamp);
