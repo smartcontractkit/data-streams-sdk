@@ -16,7 +16,7 @@ import {
 /**
  * Determines the version of a feed based on its ID
  * @param feedId The feed ID to check
- * @returns "V2", "V3", "V4", "V8", "V9", "V10" or "V13 depending on the feed ID schema version
+ * @returns "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10" or "V13 depending on the feed ID schema version
  */
 export function getReportVersion(feedId: string): "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V13" {
   const schemaVersion = feedId.slice(2, 6);

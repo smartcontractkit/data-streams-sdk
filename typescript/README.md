@@ -272,7 +272,7 @@ interface BaseFields {
 - **V8**: `midPrice: bigint, lastUpdateTimestamp: number, marketStatus: MarketStatus` - Non-OTC RWA data
 - **V9**: `navPerShare: bigint, navDate: number, aum: bigint, ripcord: number` - NAV fund data
 - **V10**: `price: bigint, lastUpdateTimestamp: number, marketStatus: MarketStatus, currentMultiplier: bigint, newMultiplier: bigint, activationDateTime: number, tokenizedPrice: bigint` - Tokenized equity data
-- **V13**: `bestAsk: bigint, bestBid: bigint, askVolume: number, bidVOlume: number, lastTradedPrice: bigint` - Best Bid/Ask
+- **V13**: `bestAsk: bigint, bestBid: bigint, askVolume: number, bidVolume: number, lastTradedPrice: bigint` - Best Bid/Ask
 
 For complete field definitions, see the [documentation](https://docs.chain.link/data-streams/reference/report-schema-v3).
 
