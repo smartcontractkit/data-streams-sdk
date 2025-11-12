@@ -2,7 +2,7 @@
  * Unit Tests for Report Decoder
  *
  * These tests validate the report decoding functionality by:
- * - Testing decoding of all supported report formats (V2-V10)
+ * - Testing decoding of all supported report formats (V2-V13)
  * - Validating error handling for malformed reports
  * - Checking edge cases like empty reports and invalid versions
  *
@@ -12,9 +12,10 @@
  * - Fast execution with minimal setup
  */
 
-import { describe, it, expect } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import {
-  decodeReport,
+  DecodedV10Report,
+  DecodedV13Report,
   DecodedV2Report,
   DecodedV3Report,
   DecodedV4Report,
@@ -23,7 +24,7 @@ import {
   DecodedV7Report,
   DecodedV8Report,
   DecodedV9Report,
-  DecodedV10Report,
+  decodeReport,
 } from "../../../src";
 import { AbiCoder } from "ethers";
 
@@ -39,6 +40,7 @@ const mockV7FeedId = "0x0007" + "4".repeat(60);
 const mockV8FeedId = "0x0008" + "5".repeat(60);
 const mockV9FeedId = "0x0009" + "6".repeat(60);
 const mockV10FeedId = "0x000a" + "7".repeat(60);
+const mockV13FeedId = "0x000d" + "7".repeat(60);
 
 // Create a properly encoded full report
 const mockReportContext = [
@@ -207,6 +209,36 @@ const mockV10ReportBlob = abiCoder.encode(
   ]
 );
 
+// Create V13 report blob
+const mockV13ReportBlob = abiCoder.encode(
+  [
+    "bytes32", // feed id
+    "uint32",  // valid from ts
+    "uint32",  // observation ts
+    "uint192", // native fee
+    "uint192", // link fee
+    "uint32",  // expires at
+    "int192",  // best ask
+    "int192",  // best bid
+    "uint64",  // ask volume
+    "uint64",  // bid volume
+    "int192",  // last traded price
+  ],
+  [
+    mockV13FeedId,
+    Math.floor(Date.now() / 1000),
+    Math.floor(Date.now() / 1000),
+    1000000000000000000n, // 1 native token
+    2000000000000000000n, // 2 LINK
+    Math.floor(Date.now() / 1000) + 3600, // expires in 1 hour
+    75000000000000000000n, // best ask $75
+    78000000000000000000n, // best bid $78
+    10000, // ask volume
+    11000, // bid volume
+    76000000000000000000n, // last traded price $76
+  ]
+);
+
 // Create full reports
 const mockV2FullReport = abiCoder.encode(
   ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
@@ -304,6 +336,17 @@ const mockV10FullReport = abiCoder.encode(
     ["0x000000000000000000000000000000000000000000000000000000000000000d"],
     ["0x000000000000000000000000000000000000000000000000000000000000000e"],
     "0x000000000000000000000000000000000000000000000000000000000000000f",
+  ]
+);
+
+const mockV13FullReport = abiCoder.encode(
+  ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+  [
+    mockReportContext,
+    mockV13ReportBlob,
+    ["0x0000000000000000000000000000000000000000000000000000000000000010"],
+    ["0x0000000000000000000000000000000000000000000000000000000000000011"],
+    "0x0000000000000000000000000000000000000000000000000000000000000012",
   ]
 );
 
@@ -626,6 +669,39 @@ describe("Report Decoder", () => {
       expect(decoded.currentMultiplier).toBeGreaterThan(0n);
       expect(decoded.newMultiplier).toBeGreaterThan(0n);
       expect(decoded.currentMultiplier).not.toBe(decoded.newMultiplier);
+    });
+  });
+
+  describe("v13 reports", () => {
+    it("should decode valid v13 report", () => {
+      const decoded = decodeReport(mockV13FullReport, mockV13FeedId) as DecodedV13Report;
+
+      expect(decoded).toBeDefined();
+      expect(decoded.version).toBe("V13");
+      expect(decoded.nativeFee).toBeDefined();
+      expect(decoded.linkFee).toBeDefined();
+      expect(decoded.expiresAt).toBeDefined();
+      expect(decoded.bestAsk).toBeDefined();
+      expect(decoded.bestBid).toBeDefined();
+      expect(decoded.askVolume).toBeDefined();
+      expect(decoded.bidVolume).toBeDefined();
+      expect(decoded.lastTradedPrice).toBeDefined();
+    });
+
+    it("should handle malformed v13 report", () => {
+      const malformedReport = "0xinvalid";
+      expect(() => decodeReport(malformedReport, mockV13FeedId)).toThrow();
+    });
+
+    it("should decode all v13 fields correctly", () => {
+      const decoded = decodeReport(mockV13FullReport, mockV13FeedId) as DecodedV13Report;
+
+      // Verify all numeric fields are properly parsed
+      expect(typeof decoded.bestAsk).toBe("bigint");
+      expect(typeof decoded.bestBid).toBe("bigint");
+      expect(typeof decoded.askVolume).toBe("number");
+      expect(typeof decoded.bidVolume).toBe("number");
+      expect(typeof decoded.lastTradedPrice).toBe("bigint");
     });
   });
 
