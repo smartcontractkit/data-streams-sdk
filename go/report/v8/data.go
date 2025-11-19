@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+
 	"github.com/smartcontractkit/data-streams-sdk/go/feed"
 )
 
@@ -19,7 +20,7 @@ func Schema() abi.Arguments {
 		}
 		return result
 	}
-	return abi.Arguments([]abi.Argument{
+	return []abi.Argument{
 		{Name: "feedId", Type: mustNewType("bytes32")},
 		{Name: "validFromTimestamp", Type: mustNewType("uint32")},
 		{Name: "observationsTimestamp", Type: mustNewType("uint32")},
@@ -29,16 +30,10 @@ func Schema() abi.Arguments {
 		{Name: "lastUpdateTimestamp", Type: mustNewType("uint64")},
 		{Name: "midPrice", Type: mustNewType("int192")},
 		{Name: "marketStatus", Type: mustNewType("uint32")},
-	})
+	}
 }
 
-const (
-	MarketStatusUnknown uint32 = iota
-	MarketStatusClosed
-	MarketStatusOpen
-)
-
-// Data is the container for this schema attributes
+// Data is the container for this schema's attributes
 type Data struct {
 	FeedID                feed.ID `abi:"feedId"`
 	ObservationsTimestamp uint32

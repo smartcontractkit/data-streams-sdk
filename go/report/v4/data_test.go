@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/smartcontractkit/data-streams-sdk/go/report/common"
 )
 
 func TestData(t *testing.T) {
@@ -16,7 +18,7 @@ func TestData(t *testing.T) {
 		LinkFee:               big.NewInt(10),
 		ExpiresAt:             uint32(time.Now().Unix()) + 100,
 		BenchmarkPrice:        big.NewInt(100),
-		MarketStatus:          MarketStatusOpen,
+		MarketStatus:          common.MarketStatusOpen,
 	}
 
 	b, err := schema.Pack(

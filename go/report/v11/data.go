@@ -1,4 +1,4 @@
-package v4
+package v11
 
 import (
 	"fmt"
@@ -27,21 +27,35 @@ func Schema() abi.Arguments {
 		{Name: "nativeFee", Type: mustNewType("uint192")},
 		{Name: "linkFee", Type: mustNewType("uint192")},
 		{Name: "expiresAt", Type: mustNewType("uint32")},
-		{Name: "benchmarkPrice", Type: mustNewType("int192")},
+
+		{Name: "mid", Type: mustNewType("int192")},
+		{Name: "lastSeenTimestampNs", Type: mustNewType("uint64")},
+		{Name: "bid", Type: mustNewType("int192")},
+		{Name: "bidVolume", Type: mustNewType("uint64")},
+		{Name: "ask", Type: mustNewType("int192")},
+		{Name: "askVolume", Type: mustNewType("uint64")},
+		{Name: "lastTradedPrice", Type: mustNewType("int192")},
 		{Name: "marketStatus", Type: mustNewType("uint32")},
 	}
 }
 
-// Data is the container for this schema attributes
+// Data is the container for this schema's attributes
 type Data struct {
 	FeedID                feed.ID `abi:"feedId"`
-	ObservationsTimestamp uint32
-	BenchmarkPrice        *big.Int
-	MarketStatus          uint32
 	ValidFromTimestamp    uint32
-	ExpiresAt             uint32
-	LinkFee               *big.Int
+	ObservationsTimestamp uint32
 	NativeFee             *big.Int
+	LinkFee               *big.Int
+	ExpiresAt             uint32
+
+	Mid                 *big.Int
+	LastSeenTimestampNs uint64
+	Bid                 *big.Int
+	BidVolume           uint64
+	Ask                 *big.Int
+	AskVolume           uint64
+	LastTradedPrice     *big.Int
+	MarketStatus        uint32
 }
 
 // Schema returns this data version schema
