@@ -15,6 +15,7 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   DecodedV10Report,
+  DecodedV11Report,
   DecodedV13Report,
   DecodedV2Report,
   DecodedV3Report,
@@ -40,6 +41,7 @@ const mockV7FeedId = "0x0007" + "4".repeat(60);
 const mockV8FeedId = "0x0008" + "5".repeat(60);
 const mockV9FeedId = "0x0009" + "6".repeat(60);
 const mockV10FeedId = "0x000a" + "7".repeat(60);
+const mockV11FeedId = "0x000b" + "7".repeat(60);
 const mockV13FeedId = "0x000d" + "7".repeat(60);
 
 // Create a properly encoded full report
@@ -209,6 +211,44 @@ const mockV10ReportBlob = abiCoder.encode(
   ]
 );
 
+// Create V11 report blob
+const mockV11ReportBlob = abiCoder.encode(
+  [
+    "bytes32",
+    "uint32",
+    "uint32",
+    "uint192",
+    "uint192",
+    "uint32",
+
+    "int192",
+    "uint64",
+    "int192",
+    "uint64",
+    "int192",
+    "uint64",
+    "int192",
+    "uint32",
+  ],
+  [
+    mockV11FeedId,
+    Math.floor(Date.now() / 1000),
+    Math.floor(Date.now() / 1000),
+    1000000000000000000n, // 1 native token
+    2000000000000000000n, // 2 LINK
+    Math.floor(Date.now() / 1000) + 3600, // expires in 1 hour
+
+    103000000000000000000n, // mid 103
+    BigInt(Math.floor(Date.now() * 1000000)), // last seen timestamp nanos
+    101000000000000000000n, // bid 101
+    10001, // bid volume
+    105000000000000000000n, // ask 105
+    10002, // ask volume
+    103000000000000000000n, // last traded price 103
+    2, // market status open
+  ]
+);
+
 // Create V13 report blob
 const mockV13ReportBlob = abiCoder.encode(
   [
@@ -336,6 +376,17 @@ const mockV10FullReport = abiCoder.encode(
     ["0x000000000000000000000000000000000000000000000000000000000000000d"],
     ["0x000000000000000000000000000000000000000000000000000000000000000e"],
     "0x000000000000000000000000000000000000000000000000000000000000000f",
+  ]
+);
+
+const mockV11FullReport = abiCoder.encode(
+  ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+  [
+    mockReportContext,
+    mockV11ReportBlob,
+    ["0x0000000000000000000000000000000000000000000000000000000000000013"],
+    ["0x0000000000000000000000000000000000000000000000000000000000000014"],
+    "0x0000000000000000000000000000000000000000000000000000000000000015",
   ]
 );
 
@@ -669,6 +720,47 @@ describe("Report Decoder", () => {
       expect(decoded.currentMultiplier).toBeGreaterThan(0n);
       expect(decoded.newMultiplier).toBeGreaterThan(0n);
       expect(decoded.currentMultiplier).not.toBe(decoded.newMultiplier);
+    });
+  });
+
+  describe("v11 reports", () => {
+    it("should decode valid v11 report", () => {
+      const decoded = decodeReport(mockV11FullReport, mockV11FeedId) as DecodedV11Report;
+
+      expect(decoded).toBeDefined();
+      expect(decoded.version).toBe("V11");
+      expect(decoded.nativeFee).toBeDefined();
+      expect(decoded.linkFee).toBeDefined();
+      expect(decoded.expiresAt).toBeDefined();
+
+      expect(decoded.mid).toBeDefined();
+      expect(decoded.lastSeenTimestampNs).toBeDefined();
+      expect(decoded.bid).toBeDefined();
+      expect(decoded.bidVolume).toBeDefined();
+      expect(decoded.ask).toBeDefined();
+      expect(decoded.askVolume).toBeDefined();
+      expect(decoded.lastTradedPrice).toBeDefined();
+      expect(decoded.marketStatus).toBeDefined();
+    });
+
+    it("should handle malformed v11 report", () => {
+      const malformedReport = "0xinvalid";
+      expect(() => decodeReport(malformedReport, mockV11FeedId)).toThrow();
+    });
+
+    it("should decode all v11 fields correctly", () => {
+      const decoded = decodeReport(mockV11FullReport, mockV11FeedId) as DecodedV11Report;
+
+      // Verify all numeric fields are properly parsed
+      expect(typeof decoded.mid).toBe("bigint");
+      expect(typeof decoded.lastSeenTimestampNs).toBe("bigint");
+      expect(typeof decoded.bid).toBe("bigint");
+      expect(typeof decoded.bidVolume).toBe("number");
+      expect(typeof decoded.ask).toBe("bigint");
+      expect(typeof decoded.askVolume).toBe("number");
+      expect(typeof decoded.lastTradedPrice).toBe("bigint");
+      expect(typeof decoded.marketStatus).toBe("number");
+
     });
   });
 

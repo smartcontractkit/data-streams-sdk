@@ -171,6 +171,21 @@ export interface DecodedV10Report extends DecodedReportFields {
 }
 
 /**
+ * Decoded V11 report format (Deutsche Boerse).
+ */
+export interface DecodedV11Report extends DecodedReportFields {
+  version: "V11";
+  mid: bigint;
+  lastSeenTimestampNs: bigint;
+  bid: bigint;
+  bidVolume: number;
+  ask: bigint;
+  askVolume: number;
+  lastTradedPrice: bigint;
+  marketStatus: number;
+}
+
+/**
  * Decoded V13 report format (Best Bid/Ask).
  * Provides the best bid/ask prices, bid/ask volume and last traded price.
  */
@@ -199,6 +214,7 @@ export type DecodedReport = (
   | DecodedV8Report
   | DecodedV9Report
   | DecodedV10Report
+  | DecodedV11Report
   | DecodedV13Report
   ) & {
   /** Feed ID this report belongs to */

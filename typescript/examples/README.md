@@ -87,7 +87,7 @@ npx ts-node examples/list-feeds.ts
 
 ## Feed IDs
 
-The SDK automatically detects and supports all report schema versions (V2, V3, V4, V5, V6, V7, V8, V9, V10, V13).
+The SDK automatically detects and supports all report schema versions (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V13).
 
 For available feed IDs, see the official [Chainlink documentation](https://docs.chain.link/data-streams/).
 

@@ -1,4 +1,8 @@
 import {
+  DecodedReport,
+  DecodedV10Report,
+  DecodedV11Report,
+  DecodedV13Report,
   DecodedV2Report,
   DecodedV3Report,
   DecodedV4Report,
@@ -7,18 +11,15 @@ import {
   DecodedV7Report,
   DecodedV8Report,
   DecodedV9Report,
-  DecodedV10Report,
-  DecodedV13Report,
-  DecodedReport,
   MarketStatus,
 } from "../types";
 
 /**
  * Determines the version of a feed based on its ID
  * @param feedId The feed ID to check
- * @returns "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10" or "V13 depending on the feed ID schema version
+ * @returns "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11" or "V13 depending on the feed ID schema version
  */
-export function getReportVersion(feedId: string): "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V13" {
+export function getReportVersion(feedId: string): "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V13" {
   const schemaVersion = feedId.slice(2, 6);
   switch (schemaVersion) {
     case "0002":
@@ -39,6 +40,8 @@ export function getReportVersion(feedId: string): "V2" | "V3" | "V4" | "V5" | "V
       return "V9";
     case "000a":
       return "V10";
+    case "000b":
+      return "V11";
     case "000d":
       return "V13";
     default:
@@ -49,12 +52,12 @@ export function getReportVersion(feedId: string): "V2" | "V3" | "V4" | "V5" | "V
 /**
  * Formats a report as a human-readable string
  * @param report The report object to format
- * @param version The version of the report (V2, V3, V4, V5, V6, V7, V8, V9, V10 or V13)
+ * @param version The version of the report (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11 or V13)
  * @returns Formatted string representation of the report
  */
 export function formatReport(
   report: DecodedReport,
-  version: "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V13"
+  version: "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V13"
 ): string {
   let output = "";
 
@@ -133,6 +136,18 @@ export function formatReport(
       output += `New Multiplier: ${r.newMultiplier.toString()}\n`;
       output += `Activation Date: ${r.activationDateTime}\n`;
       output += `Tokenized Price: ${r.tokenizedPrice.toString()}\n`;
+      break;
+    }
+    case "V11": {
+      const r = report as DecodedV11Report;
+      output += `Mid: ${r.mid.toString()}\n`;
+      output += `Last Seen Timestamp Nanos: ${r.lastSeenTimestampNs.toString()}\n`;
+      output += `Bid: ${r.bid.toString()}\n`;
+      output += `Bid Volume: ${r.bidVolume.toString()}\n`;
+      output += `Ask: ${r.ask.toString()}\n`;
+      output += `Ask Volume: ${r.askVolume.toString()}\n`;
+      output += `Last Traded Price: ${r.lastTradedPrice.toString()}\n`;
+      output += `Market Status: ${r.marketStatus.toString()}\n`;
       break;
     }
     case "V13": {
