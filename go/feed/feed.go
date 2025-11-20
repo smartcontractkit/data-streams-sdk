@@ -21,6 +21,7 @@ const (
 	FeedVersion8
 	FeedVersion9
 	FeedVersion10
+	FeedVersion13
 	_
 )
 

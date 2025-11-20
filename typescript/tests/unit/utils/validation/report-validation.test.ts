@@ -2,7 +2,7 @@
  * Unit Tests for Report Validation and Decoding
  *
  * These tests validate the report functionality by:
- * - Testing report structure validation for all versions (V2, V3, V4, V5, V6, V7, V8, V9, V10)
+ * - Testing report structure validation for all versions (V2, V3, V4, V5, V6, V7, V8, V9, V10, V13)
  * - Testing report version handling and extraction
  * - Testing malformed report rejection with clear error messages
  * - Testing report timestamp validation
@@ -16,12 +16,12 @@
  * Goals:
  * - Ensure robust report validation that prevents invalid data
  * - Test all edge cases and error scenarios comprehensively
- * - Support all report versions (V2, V3, V4, V5, V6, V7, V8, V9, V10)
+ * - Support all report versions (V2, V3, V4, V5, V6, V7, V8, V9, V10, V13)
  * - Provide clear, helpful error messages for developers
  * - Build the best possible TypeScript report validation
  */
 
-import { describe, it, expect } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import { decodeReport } from "../../../../src/decoder";
 import { ReportDecodingError } from "../../../../src/types/errors";
 import { MarketStatus } from "../../../../src/types";
@@ -39,6 +39,7 @@ describe("Report Validation Tests", () => {
     V8: "0x00086b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
     V9: "0x00096b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
     V10: "0x000a6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
+    V13: "0x000d13a9b9c5e37a099f374e92c37914af5c268f3a8a9721f1725135bfb4cbb8",
   };
 
   // Helper function to create a valid full report structure
@@ -256,6 +257,39 @@ describe("Report Validation Tests", () => {
     );
   }
 
+  // Helper function to create a valid V13 report blob
+  function createV13ReportBlob(): string {
+    const abiCoder = new AbiCoder();
+    return abiCoder.encode(
+      [
+        "bytes32",
+        "uint32",
+        "uint32",
+        "uint192",
+        "uint192",
+        "uint32",
+        "int192",
+        "int192",
+        "uint64",
+        "uint64",
+        "int192",
+      ],
+      [
+        FEED_IDS.V13,
+        1640995200,
+        1640995300,
+        "1000000000000000000",
+        "500000000000000000",
+        1640995400,
+        "75000000000000000000",
+        "78000000000000000000",
+        10000,
+        11000,
+        "76000000000000000000",
+      ]
+    );
+  }
+
   describe("valid report decoding", () => {
     it("should decode valid V2 report", () => {
       const reportBlob = createV2ReportBlob();
@@ -338,6 +372,17 @@ describe("Report Validation Tests", () => {
       expect(decoded.version).toBe("V10");
       expect((decoded as any).price).toBe(75000000000000000000n);
       expect((decoded as any).tokenizedPrice).toBe(150000000000000000000n);
+    });
+
+    it("should decode valid V13 report", () => {
+      const reportBlob = createV13ReportBlob();
+      const fullReport = createFullReport(reportBlob);
+      const decoded = decodeReport(fullReport, FEED_IDS.V13);
+
+      expect(decoded.version).toBe("V13");
+      expect((decoded as any).bestAsk).toBe(75000000000000000000n);
+      expect((decoded as any).bestBid).toBe(78000000000000000000n);
+      expect((decoded as any).lastTradedPrice).toBe(76000000000000000000n);
     });
 
     it("should handle reports without 0x prefix", () => {
@@ -445,6 +490,7 @@ describe("Report Validation Tests", () => {
         { feedId: FEED_IDS.V8, expectedVersion: "V8" },
         { feedId: FEED_IDS.V9, expectedVersion: "V9" },
         { feedId: FEED_IDS.V10, expectedVersion: "V10" },
+        { feedId: FEED_IDS.V13, expectedVersion: "V13" },
       ];
 
       versions.forEach(({ feedId, expectedVersion }) => {
@@ -465,7 +511,9 @@ describe("Report Validation Tests", () => {
                         ? createV8ReportBlob()
                         : expectedVersion === "V9"
                           ? createV9ReportBlob()
-                          : createV10ReportBlob();
+                          : expectedVersion === "V10"
+                            ? createV10ReportBlob()
+                            : createV13ReportBlob();
         const fullReport = createFullReport(reportBlob);
         const decoded = decodeReport(fullReport, feedId);
         expect(decoded.version).toBe(expectedVersion);

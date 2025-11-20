@@ -215,6 +215,53 @@ export class ConnectionManager extends EventEmitter {
   }
 
   /**
+   * Clean up a WebSocket connection without scheduling reconnection
+   * This is a helper method to prevent duplicate connections
+   */
+  private cleanupWebSocket(connection: ManagedConnection): void {
+    if (!connection.ws) {
+      return;
+    }
+
+    this.logger.connectionDebug(
+      `Cleaning up WebSocket for ${connection.id} (readyState: ${connection.ws.readyState})`
+    );
+
+    // Store reference to WebSocket before cleanup
+    const ws = connection.ws;
+
+    // Add error handler BEFORE removing listeners to catch any async errors during termination
+    // This prevents "WebSocket was closed before the connection was established" from crashing the process
+    ws.once("error", (error: Error) => {
+      // Silently ignore errors during cleanup - connection is being terminated anyway
+      this.logger.connectionDebug(`Error during WebSocket cleanup for ${connection.id}:`, error);
+    });
+
+    // Remove all other event listeners to prevent memory leaks
+    ws.removeAllListeners("open");
+    ws.removeAllListeners("close");
+    ws.removeAllListeners("message");
+    ws.removeAllListeners("ping");
+    ws.removeAllListeners("pong");
+    ws.removeAllListeners("unexpected-response");
+
+    // Terminate the connection if it's still open or connecting
+    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+      try {
+        ws.terminate();
+      } catch (error) {
+        // Ignore synchronous errors during cleanup
+        this.logger.connectionDebug(`Synchronous error terminating WebSocket for ${connection.id}:`, error);
+      }
+    }
+
+    connection.ws = null;
+
+    // Stop health monitoring
+    this.stopHealthMonitoring(connection);
+  }
+
+  /**
    * Create and establish a single connection to an origin
    */
   private async createConnection(origin: string, index: number): Promise<ManagedConnection> {
@@ -252,7 +299,18 @@ export class ConnectionManager extends EventEmitter {
   private async establishConnection(connection: ManagedConnection): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
+        // CRITICAL FIX: Clean up old WebSocket before creating new one to prevent multiple connections
+        const hadExistingConnection = !!connection.ws;
+        if (hadExistingConnection) {
+          this.logger.connectionDebug(`Cleaning up existing WebSocket for ${connection.id} before reconnection`);
+          this.cleanupWebSocket(connection);
+        }
+
         this.updateConnectionState(connection, ConnectionState.CONNECTING, "WebSocket connection initiated");
+
+        this.logger.connectionDebug(
+          `Creating new WebSocket for ${connection.id} to ${connection.origin} (cleaned up old: ${hadExistingConnection})`
+        );
 
         // Build WebSocket URL with feed IDs
         const feedIdsParam = this.managerConfig.feedIds.join(",");
@@ -641,17 +699,30 @@ export class ConnectionManager extends EventEmitter {
 
       if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
         const timeout = setTimeout(() => {
-          ws.terminate();
+          // Use cleanup method to ensure proper termination
+          this.cleanupWebSocket(connection);
           resolve();
         }, 1000);
 
         ws.once("close", () => {
           clearTimeout(timeout);
+          // Clean up after close
+          this.cleanupWebSocket(connection);
           resolve();
         });
 
-        ws.close();
+        try {
+          ws.close();
+        } catch (error) {
+          // If close fails, force cleanup
+          this.logger.connectionDebug(`Error closing WebSocket for ${connection.id}:`, error);
+          this.cleanupWebSocket(connection);
+          clearTimeout(timeout);
+          resolve();
+        }
       } else {
+        // For already closed connections, just cleanup
+        this.cleanupWebSocket(connection);
         resolve();
       }
     });

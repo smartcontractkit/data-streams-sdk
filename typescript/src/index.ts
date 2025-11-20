@@ -59,6 +59,7 @@ export type {
   DecodedV8Report,
   DecodedV9Report,
   DecodedV10Report,
+  DecodedV13Report,
   MarketStatus,
 } from "./types/report";
 export type { Logger, LoggingConfig } from "./types/logger";

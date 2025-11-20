@@ -27,7 +27,7 @@ TypeScript SDK for accessing Chainlink Data Streams with real-time streaming and
 - **Real-time streaming** via WebSocket connections
 - **High Availability mode** with multiple connections and automatic failover
 - **Historical data access** via REST API
-- **Automatic report decoding** for all supported formats (V2, V3, V4, V5, V6, V7, V8, V9, V10)
+- **Automatic report decoding** for all supported formats (V2, V3, V4, V5, V6, V7, V8, V9, V10, V13)
 - **Metrics** for monitoring and observability
 - **Type-safe** with full TypeScript support
 - **Event-driven architecture** for complete developer control
@@ -244,13 +244,14 @@ The SDK automatically detects and decodes all report versions based on Feed ID p
 - **V8**: Feed IDs starting with `0x0008` (Non-OTC RWA)
 - **V9**: Feed IDs starting with `0x0009` (NAV Fund Data)
 - **V10**: Feed IDs starting with `0x000a` (Tokenized Equity)
+- **V13**: Feed IDs starting with `0x000d` (Best Bid/Ask)
 
 ### Common Fields
 
 All reports include standard metadata:
 ```typescript
 interface BaseFields {
-  version: "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10";
+  version: "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V13";
   nativeFee: bigint;
   linkFee: bigint;
   expiresAt: number;
@@ -271,6 +272,7 @@ interface BaseFields {
 - **V8**: `midPrice: bigint, lastUpdateTimestamp: number, marketStatus: MarketStatus` - Non-OTC RWA data
 - **V9**: `navPerShare: bigint, navDate: number, aum: bigint, ripcord: number` - NAV fund data
 - **V10**: `price: bigint, lastUpdateTimestamp: number, marketStatus: MarketStatus, currentMultiplier: bigint, newMultiplier: bigint, activationDateTime: number, tokenizedPrice: bigint` - Tokenized equity data
+- **V13**: `bestAsk: bigint, bestBid: bigint, askVolume: number, bidVolume: number, lastTradedPrice: bigint` - Best Bid/Ask
 
 For complete field definitions, see the [documentation](https://docs.chain.link/data-streams/reference/report-schema-v3).
 

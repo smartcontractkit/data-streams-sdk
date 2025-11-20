@@ -171,6 +171,19 @@ export interface DecodedV10Report extends DecodedReportFields {
 }
 
 /**
+ * Decoded V13 report format (Best Bid/Ask).
+ * Provides the best bid/ask prices, bid/ask volume and last traded price.
+ */
+export interface DecodedV13Report extends DecodedReportFields {
+  version: "V13";
+  bestAsk: bigint;
+  bestBid: bigint;
+  askVolume: number;
+  bidVolume: number;
+  lastTradedPrice: bigint;
+}
+
+/**
  * Complete decoded report structure received from Data Streams.
  *
  * This union type represents any valid decoded report format. The version field
@@ -186,7 +199,8 @@ export type DecodedReport = (
   | DecodedV8Report
   | DecodedV9Report
   | DecodedV10Report
-) & {
+  | DecodedV13Report
+  ) & {
   /** Feed ID this report belongs to */
   feedID: string;
   /** Earliest timestamp this report is valid for */

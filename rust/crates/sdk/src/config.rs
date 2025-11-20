@@ -109,8 +109,8 @@ impl Config {
     ///
     ///    // If you want to customize the configuration further, use the builder pattern
     ///    let ws_urls_multiple = "wss://api.testnet-dataengine.chain.link/ws,wss://api.testnet-dataengine.chain.link/ws";
-    ///    
-    ///    let configCustom = Config::new(
+    ///
+    ///    let config_custom = Config::new(
     ///        api_key.to_string(),
     ///        user_secret.to_string(),
     ///        rest_url.to_string(),

@@ -11,6 +11,7 @@ pub mod v8;
 pub mod v9;
 pub mod v10;
 pub mod v12;
+pub mod v13;
 
 use base::{ReportBase, ReportError};
 
@@ -39,7 +40,7 @@ use serde::{Deserialize, Serialize};
 ///    observations_timestamp: 1718885772,
 ///    full_report: "00016b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b84720000000000000000000000000000000000000000000000000000000066741d8c00000000000000000000000000000000000000000000000000000000000000640000000000000000000000000000000000000000000000000000000000000064000000000000000000000000000000000000000000000000000000000000006400000000000000000000000000000000000000000000000000000000000000640000070407020401522602090605060802080505a335ef7fae696b663f1b840100000000000000000000000000000000000000000000000000000000000bbbda0000000000000000000000000000000000000000000000000000000066741d8c".to_string(),
 /// };
-/// ```    
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Report {
     #[serde(rename = "feedID")]
@@ -124,8 +125,8 @@ pub fn decode_full_report(payload: &[u8]) -> Result<(Vec<[u8; 32]>, Vec<u8>), Re
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::report::{v1::ReportDataV1, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5, v6::ReportDataV6, v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9, v10::ReportDataV10, v12::ReportDataV12};
-    use num_bigint::BigInt;
+    use crate::report::{v1::ReportDataV1, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5, v6::ReportDataV6, v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9, v10::ReportDataV10, v12::ReportDataV12, v13::ReportDataV13};
+    use num_bigint::{BigInt};
 
     const V1_FEED_ID: ID = ID([
         0, 1, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
@@ -171,11 +172,20 @@ mod tests {
         00, 12, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
         163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
     ]);
+    const V13_FEED_ID: ID = ID([
+        00, 13, 19, 169, 185, 197, 227, 122, 9, 159, 55, 78, 146, 195, 121, 20, 175, 92, 38, 143,
+        58, 138, 151, 33, 241, 114, 81, 53, 191, 180, 203, 184,
+    ]);
 
     pub const MOCK_TIMESTAMP: u32 = 1718885772;
     pub const MOCK_FEE: usize = 10;
     pub const MOCK_PRICE: isize = 100;
     pub const MARKET_STATUS_OPEN: u32 = 2;
+    pub const MOCK_BEST_ASK: isize = 227;
+    pub const MOCK_BEST_BID: isize = 229;
+    pub const MOCK_ASK_VOLUME: u64 = 1500;
+    pub const MOCK_BID_VOLUME: u64 = 1200;
+    pub const MOCK_LAST_TRADED_PRICE: isize = 228;
 
     pub fn generate_mock_report_data_v1() -> ReportDataV1 {
         let report_data = ReportDataV1 {
@@ -312,7 +322,7 @@ mod tests {
     pub fn generate_mock_report_data_v9() -> ReportDataV9 {
         const MOCK_NAV_PER_SHARE: isize = 1;
         const MOCK_AUM: isize = 1000;
-        const RIPCORD_NORMAL: u32 = 0; 
+        const RIPCORD_NORMAL: u32 = 0;
 
         let report_data = ReportDataV9 {
             feed_id: V9_FEED_ID,
@@ -355,7 +365,7 @@ mod tests {
     pub fn generate_mock_report_data_v12() -> ReportDataV12 {
         const MOCK_NAV_PER_SHARE: isize = 1;
         const MOCK_NEXT_NAV_PER_SHARE: isize = 2;
-        const RIPCORD_NORMAL: u32 = 0; 
+        const RIPCORD_NORMAL: u32 = 0;
 
         let report_data = ReportDataV12 {
             feed_id: V12_FEED_ID,
@@ -368,6 +378,26 @@ mod tests {
             next_nav_per_share: BigInt::from(MOCK_NEXT_NAV_PER_SHARE),
             nav_date: MOCK_TIMESTAMP as i64,
             ripcord: RIPCORD_NORMAL,
+        };
+
+        report_data
+    }
+
+    pub fn generate_mock_report_data_v13() -> ReportDataV13 {
+        let multiplier: BigInt = "1000000000000000000".parse::<BigInt>().unwrap(); // 1.0 with 18 decimals
+
+        let report_data = ReportDataV13 {
+            feed_id: V13_FEED_ID,
+            valid_from_timestamp: MOCK_TIMESTAMP,
+            observations_timestamp: MOCK_TIMESTAMP,
+            native_fee: BigInt::from(MOCK_FEE),
+            link_fee: BigInt::from(MOCK_FEE),
+            expires_at: MOCK_TIMESTAMP + 100,
+            best_ask: BigInt::from(MOCK_BEST_ASK).checked_mul(&multiplier).unwrap(),
+            best_bid: BigInt::from(MOCK_BEST_BID).checked_mul(&multiplier).unwrap(),
+            ask_volume: MOCK_ASK_VOLUME,
+            bid_volume: MOCK_BID_VOLUME,
+            last_traded_price: BigInt::from(MOCK_LAST_TRADED_PRICE).checked_mul(&multiplier).unwrap(),
         };
 
         report_data
@@ -753,5 +783,38 @@ mod tests {
         let decoded_report = ReportDataV12::decode(&report_blob).unwrap();
 
         assert_eq!(decoded_report.feed_id, V12_FEED_ID);
+    }
+
+    #[test]
+    fn test_decode_report_v13() {
+        let report_data = generate_mock_report_data_v13();
+        let encoded_report_data = report_data.abi_encode().unwrap();
+
+        let report = generate_mock_report(&encoded_report_data);
+
+        let (_report_context, report_blob) = decode_full_report(&report).unwrap();
+
+        let expected_report_blob = vec![
+            "000d13a9b9c5e37a099f374e92c37914af5c268f3a8a9721f1725135bfb4cbb8", // feed_id
+            "0000000000000000000000000000000000000000000000000000000066741d8c", // valid_from_timestamp
+            "0000000000000000000000000000000000000000000000000000000066741d8c", // observations_timestamp
+            "000000000000000000000000000000000000000000000000000000000000000a", // native_fee
+            "000000000000000000000000000000000000000000000000000000000000000a", // link_fee
+            "0000000000000000000000000000000000000000000000000000000066741df0", // expires_at
+            "00000000000000000000000000000000000000000000000c4e42014d6dac0000", // best_ask: 227 * 10^18
+            "00000000000000000000000000000000000000000000000c6a036eb4bc740000", // best_bid: 229 * 10^18
+            "00000000000000000000000000000000000000000000000000000000000005dc", // ask_volume: 1500
+            "00000000000000000000000000000000000000000000000000000000000004b0", // bid_volume: 1200
+            "00000000000000000000000000000000000000000000000c5c22b80115100000", // last_traded_price: 228 * 10^18
+        ];
+
+        let expected = bytes(&format!("0x{}", expected_report_blob.join("")));
+        println!("Actual  : {}", hex::encode(&report_blob));
+        println!("Expected: {}", hex::encode(&expected));
+        assert_eq!(report_blob, expected);
+
+        let decoded_report = ReportDataV13::decode(&report_blob).unwrap();
+
+        assert_eq!(decoded_report.feed_id, V13_FEED_ID);
     }
 }
