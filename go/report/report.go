@@ -8,6 +8,7 @@ import (
 	v1 "github.com/smartcontractkit/data-streams-sdk/go/report/v1"
 	v10 "github.com/smartcontractkit/data-streams-sdk/go/report/v10"
 	v11 "github.com/smartcontractkit/data-streams-sdk/go/report/v11"
+	v12 "github.com/smartcontractkit/data-streams-sdk/go/report/v12"
 	v13 "github.com/smartcontractkit/data-streams-sdk/go/report/v13"
 	v2 "github.com/smartcontractkit/data-streams-sdk/go/report/v2"
 	v3 "github.com/smartcontractkit/data-streams-sdk/go/report/v3"
@@ -21,7 +22,7 @@ import (
 
 // Data represents the actual report data and attributes
 type Data interface {
-	v1.Data | v2.Data | v3.Data | v4.Data | v5.Data | v6.Data | v7.Data | v8.Data | v9.Data | v10.Data | v11.Data | v13.Data
+	v1.Data | v2.Data | v3.Data | v4.Data | v5.Data | v6.Data | v7.Data | v8.Data | v9.Data | v10.Data | v11.Data | v12.Data | v13.Data
 	Schema() abi.Arguments
 }
 
