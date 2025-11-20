@@ -50,6 +50,7 @@ const TEST_FEED_IDS = {
   V9: "0x0009" + "1".repeat(60),
   V10: "0x000a" + "1".repeat(60),
   V11: "0x000b" + "1".repeat(60),
+  V12: "0x000c" + "1".repeat(60),
   V13: "0x000d" + "1".repeat(60),
 } as const;
 
@@ -796,7 +797,7 @@ describe("DataStreams Client", () => {
   });
 
   describe("Schema Version Compatibility", () => {
-    it("should handle all supported schema versions (V2, V3, V4, V8, V9, V10, V11, V13)", async () => {
+    it("should handle all supported schema versions (V2, V3, V4, V8, V9, V10, V11, V12, V13)", async () => {
       // Test that client can process feeds with different schema versions
       const schemaTests = [
         { feedId: TEST_FEED_IDS.V3 },
@@ -804,6 +805,7 @@ describe("DataStreams Client", () => {
         { feedId: TEST_FEED_IDS.V9 },
         { feedId: TEST_FEED_IDS.V10 },
         { feedId: TEST_FEED_IDS.V11 },
+        { feedId: TEST_FEED_IDS.V12 },
         { feedId: TEST_FEED_IDS.V13 },
       ];
 
@@ -840,7 +842,7 @@ describe("DataStreams Client", () => {
     });
 
     it("should support mixed schema versions in bulk operations", async () => {
-      const mixedFeedIds = [TEST_FEED_IDS.V3, TEST_FEED_IDS.V8, TEST_FEED_IDS.V9, TEST_FEED_IDS.V10, TEST_FEED_IDS.V11, TEST_FEED_IDS.V13];
+      const mixedFeedIds = [TEST_FEED_IDS.V3, TEST_FEED_IDS.V8, TEST_FEED_IDS.V9, TEST_FEED_IDS.V10, TEST_FEED_IDS.V11, TEST_FEED_IDS.V12, TEST_FEED_IDS.V13];
       const timestamp = Math.floor(Date.now() / 1000);
 
       const mockReports = mixedFeedIds.map(feedId => ({

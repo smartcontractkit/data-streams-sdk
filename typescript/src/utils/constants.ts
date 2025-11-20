@@ -23,7 +23,7 @@ export const VALIDATION_REGEX = {
   /** Matches valid feed IDs (0x followed by 64 hex characters) */
   FEED_ID: /^0x[0-9a-fA-F]{64}$/,
   /** Matches valid schema versions (0x0002-0x0009, 0x000a, 0x000d) */
-  SCHEMA_VERSION: /^0x000([2-9]|a|b|d)$/,
+  SCHEMA_VERSION: /^0x000([2-9]|a|b|c|d)$/,
 } as const;
 
 // Request timeout constants

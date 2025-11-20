@@ -60,6 +60,7 @@ export type {
   DecodedV9Report,
   DecodedV10Report,
   DecodedV11Report,
+  DecodedV12Report,
   DecodedV13Report,
   MarketStatus,
 } from "./types/report";

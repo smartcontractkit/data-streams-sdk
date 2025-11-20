@@ -2,7 +2,7 @@
  * Unit Tests for Report Validation and Decoding
  *
  * These tests validate the report functionality by:
- * - Testing report structure validation for all versions (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V13)
+ * - Testing report structure validation for all versions (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13)
  * - Testing report version handling and extraction
  * - Testing malformed report rejection with clear error messages
  * - Testing report timestamp validation
@@ -16,7 +16,7 @@
  * Goals:
  * - Ensure robust report validation that prevents invalid data
  * - Test all edge cases and error scenarios comprehensively
- * - Support all report versions (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V13)
+ * - Support all report versions (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13)
  * - Provide clear, helpful error messages for developers
  * - Build the best possible TypeScript report validation
  */
@@ -24,7 +24,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { decodeReport } from "../../../../src/decoder";
 import { ReportDecodingError } from "../../../../src/types/errors";
-import { MarketStatus } from "../../../../src/types";
+import { MarketStatus, Ripcord } from "../../../../src/types";
 import { AbiCoder } from "ethers";
 
 describe("Report Validation Tests", () => {
@@ -40,6 +40,7 @@ describe("Report Validation Tests", () => {
     V9: "0x00096b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
     V10: "0x000a6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
     V11: "0x000bfb6d135897e4aaf5657bffd3b0b48f8e2a5131214c9ec2d62eac5d532067",
+    V12: "0x000c6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
     V13: "0x000d13a9b9c5e37a099f374e92c37914af5c268f3a8a9721f1725135bfb4cbb8",
   };
 
@@ -297,6 +298,40 @@ describe("Report Validation Tests", () => {
     );
   }
 
+
+  // Helper function to create a valid V12 report blob
+  function createV12ReportBlob(): string {
+    const abiCoder = new AbiCoder();
+    return abiCoder.encode(
+      [
+        "bytes32",
+        "uint32",
+        "uint32",
+        "uint192",
+        "uint192",
+        "uint32",
+
+        "int192",
+        "int192",
+        "uint64",
+        "uint32",
+      ],
+      [
+        FEED_IDS.V12,
+        1640995200,
+        1640995300,
+        "1000000000000000000",
+        "500000000000000000",
+        1640995400,
+
+        "103000000000000000000",
+        "104000000000000000000",
+        1640995250000000,
+        Ripcord.NORMAL,
+      ]
+    );
+  }
+
   // Helper function to create a valid V13 report blob
   function createV13ReportBlob(): string {
     const abiCoder = new AbiCoder();
@@ -426,6 +461,22 @@ describe("Report Validation Tests", () => {
       expect((decoded as any).lastTradedPrice).toBe(103000000000000000000n);
     });
 
+    it("should decode valid V12 report", () => {
+      const reportBlob = createV12ReportBlob();
+      const fullReport = createFullReport(reportBlob);
+
+      const decoded = decodeReport(fullReport, FEED_IDS.V12);
+
+      expect(decoded.version).toBe("V12");
+      expect(decoded.nativeFee).toBe(1000000000000000000n);
+      expect(decoded.linkFee).toBe(500000000000000000n);
+      expect(decoded.expiresAt).toBe(1640995400);
+      expect((decoded as any).navPerShare).toBe(103000000000000000000n);
+      expect((decoded as any).nextNavPerShare).toBe(104000000000000000000n);
+      expect((decoded as any).navDate).toBe(1640995250000000);
+      expect((decoded as any).ripcord).toBe(0);
+    });
+
     it("should decode valid V13 report", () => {
       const reportBlob = createV13ReportBlob();
       const fullReport = createFullReport(reportBlob);
@@ -543,6 +594,7 @@ describe("Report Validation Tests", () => {
         { feedId: FEED_IDS.V9, expectedVersion: "V9" },
         { feedId: FEED_IDS.V10, expectedVersion: "V10" },
         { feedId: FEED_IDS.V11, expectedVersion: "V11" },
+        { feedId: FEED_IDS.V12, expectedVersion: "V12" },
         { feedId: FEED_IDS.V13, expectedVersion: "V13" },
       ];
 
@@ -568,7 +620,9 @@ describe("Report Validation Tests", () => {
                             ? createV10ReportBlob()
                             : expectedVersion === "V11"
                               ? createV11ReportBlob()
-                              : createV13ReportBlob();
+                              : expectedVersion === "V12"
+                                ? createV12ReportBlob()
+                                : createV13ReportBlob();
         const fullReport = createFullReport(reportBlob);
         const decoded = decodeReport(fullReport, feedId);
         expect(decoded.version).toBe(expectedVersion);

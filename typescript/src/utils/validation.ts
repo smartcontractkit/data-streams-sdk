@@ -16,7 +16,7 @@ export function validateFeedId(feedId: string): void {
   const version = feedId.slice(2, 6);
   if (!VALIDATION_REGEX.SCHEMA_VERSION.test(`0x${version}`)) {
     throw new ValidationError(
-      "Invalid feed ID version. Must start with 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a, 0x000b or 0x000d"
+      "Invalid feed ID version. Must start with 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a, 0x000b, 0x000c or 0x000d"
     );
   }
 }
