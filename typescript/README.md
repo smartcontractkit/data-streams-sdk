@@ -27,7 +27,7 @@ TypeScript SDK for accessing Chainlink Data Streams with real-time streaming and
 - **Real-time streaming** via WebSocket connections
 - **High Availability mode** with multiple connections and automatic failover
 - **Historical data access** via REST API
-- **Automatic report decoding** for all supported formats (V2, V3, V4, V5, V6, V7, V8, V9, V10, V13)
+- **Automatic report decoding** for all supported formats (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13)
 - **Metrics** for monitoring and observability
 - **Type-safe** with full TypeScript support
 - **Event-driven architecture** for complete developer control
@@ -48,12 +48,14 @@ npm install @chainlink/data-streams-sdk
 **Set your credentials:**
 
 Option 1 - Environment variables:
+
 ```bash
 export API_KEY="your_api_key_here"
 export USER_SECRET="your_user_secret_here"
 ```
 
 Option 2 - `.env` file:
+
 ```bash
 # Create .env file from template
 cp .env.example .env
@@ -64,6 +66,7 @@ USER_SECRET="your_user_secret_here"
 ```
 
 **Basic streaming:**
+
 ```typescript
 import { createClient, LogLevel } from '@chainlink/data-streams-sdk';
 
@@ -104,17 +107,17 @@ interface Config {
   userSecret: string;              // User secret for authentication
   endpoint: string;                // REST API URL
   wsEndpoint: string;              // WebSocket URL
-  
+
   // Optional - Request & Retry
   timeout?: number;                // Request timeout (default: 30000ms)
   retryAttempts?: number;          // Retry attempts (default: 3)
   retryDelay?: number;             // Retry delay (default: 1000ms)
-  
+
   // Optional - High Availability
   haMode?: boolean;                // Enable HA mode (default: false)
   haConnectionTimeout?: number;    // HA connection timeout (default: 10000ms)
   connectionStatusCallback?: (isConnected: boolean, host: string, origin: string) => void;
-  
+
   // Optional - Logging
   logging?: LoggingConfig;         // See Logging Configuration section
 }
@@ -148,6 +151,7 @@ const haClient = createClient({
 ## Examples
 
 **Quick Commands:**
+
 ```bash
 # Real-time streaming
 npx ts-node examples/stream-reports.ts 0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782
@@ -166,7 +170,7 @@ npx ts-node examples/list-feeds.ts
 See [`examples/README.md`](./examples/README.md) for detailed usage instructions, setup, and all available examples including:
 
 - **Streaming:** Basic streaming, HA mode, metrics monitoring
-- **REST API:** Latest reports, historical data, bulk operations, feed management  
+- **REST API:** Latest reports, historical data, bulk operations, feed management
 - **Configuration:** Logging setup, debugging, monitoring integration
 
 ## API Reference
@@ -190,7 +194,6 @@ await stream.close();
 // Metrics
 const metrics = stream.getMetrics();
 ```
-
 
 ### Stream Options
 
@@ -235,8 +238,9 @@ const decoded = decodeReport(report.fullReport, report.feedID);
 ### Schema Auto-Detection
 
 The SDK automatically detects and decodes all report versions based on Feed ID patterns:
+
 - **V2**: Feed IDs starting with `0x0002`
-- **V3**: Feed IDs starting with `0x0003` (Crypto Streams)  
+- **V3**: Feed IDs starting with `0x0003` (Crypto Streams)
 - **V4**: Feed IDs starting with `0x0004` (Real-World Assets)
 - **V5**: Feed IDs starting with `0x0005`
 - **V6**: Feed IDs starting with `0x0006` (Multiple Price Values)
@@ -244,14 +248,17 @@ The SDK automatically detects and decodes all report versions based on Feed ID p
 - **V8**: Feed IDs starting with `0x0008` (Non-OTC RWA)
 - **V9**: Feed IDs starting with `0x0009` (NAV Fund Data)
 - **V10**: Feed IDs starting with `0x000a` (Tokenized Equity)
+- **V11**: Feed IDs starting with `0x000b` (Deutsche Boerse)
+- **V12**: Feed IDs starting with `0x000c` (Nav Fund Data + Next)
 - **V13**: Feed IDs starting with `0x000d` (Best Bid/Ask)
 
 ### Common Fields
 
 All reports include standard metadata:
+
 ```typescript
 interface BaseFields {
-  version: "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V13";
+  version: "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V12" | "V13";
   nativeFee: bigint;
   linkFee: bigint;
   expiresAt: number;
@@ -264,7 +271,7 @@ interface BaseFields {
 ### Schema-Specific Fields
 
 - **V2/V3/V4**: `price: bigint` - Standard price data
-- **V3**: `bid: bigint, ask: bigint` - Crypto bid/ask spreads  
+- **V3**: `bid: bigint, ask: bigint` - Crypto bid/ask spreads
 - **V4**: `marketStatus: MarketStatus` - Real-world asset market status
 - **V5**: `rate: bigint, timestamp: number, duration: number` - Interest rate data with observation timestamp and duration
 - **V6**: `price: bigint, price2: bigint, price3: bigint, price4: bigint, price5: bigint` - Multiple price values in a single payload
@@ -272,6 +279,8 @@ interface BaseFields {
 - **V8**: `midPrice: bigint, lastUpdateTimestamp: number, marketStatus: MarketStatus` - Non-OTC RWA data
 - **V9**: `navPerShare: bigint, navDate: number, aum: bigint, ripcord: number` - NAV fund data
 - **V10**: `price: bigint, lastUpdateTimestamp: number, marketStatus: MarketStatus, currentMultiplier: bigint, newMultiplier: bigint, activationDateTime: number, tokenizedPrice: bigint` - Tokenized equity data
+- **V11**: `mid: bigint, LastSeenTimestampNs: number, bid: bigint, vidVolume: number, ask: bigint, askVolume: number, lastTradedPrice: bigint, marketStatus: MarketStatus` - Deutsche Boerse
+- **V12**: `navPerShare: bigint, nextNavPerShare: bigint, navDate: number, ripcord: number` - NAV fund data + Next
 - **V13**: `bestAsk: bigint, bestBid: bigint, askVolume: number, bidVolume: number, lastTradedPrice: bigint` - Best Bid/Ask
 
 For complete field definitions, see the [documentation](https://docs.chain.link/data-streams/reference/report-schema-v3).
@@ -281,7 +290,7 @@ For complete field definitions, see the [documentation](https://docs.chain.link/
 HA mode establishes multiple simultaneous connections for zero-downtime operation:
 
 - **Automatic failover** between connections
-- **Report deduplication** across connections  
+- **Report deduplication** across connections
 - **Automatic origin discovery** to find available endpoints
 - **Per-connection monitoring** and statistics
 
@@ -303,22 +312,22 @@ const client = createClient({
 
 ### Error Types Overview
 
-| **Error Type** | **When Thrown** | **Key Properties** |
-|---|---|---|
-| `ValidationError` | Invalid feed IDs, timestamps, parameters | `message` |
-| `AuthenticationError` | Invalid credentials, HMAC failures | `message` |
-| `APIError` | HTTP 4xx/5xx, network timeouts, rate limits | `statusCode`, `message` |
-| `ReportDecodingError` | Corrupted report data, unsupported versions | `message` |
-| `WebSocketError` | Connection failures, protocol errors | `message` |
-| `OriginDiscoveryError` | HA discovery failures | `cause`, `message` |
-| `MultiConnectionError` | All HA connections failed | `message` |
-| `PartialConnectionFailureError` | Some HA connections failed | `failedConnections`, `totalConnections` |
-| `InsufficientConnectionsError` | HA degraded performance | `availableConnections`, `requiredConnections` |
+| **Error Type**                  | **When Thrown**                             | **Key Properties**                            |
+|---------------------------------|---------------------------------------------|-----------------------------------------------|
+| `ValidationError`               | Invalid feed IDs, timestamps, parameters    | `message`                                     |
+| `AuthenticationError`           | Invalid credentials, HMAC failures          | `message`                                     |
+| `APIError`                      | HTTP 4xx/5xx, network timeouts, rate limits | `statusCode`, `message`                       |
+| `ReportDecodingError`           | Corrupted report data, unsupported versions | `message`                                     |
+| `WebSocketError`                | Connection failures, protocol errors        | `message`                                     |
+| `OriginDiscoveryError`          | HA discovery failures                       | `cause`, `message`                            |
+| `MultiConnectionError`          | All HA connections failed                   | `message`                                     |
+| `PartialConnectionFailureError` | Some HA connections failed                  | `failedConnections`, `totalConnections`       |
+| `InsufficientConnectionsError`  | HA degraded performance                     | `availableConnections`, `requiredConnections` |
 
 ### Usage Examples
 
 ```typescript
-import { 
+import {
   ValidationError,
   AuthenticationError,
   APIError,
@@ -356,6 +365,7 @@ stream.on('error', (error) => {
 ```
 
 **Catch-all error handling:**
+
 ```typescript
 import { DataStreamsError } from './src';
 
@@ -402,6 +412,7 @@ const client = createClient({
 ```
 
 Using Pino (structured JSON):
+
 ```typescript
 import pino from 'pino';
 import { createClient, LogLevel } from '@chainlink/data-streams-sdk';
@@ -427,6 +438,7 @@ const client = createClient({
 ```
 
 Command-line with pretty output:
+
 ```bash
 PINO_LEVEL=info npx ts-node examples/metrics-monitoring.ts | npx pino-pretty
 ```
@@ -503,10 +515,10 @@ interface LoggingConfig {
     warn?: (message: string, ...args: any[]) => void;
     error?: (message: string, ...args: any[]) => void;
   };
-  
+
   /** Minimum logging level - filters out lower priority logs */
   logLevel?: LogLevel; // DEBUG (0) | INFO (1) | WARN (2) | ERROR (3)
-  
+
   /** Enable WebSocket ping/pong and connection state debugging logs */
   enableConnectionDebug?: boolean;
 }
@@ -531,6 +543,7 @@ const m = stream.getMetrics();
 ```
 
 Simple periodic print (example):
+
 ```typescript
 setInterval(() => {
   const m = stream.getMetrics();
