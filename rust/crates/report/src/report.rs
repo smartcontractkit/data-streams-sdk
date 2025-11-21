@@ -3,6 +3,7 @@ pub mod compress;
 pub mod v1;
 pub mod v10;
 pub mod v11;
+pub mod v12;
 pub mod v13;
 pub mod v2;
 pub mod v3;
@@ -126,9 +127,9 @@ pub fn decode_full_report(payload: &[u8]) -> Result<(Vec<[u8; 32]>, Vec<u8>), Re
 mod tests {
     use super::*;
     use crate::report::{
-        v1::ReportDataV1, v10::ReportDataV10, v11::ReportDataV11, v13::ReportDataV13,
-        v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5, v6::ReportDataV6,
-        v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9,
+        v1::ReportDataV1, v10::ReportDataV10, v11::ReportDataV11, v11::ReportDataV12,
+        v13::ReportDataV13, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5,
+        v6::ReportDataV6, v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9,
     };
     use num_bigint::BigInt;
 
@@ -175,6 +176,10 @@ mod tests {
     const V11_FEED_ID: ID = ID([
         00, 11, 251, 109, 19, 88, 151, 228, 170, 245, 101, 123, 255, 211, 176, 180, 143, 142, 42,
         81, 49, 33, 76, 158, 194, 214, 46, 172, 93, 83, 32, 103,
+    ]);
+    const V12_FEED_ID: ID = ID([
+        00, 12, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
+        163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
     ]);
     const V13_FEED_ID: ID = ID([
         00, 13, 19, 169, 185, 197, 227, 122, 9, 159, 55, 78, 146, 195, 121, 20, 175, 92, 38, 143,
@@ -391,6 +396,27 @@ mod tests {
                 .checked_mul(&multiplier)
                 .unwrap(),
             market_status: MOCK_MARKET_STATUS,
+        };
+
+        report_data
+    }
+
+    pub fn generate_mock_report_data_v12() -> ReportDataV12 {
+        const MOCK_NAV_PER_SHARE: isize = 1;
+        const MOCK_NEXT_NAV_PER_SHARE: isize = 2;
+        const RIPCORD_NORMAL: u32 = 0;
+
+        let report_data = ReportDataV12 {
+            feed_id: V12_FEED_ID,
+            valid_from_timestamp: MOCK_TIMESTAMP,
+            observations_timestamp: MOCK_TIMESTAMP,
+            native_fee: BigInt::from(MOCK_FEE),
+            link_fee: BigInt::from(MOCK_FEE),
+            expires_at: MOCK_TIMESTAMP + 100,
+            nav_per_share: BigInt::from(MOCK_NAV_PER_SHARE),
+            next_nav_per_share: BigInt::from(MOCK_NEXT_NAV_PER_SHARE),
+            nav_date: MOCK_TIMESTAMP as i64,
+            ripcord: RIPCORD_NORMAL,
         };
 
         report_data
@@ -806,6 +832,38 @@ mod tests {
         let decoded_report = ReportDataV10::decode(&report_blob).unwrap();
 
         assert_eq!(decoded_report.feed_id, V11_FEED_ID);
+    }
+
+    #[test]
+    fn test_decode_report_v12() {
+        let report_data = generate_mock_report_data_v12();
+        let encoded_report_data = report_data.abi_encode().unwrap();
+
+        let report = generate_mock_report(&encoded_report_data);
+
+        let (_report_context, report_blob) = decode_full_report(&report).unwrap();
+
+        let expected_report_blob = vec![
+            "000c6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
+            "0000000000000000000000000000000000000000000000000000000066741d8c",
+            "0000000000000000000000000000000000000000000000000000000066741d8c",
+            "000000000000000000000000000000000000000000000000000000000000000a",
+            "000000000000000000000000000000000000000000000000000000000000000a",
+            "0000000000000000000000000000000000000000000000000000000066741df0",
+            "0000000000000000000000000000000000000000000000000000000000000001", // NAV per share
+            "0000000000000000000000000000000000000000000000000000000000000002", // Next NAV per share
+            "0000000000000000000000000000000000000000000000000000000066741d8c", // NAV date
+            "0000000000000000000000000000000000000000000000000000000000000000", // Ripcord: Normal
+        ];
+
+        assert_eq!(
+            report_blob,
+            bytes(&format!("0x{}", expected_report_blob.join("")))
+        );
+
+        let decoded_report = ReportDataV12::decode(&report_blob).unwrap();
+
+        assert_eq!(decoded_report.feed_id, V12_FEED_ID);
     }
 
     #[test]
