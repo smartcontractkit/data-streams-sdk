@@ -17,4 +17,5 @@
 
 1. Increment the version in all `Cargo.toml` files.
 2. Run `cargo build` and `cargo publish --dry-run` in order to update `Cargo.lock`.
-3. Run the `Publish Chainlink Data Streams SDK Crate` and `Publish Chainlink Data Streams Report Crate` GitHub actions.
+3. Tag a `main` commit with `rust/chainlink-data-streams-report-vX.Y.Z`. This will trigger a GitHub action which will
+   publish the two crates. 
