@@ -1,6 +1,10 @@
 pub mod base;
 pub mod compress;
 pub mod v1;
+pub mod v10;
+pub mod v11;
+pub mod v12;
+pub mod v13;
 pub mod v2;
 pub mod v3;
 pub mod v4;
@@ -9,9 +13,6 @@ pub mod v6;
 pub mod v7;
 pub mod v8;
 pub mod v9;
-pub mod v10;
-pub mod v12;
-pub mod v13;
 
 use base::{ReportBase, ReportError};
 
@@ -125,8 +126,12 @@ pub fn decode_full_report(payload: &[u8]) -> Result<(Vec<[u8; 32]>, Vec<u8>), Re
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::report::{v1::ReportDataV1, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5, v6::ReportDataV6, v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9, v10::ReportDataV10, v12::ReportDataV12, v13::ReportDataV13};
-    use num_bigint::{BigInt};
+    use crate::report::{
+        v1::ReportDataV1, v10::ReportDataV10, v11::ReportDataV11, v11::ReportDataV12,
+        v13::ReportDataV13, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5,
+        v6::ReportDataV6, v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9,
+    };
+    use num_bigint::BigInt;
 
     const V1_FEED_ID: ID = ID([
         0, 1, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
@@ -168,6 +173,10 @@ mod tests {
         00, 10, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
         163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
     ]);
+    const V11_FEED_ID: ID = ID([
+        00, 11, 251, 109, 19, 88, 151, 228, 170, 245, 101, 123, 255, 211, 176, 180, 143, 142, 42,
+        81, 49, 33, 76, 158, 194, 214, 46, 172, 93, 83, 32, 103,
+    ]);
     const V12_FEED_ID: ID = ID([
         00, 12, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
         163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
@@ -178,14 +187,19 @@ mod tests {
     ]);
 
     pub const MOCK_TIMESTAMP: u32 = 1718885772;
+    pub const MOCK_LAST_SEEN_TIMESTAMP_NS: u64 = 1718885772000000000;
     pub const MOCK_FEE: usize = 10;
     pub const MOCK_PRICE: isize = 100;
     pub const MARKET_STATUS_OPEN: u32 = 2;
-    pub const MOCK_BEST_ASK: isize = 227;
-    pub const MOCK_BEST_BID: isize = 229;
+    pub const MOCK_ASK: isize = 229;
+    pub const MOCK_BEST_ASK: isize = 229;
+    pub const MOCK_BID: isize = 227;
+    pub const MOCK_BEST_BID: isize = 227;
     pub const MOCK_ASK_VOLUME: u64 = 1500;
     pub const MOCK_BID_VOLUME: u64 = 1200;
     pub const MOCK_LAST_TRADED_PRICE: isize = 228;
+    pub const MOCK_MID: isize = 228;
+    pub const MOCK_MARKET_STATUS: u32 = 2;
 
     pub fn generate_mock_report_data_v1() -> ReportDataV1 {
         let report_data = ReportDataV1 {
@@ -362,6 +376,31 @@ mod tests {
         report_data
     }
 
+    pub fn generate_mock_report_data_v11() -> ReportDataV11 {
+        let multiplier: BigInt = "1000000000000000000".parse::<BigInt>().unwrap(); // 1.0 with 18 decimals
+
+        let report_data = ReportDataV11 {
+            feed_id: V11_FEED_ID,
+            valid_from_timestamp: MOCK_TIMESTAMP,
+            observations_timestamp: MOCK_TIMESTAMP,
+            native_fee: BigInt::from(MOCK_FEE),
+            link_fee: BigInt::from(MOCK_FEE),
+            expires_at: MOCK_TIMESTAMP + 100,
+            mid: BigInt::from(MOCK_MID).checked_mul(&multiplier).unwrap(),
+            last_seen_timestamp_ns: MOCK_LAST_SEEN_TIMESTAMP_NS,
+            bid: BigInt::from(MOCK_BID).checked_mul(&multiplier).unwrap(),
+            bid_volume: MOCK_BID_VOLUME,
+            ask: BigInt::from(MOCK_ASK).checked_mul(&multiplier).unwrap(),
+            ask_volume: MOCK_ASK_VOLUME,
+            last_traded_price: BigInt::from(MOCK_LAST_TRADED_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap(),
+            market_status: MOCK_MARKET_STATUS,
+        };
+
+        report_data
+    }
+
     pub fn generate_mock_report_data_v12() -> ReportDataV12 {
         const MOCK_NAV_PER_SHARE: isize = 1;
         const MOCK_NEXT_NAV_PER_SHARE: isize = 2;
@@ -393,11 +432,17 @@ mod tests {
             native_fee: BigInt::from(MOCK_FEE),
             link_fee: BigInt::from(MOCK_FEE),
             expires_at: MOCK_TIMESTAMP + 100,
-            best_ask: BigInt::from(MOCK_BEST_ASK).checked_mul(&multiplier).unwrap(),
-            best_bid: BigInt::from(MOCK_BEST_BID).checked_mul(&multiplier).unwrap(),
+            best_ask: BigInt::from(MOCK_BEST_ASK)
+                .checked_mul(&multiplier)
+                .unwrap(),
+            best_bid: BigInt::from(MOCK_BEST_BID)
+                .checked_mul(&multiplier)
+                .unwrap(),
             ask_volume: MOCK_ASK_VOLUME,
             bid_volume: MOCK_BID_VOLUME,
-            last_traded_price: BigInt::from(MOCK_LAST_TRADED_PRICE).checked_mul(&multiplier).unwrap(),
+            last_traded_price: BigInt::from(MOCK_LAST_TRADED_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap(),
         };
 
         report_data
@@ -754,6 +799,42 @@ mod tests {
     }
 
     #[test]
+    fn test_decode_report_v11() {
+        let report_data = generate_mock_report_data_v11();
+        let encoded_report_data = report_data.abi_encode().unwrap();
+
+        let report = generate_mock_report(&encoded_report_data);
+
+        let (_report_context, report_blob) = decode_full_report(&report).unwrap();
+
+        let expected_report_blob = vec![
+            "000bfb6d135897e4aaf5657bffd3b0b48f8e2a5131214c9ec2d62eac5d532067", // feed_id
+            "0000000000000000000000000000000000000000000000000000000066741d8c", // valid_from_timestamp
+            "0000000000000000000000000000000000000000000000000000000066741d8c", // observations_timestamp
+            "000000000000000000000000000000000000000000000000000000000000000a", // native_fee
+            "000000000000000000000000000000000000000000000000000000000000000a", // link_fee
+            "0000000000000000000000000000000000000000000000000000000066741df0", // expires_at
+            "00000000000000000000000000000000000000000000000c5c22b80115100000", // mid: 228 * 10^18
+            "00000000000000000000000000000000000000000000000017dab580a9887800", // last_seen_timestamp_ns
+            "00000000000000000000000000000000000000000000000c4e42014d6dac0000", // bid: 227 * 10^18
+            "00000000000000000000000000000000000000000000000000000000000004b0", // bid_volume: 1200
+            "00000000000000000000000000000000000000000000000c6a036eb4bc740000", // ask: 229 * 10^18
+            "00000000000000000000000000000000000000000000000000000000000005dc", // ask_volume: 1500
+            "00000000000000000000000000000000000000000000000c5c22b80115100000", // last_traded_price: 228 * 10^18
+            "0000000000000000000000000000000000000000000000000000000000000002", // market_status: 2 (open)
+        ];
+
+        let expected = bytes(&format!("0x{}", expected_report_blob.join("")));
+        println!("Actual  : {}", hex::encode(&report_blob));
+        println!("Expected: {}", hex::encode(&expected));
+        assert_eq!(report_blob, expected);
+
+        let decoded_report = ReportDataV10::decode(&report_blob).unwrap();
+
+        assert_eq!(decoded_report.feed_id, V11_FEED_ID);
+    }
+
+    #[test]
     fn test_decode_report_v12() {
         let report_data = generate_mock_report_data_v12();
         let encoded_report_data = report_data.abi_encode().unwrap();
@@ -801,8 +882,8 @@ mod tests {
             "000000000000000000000000000000000000000000000000000000000000000a", // native_fee
             "000000000000000000000000000000000000000000000000000000000000000a", // link_fee
             "0000000000000000000000000000000000000000000000000000000066741df0", // expires_at
-            "00000000000000000000000000000000000000000000000c4e42014d6dac0000", // best_ask: 227 * 10^18
-            "00000000000000000000000000000000000000000000000c6a036eb4bc740000", // best_bid: 229 * 10^18
+            "00000000000000000000000000000000000000000000000c6a036eb4bc740000", // best_ask: 229 * 10^18
+            "00000000000000000000000000000000000000000000000c4e42014d6dac0000", // best_bid: 227 * 10^18
             "00000000000000000000000000000000000000000000000000000000000005dc", // ask_volume: 1500
             "00000000000000000000000000000000000000000000000000000000000004b0", // bid_volume: 1200
             "00000000000000000000000000000000000000000000000c5c22b80115100000", // last_traded_price: 228 * 10^18

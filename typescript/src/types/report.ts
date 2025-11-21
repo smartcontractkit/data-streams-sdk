@@ -28,6 +28,11 @@ export enum MarketStatus {
   ACTIVE = 2,
 }
 
+export enum Ripcord {
+  NORMAL = 0,
+  PAUSED = 1,
+}
+
 /**
  * Base interface for all reports before decoding
  */
@@ -171,6 +176,35 @@ export interface DecodedV10Report extends DecodedReportFields {
 }
 
 /**
+ * Decoded V11 report format (Deutsche Boerse).
+ */
+export interface DecodedV11Report extends DecodedReportFields {
+  version: "V11";
+  mid: bigint;
+  lastSeenTimestampNs: bigint;
+  bid: bigint;
+  bidVolume: number;
+  ask: bigint;
+  askVolume: number;
+  lastTradedPrice: bigint;
+  marketStatus: number;
+}
+
+/**
+ * Decoded V12 report format (NAV Data + Next).
+ */
+export interface DecodedV12Report extends DecodedReportFields {
+  version: "V12";
+  /** DON's consensus NAV per share (18 decimal precision) */
+  navPerShare: bigint;
+  nextNavPerShare: bigint;
+  /** Timestamp for the date the NAV report was produced */
+  navDate: number;
+  /** Emergency pause flag (0 = normal, 1 = paused - do not consume NAV data) */
+  ripcord: number;
+}
+
+/**
  * Decoded V13 report format (Best Bid/Ask).
  * Provides the best bid/ask prices, bid/ask volume and last traded price.
  */
@@ -199,6 +233,8 @@ export type DecodedReport = (
   | DecodedV8Report
   | DecodedV9Report
   | DecodedV10Report
+  | DecodedV11Report
+  | DecodedV12Report
   | DecodedV13Report
   ) & {
   /** Feed ID this report belongs to */

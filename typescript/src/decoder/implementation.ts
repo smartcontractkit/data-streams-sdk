@@ -1,6 +1,10 @@
-import { AbiCoder, isHexString, getBytes } from "ethers";
+import { AbiCoder, getBytes, isHexString } from "ethers";
 import { ReportDecodingError } from "../types/errors";
 import {
+  DecodedV10Report,
+  DecodedV11Report,
+  DecodedV12Report,
+  DecodedV13Report,
   DecodedV2Report,
   DecodedV3Report,
   DecodedV4Report,
@@ -9,9 +13,8 @@ import {
   DecodedV7Report,
   DecodedV8Report,
   DecodedV9Report,
-  DecodedV10Report,
-  DecodedV13Report,
   MarketStatus,
+  Ripcord,
 } from "../types";
 
 import { SDKLogger } from "../utils/logger";
@@ -129,6 +132,36 @@ const reportSchemaV10 = [
   { type: "int192", name: "tokenizedPrice" },
 ];
 
+const reportSchemaV11 = [
+  { type: "bytes32", name: "feedId" },
+  { type: "uint32", name: "validFromTimestamp" },
+  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint192", name: "nativeFee" },
+  { type: "uint192", name: "linkFee" },
+  { type: "uint32", name: "expiresAt" },
+  { type: "int192", name: "mid" },
+  { type: "uint64", name: "lastSeenTimestampNs" },
+  { type: "int192", name: "bid" },
+  { type: "uint64", name: "bidVolume" },
+  { type: "int192", name: "ask" },
+  { type: "uint64", name: "askVolume" },
+  { type: "int192", name: "lastTradedPrice" },
+  { type: "uint32", name: "marketStatus" },
+];
+
+const reportSchemaV12 = [
+  { type: "bytes32", name: "feedId" },
+  { type: "uint32", name: "validFromTimestamp" },
+  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint192", name: "nativeFee" },
+  { type: "uint192", name: "linkFee" },
+  { type: "uint32", name: "expiresAt" },
+  { type: "int192", name: "navPerShare" },
+  { type: "int192", name: "nextNavPerShare" },
+  { type: "uint64", name: "navDate" },
+  { type: "uint32", name: "ripcord" },
+];
+
 const reportSchemaV13 = [
   { type: "bytes32", name: "feedId" },
   { type: "uint32", name: "validFromTimestamp" },
@@ -164,6 +197,8 @@ export function decodeReport(
   | DecodedV8Report
   | DecodedV9Report
   | DecodedV10Report
+  | DecodedV11Report
+  | DecodedV12Report
   | DecodedV13Report {
   logger?.debug(`Decoding report for feed ${feedId}`);
 
@@ -212,6 +247,10 @@ export function decodeReport(
         return decodeV9Report(reportBlob);
       case "000a":
         return decodeV10Report(reportBlob);
+      case "000b":
+        return decodeV11Report(reportBlob);
+      case "000c":
+        return decodeV12Report(reportBlob);
       case "000d":
         return decodeV13Report(reportBlob);
       default:
@@ -409,7 +448,7 @@ function decodeV9Report(reportBlob: string): DecodedV9Report {
     );
 
     const ripcord = Number(decoded[9]);
-    if (ripcord !== 0 && ripcord !== 1) {
+    if (ripcord !== Ripcord.NORMAL && ripcord !== Ripcord.PAUSED) {
       throw new ReportDecodingError(`Invalid ripcord value: ${ripcord}. Must be 0 (normal) or 1 (paused)`);
     }
 
@@ -465,6 +504,64 @@ function decodeV10Report(reportBlob: string): DecodedV10Report {
     );
   }
 }
+
+function decodeV11Report(reportBlob: string): DecodedV11Report {
+  try {
+    const decoded = globalAbiCoder.decode(
+      reportSchemaV11.map(item => item.type),
+      getBytes(reportBlob)
+    );
+
+    return {
+      version: "V11",
+      nativeFee: decoded[3],
+      linkFee: decoded[4],
+      expiresAt: Number(decoded[5]),
+      mid: decoded[6],
+      lastSeenTimestampNs: decoded[7],
+      bid: decoded[8],
+      bidVolume: Number(decoded[9]),
+      ask: decoded[10],
+      askVolume: Number(decoded[11]),
+      lastTradedPrice: decoded[12],
+      marketStatus: Number(decoded[13]),
+    };
+  } catch (error) {
+    throw new ReportDecodingError(
+      `Failed to decode V11 report: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+function decodeV12Report(reportBlob: string): DecodedV12Report {
+  try {
+    const decoded = globalAbiCoder.decode(
+      reportSchemaV12.map(item => item.type),
+      getBytes(reportBlob)
+    );
+
+    const ripcord = Number(decoded[9]);
+    if (ripcord !== Ripcord.NORMAL && ripcord !== Ripcord.PAUSED) {
+      throw new ReportDecodingError(`Invalid ripcord value: ${ripcord}. Must be 0 (normal) or 1 (paused)`);
+    }
+
+    return {
+      version: "V12",
+      nativeFee: decoded[3],
+      linkFee: decoded[4],
+      expiresAt: Number(decoded[5]),
+      navPerShare: decoded[6],
+      nextNavPerShare: decoded[7],
+      navDate: Number(decoded[8]),
+      ripcord,
+    };
+  } catch (error) {
+    throw new ReportDecodingError(
+      `Failed to decode V12 report: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
 
 function decodeV13Report(reportBlob: string): DecodedV13Report {
   try {
