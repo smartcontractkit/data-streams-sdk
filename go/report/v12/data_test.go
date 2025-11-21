@@ -1,25 +1,26 @@
-package v8
+package v12
 
 import (
 	"math/big"
 	"reflect"
 	"testing"
 	"time"
-
-	"github.com/smartcontractkit/data-streams-sdk/go/report/common"
 )
 
 func TestData(t *testing.T) {
 	r := &Data{
-		FeedID:                [32]uint8{00, 8, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114},
+		// 0x000c6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472
+		FeedID:                [32]uint8{00, 12, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114},
 		ValidFromTimestamp:    uint32(time.Now().Unix()),
 		ObservationsTimestamp: uint32(time.Now().Unix()),
 		NativeFee:             big.NewInt(10),
 		LinkFee:               big.NewInt(10),
 		ExpiresAt:             uint32(time.Now().Unix()) + 100,
-		LastUpdateTimestamp:   uint64(time.Now().UnixNano() - int64(10*time.Second)),
-		MidPrice:              big.NewInt(100),
-		MarketStatus:          common.MarketStatusOpen,
+
+		NavPerShare:     big.NewInt(1100),
+		NextNavPerShare: big.NewInt(1101),
+		NavDate:         uint64(time.Now().UnixNano()) - 100,
+		Ripcord:         108,
 	}
 
 	b, err := schema.Pack(
@@ -29,9 +30,11 @@ func TestData(t *testing.T) {
 		r.NativeFee,
 		r.LinkFee,
 		r.ExpiresAt,
-		r.LastUpdateTimestamp,
-		r.MidPrice,
-		r.MarketStatus,
+
+		r.NavPerShare,
+		r.NextNavPerShare,
+		r.NavDate,
+		r.Ripcord,
 	)
 
 	if err != nil {
