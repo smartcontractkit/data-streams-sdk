@@ -64,9 +64,9 @@ impl ReportBase {
         if offset + Self::WORD_SIZE > data.len() {
             return Err(ReportError::DataTooShort("uint32"));
         }
-        let value_bytes = &data[offset + 28..offset + 32];
+        let value_bytes = &data[offset..offset + Self::WORD_SIZE];
         Ok(u32::from_be_bytes(
-            value_bytes
+            value_bytes[28..32]
                 .try_into()
                 .map_err(|_| ReportError::InvalidLength("uint32"))?,
         ))
@@ -75,7 +75,13 @@ impl ReportBase {
     pub(crate) fn encode_uint32(value: u32) -> Result<[u8; 32], ReportError> {
         let mut buffer = [0u8; 32];
         let bytes_value = value.to_be_bytes();
-        buffer[28..32].copy_from_slice(&bytes_value); // Place at the end of the 32 bytes word
+        let len = bytes_value.len();
+
+        if len > 4 {
+            return Err(ReportError::InvalidLength("uint32"));
+        }
+
+        buffer[32 - len..32].copy_from_slice(&bytes_value);
         Ok(buffer)
     }
 
@@ -83,9 +89,9 @@ impl ReportBase {
         if offset + Self::WORD_SIZE > data.len() {
             return Err(ReportError::DataTooShort("uint64"));
         }
-        let value_bytes = &data[offset + 24..offset + 32];
+        let value_bytes = &data[offset..offset + Self::WORD_SIZE];
         Ok(u64::from_be_bytes(
-            value_bytes
+            value_bytes[24..32]
                 .try_into()
                 .map_err(|_| ReportError::InvalidLength("uint64"))?,
         ))
@@ -94,7 +100,38 @@ impl ReportBase {
     pub(crate) fn encode_uint64(value: u64) -> Result<[u8; 32], ReportError> {
         let mut buffer = [0u8; 32];
         let bytes_value = value.to_be_bytes();
-        buffer[24..32].copy_from_slice(&bytes_value); // Place at the end of the 32 bytes word
+        let len = bytes_value.len();
+
+        if len > 8 {
+            return Err(ReportError::InvalidLength("uint64"));
+        }
+
+        buffer[32 - len..32].copy_from_slice(&bytes_value);
+        Ok(buffer)
+    }
+
+    pub(crate) fn read_int64(data: &[u8], offset: usize) -> Result<i64, ReportError> {
+        if offset + Self::WORD_SIZE > data.len() {
+            return Err(ReportError::DataTooShort("int64"));
+        }
+        let value_bytes = &data[offset..offset + Self::WORD_SIZE];
+        Ok(i64::from_be_bytes(
+            value_bytes[24..32]
+                .try_into()
+                .map_err(|_| ReportError::InvalidLength("int64"))?,
+        ))
+    }
+
+    pub(crate) fn encode_int64(value: i64) -> Result<[u8; 32], ReportError> {
+        let mut buffer = [0u8; 32];
+        let bytes_value = value.to_be_bytes();
+        let len = bytes_value.len();
+
+        if len > 8 {
+            return Err(ReportError::InvalidLength("int64"));
+        }
+
+        buffer[32 - len..32].copy_from_slice(&bytes_value);
         Ok(buffer)
     }
 }
