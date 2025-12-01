@@ -1,5 +1,10 @@
 # Instructions for publishing a new SDK version
 
+What this guide covers is how to publish a new SDK package on a package distribution network (where that applies), e.g.
+[NPM](https://www.npmjs.com/package/@chainlink/data-streams-sdk) for TypeScript
+or [crates.io](https://crates.io/crates/chainlink-data-streams-report) for Rust. As Go doesn't use a package system like
+that, the release process is limited to tagging a commit and creating a GitHub release.
+
 ## Go
 
 1. Tag a `main` commit with `go/vX.Y.X`. This is enough for the new version to be considered released.
