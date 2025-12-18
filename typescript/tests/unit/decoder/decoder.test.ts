@@ -226,9 +226,9 @@ const mockV11ReportBlob = abiCoder.encode(
     "int192",
     "uint64",
     "int192",
-    "uint64",
     "int192",
-    "uint64",
+    "int192",
+    "int192",
     "int192",
     "uint32",
   ],
@@ -243,9 +243,9 @@ const mockV11ReportBlob = abiCoder.encode(
     103000000000000000000n, // mid 103
     BigInt(Math.floor(Date.now() * 1000000)), // last seen timestamp nanos
     101000000000000000000n, // bid 101
-    10001, // bid volume
+    BigInt(10001), // bid volume
     105000000000000000000n, // ask 105
-    10002, // ask volume
+    BigInt(10002), // ask volume
     103000000000000000000n, // last traded price 103
     2, // market status open
   ]
@@ -786,9 +786,9 @@ describe("Report Decoder", () => {
       expect(typeof decoded.mid).toBe("bigint");
       expect(typeof decoded.lastSeenTimestampNs).toBe("bigint");
       expect(typeof decoded.bid).toBe("bigint");
-      expect(typeof decoded.bidVolume).toBe("number");
+      expect(typeof decoded.bidVolume).toBe("bigint");
       expect(typeof decoded.ask).toBe("bigint");
-      expect(typeof decoded.askVolume).toBe("number");
+      expect(typeof decoded.askVolume).toBe("bigint");
       expect(typeof decoded.lastTradedPrice).toBe("bigint");
       expect(typeof decoded.marketStatus).toBe("number");
 

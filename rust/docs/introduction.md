@@ -20,8 +20,8 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-chainlink-data-streams-report = "1.2.0"
-chainlink-data-streams-sdk = { version = "1.2.0", features = ["full"] }
+chainlink-data-streams-report = "1.2.1"
+chainlink-data-streams-sdk = { version = "1.2.1", features = ["full"] }
 ```
 
 #### Features

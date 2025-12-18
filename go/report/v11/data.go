@@ -31,9 +31,9 @@ func Schema() abi.Arguments {
 		{Name: "mid", Type: mustNewType("int192")},
 		{Name: "lastSeenTimestampNs", Type: mustNewType("uint64")},
 		{Name: "bid", Type: mustNewType("int192")},
-		{Name: "bidVolume", Type: mustNewType("uint64")},
+		{Name: "bidVolume", Type: mustNewType("int192")},
 		{Name: "ask", Type: mustNewType("int192")},
-		{Name: "askVolume", Type: mustNewType("uint64")},
+		{Name: "askVolume", Type: mustNewType("int192")},
 		{Name: "lastTradedPrice", Type: mustNewType("int192")},
 		{Name: "marketStatus", Type: mustNewType("uint32")},
 	}
@@ -51,9 +51,9 @@ type Data struct {
 	Mid                 *big.Int
 	LastSeenTimestampNs uint64
 	Bid                 *big.Int
-	BidVolume           uint64
+	BidVolume           *big.Int
 	Ask                 *big.Int
-	AskVolume           uint64
+	AskVolume           *big.Int
 	LastTradedPrice     *big.Int
 	MarketStatus        uint32
 }

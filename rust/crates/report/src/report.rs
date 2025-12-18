@@ -127,7 +127,7 @@ pub fn decode_full_report(payload: &[u8]) -> Result<(Vec<[u8; 32]>, Vec<u8>), Re
 mod tests {
     use super::*;
     use crate::report::{
-        v1::ReportDataV1, v10::ReportDataV10, v11::ReportDataV11, v11::ReportDataV12,
+        v1::ReportDataV1, v10::ReportDataV10, v11::ReportDataV11, v12::ReportDataV12,
         v13::ReportDataV13, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5,
         v6::ReportDataV6, v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9,
     };
@@ -389,9 +389,9 @@ mod tests {
             mid: BigInt::from(MOCK_MID).checked_mul(&multiplier).unwrap(),
             last_seen_timestamp_ns: MOCK_LAST_SEEN_TIMESTAMP_NS,
             bid: BigInt::from(MOCK_BID).checked_mul(&multiplier).unwrap(),
-            bid_volume: MOCK_BID_VOLUME,
+            bid_volume: BigInt::from(MOCK_BID_VOLUME).checked_mul(&multiplier).unwrap(),
             ask: BigInt::from(MOCK_ASK).checked_mul(&multiplier).unwrap(),
-            ask_volume: MOCK_ASK_VOLUME,
+            ask_volume: BigInt::from(MOCK_ASK_VOLUME).checked_mul(&multiplier).unwrap(),
             last_traded_price: BigInt::from(MOCK_LAST_TRADED_PRICE)
                 .checked_mul(&multiplier)
                 .unwrap(),
@@ -817,9 +817,9 @@ mod tests {
             "00000000000000000000000000000000000000000000000c5c22b80115100000", // mid: 228 * 10^18
             "00000000000000000000000000000000000000000000000017dab580a9887800", // last_seen_timestamp_ns
             "00000000000000000000000000000000000000000000000c4e42014d6dac0000", // bid: 227 * 10^18
-            "00000000000000000000000000000000000000000000000000000000000004b0", // bid_volume: 1200
+            "0000000000000000000000000000000000000000000000410d586a20a4c00000", // bid_volume: 1200
             "00000000000000000000000000000000000000000000000c6a036eb4bc740000", // ask: 229 * 10^18
-            "00000000000000000000000000000000000000000000000000000000000005dc", // ask_volume: 1500
+            "00000000000000000000000000000000000000000000005150ae84a8cdf00000", // ask_volume: 1500
             "00000000000000000000000000000000000000000000000c5c22b80115100000", // last_traded_price: 228 * 10^18
             "0000000000000000000000000000000000000000000000000000000000000002", // market_status: 2 (open)
         ];
