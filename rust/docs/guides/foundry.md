@@ -217,8 +217,8 @@ version = "0.0.1"
 edition = "2021"
 
 [dependencies]
-chainlink-data-streams-report = "1.2.0"
-chainlink-data-streams-sdk = { version = "1.2.0", features = ["rest"] }
+chainlink-data-streams-report = "1.2.1"
+chainlink-data-streams-sdk = { version = "1.2.1", features = ["rest"] }
 dotenv = "0.15"
 tokio = { version = "1", features = ["full"] }
 
