@@ -22,9 +22,9 @@ func TestData(t *testing.T) {
 		Mid:                 big.NewInt(103),
 		LastSeenTimestampNs: uint64(time.Now().Unix()),
 		Bid:                 big.NewInt(101),
-		BidVolume:           10002,
+		BidVolume:           big.NewInt(10002),
 		Ask:                 big.NewInt(105),
-		AskVolume:           10001,
+		AskVolume:           big.NewInt(10001),
 		LastTradedPrice:     big.NewInt(103),
 		MarketStatus:        common.MarketStatusOpen,
 	}
