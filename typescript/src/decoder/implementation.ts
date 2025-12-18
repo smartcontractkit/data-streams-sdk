@@ -142,9 +142,9 @@ const reportSchemaV11 = [
   { type: "int192", name: "mid" },
   { type: "uint64", name: "lastSeenTimestampNs" },
   { type: "int192", name: "bid" },
-  { type: "uint64", name: "bidVolume" },
+  { type: "int192", name: "bidVolume" },
   { type: "int192", name: "ask" },
-  { type: "uint64", name: "askVolume" },
+  { type: "int192", name: "askVolume" },
   { type: "int192", name: "lastTradedPrice" },
   { type: "uint32", name: "marketStatus" },
 ];
@@ -520,9 +520,9 @@ function decodeV11Report(reportBlob: string): DecodedV11Report {
       mid: decoded[6],
       lastSeenTimestampNs: decoded[7],
       bid: decoded[8],
-      bidVolume: Number(decoded[9]),
+      bidVolume: decoded[9],
       ask: decoded[10],
-      askVolume: Number(decoded[11]),
+      askVolume: decoded[11],
       lastTradedPrice: decoded[12],
       marketStatus: Number(decoded[13]),
     };
