@@ -22,19 +22,19 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
-        run: npm ci
+      #      - name: Install dependencies
+      #        run: npm ci
 
       #################################
       # npm
       #################################
 
       # Ensure npm 11.5.1 or later is installed
-      # - name: Update npm
-      #   run: npm install -g npm@latest
+      - name: Update npm
+        run: npm install -g npm@latest
 
-      # - name: Publish
-      #   run: npm publish
+      - name: Publish
+        run: npm publish --access public
 
       #################################
       # yarn
@@ -60,8 +60,8 @@ jobs:
       # composite action
       #################################
 
-      - name: Publish
-        uses: smartcontractkit/.github/actions/ci-publish-npm@5cf24eba2fef708acd6050f0f9a0397b2dabbfb8
-        with:
-          publish-command: npm publish
-          package-json-directory: ./typescript
+#      - name: Publish
+#        uses: smartcontractkit/.github/actions/ci-publish-npm@5cf24eba2fef708acd6050f0f9a0397b2dabbfb8
+#        with:
+#          publish-command: npm publish
+#          package-json-directory: ./typescript
