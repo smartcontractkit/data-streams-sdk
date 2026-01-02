@@ -10,7 +10,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    environment: publish
+    environment: publish-npm
     defaults:
       run:
         working-directory: ./typescript
