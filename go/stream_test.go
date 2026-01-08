@@ -801,3 +801,96 @@ func TestClient_StreamHA_OneOriginDown(t *testing.T) {
 	}
 
 }
+
+// Tests that when in HA mode both origins are up after a recovery period even if one origin is down on initial connection
+func TestClient_StreamHA_OneOriginDownRecovery(t *testing.T) {
+	connectAttempts := &atomic.Uint64{}
+	reconnectAttemptsBeforeRecovery := uint64(4)
+
+	ms := newMockServer(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead {
+			w.Header().Add(cllAvailOriginsHeader, "{001,002}")
+			w.WriteHeader(200)
+			return
+		}
+
+		if r.URL.Path != apiV1WS {
+			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		}
+
+		origin := r.Header.Get(cllOriginHeader)
+		connectAttempts.Add(1)
+
+		// Simulate origin 002 being down for the first reconnectAttemptsBeforeRecovery attempts
+		// Add one to count for 001 connection
+		if origin == "002" && connectAttempts.Load() <= reconnectAttemptsBeforeRecovery+1 {
+			w.WriteHeader(http.StatusGatewayTimeout)
+			return
+		}
+
+		conn, err := websocket.Accept(
+			w, r, &websocket.AcceptOptions{CompressionMode: websocket.CompressionContextTakeover},
+		)
+
+		if err != nil {
+			t.Fatalf("error accepting connection: %s", err)
+		}
+		defer func() { _ = conn.CloseNow() }()
+
+		// Keep the connection alive for testing
+		for {
+			_, _, err := conn.Read(context.Background())
+			if err != nil {
+				break
+			}
+		}
+	})
+	defer ms.Close()
+
+	streamsClient, err := ms.Client()
+	if err != nil {
+		t.Fatalf("error creating client %s", err)
+	}
+
+	cc := streamsClient.(*client)
+	cc.config.Logger = LogPrintf
+	cc.config.LogDebug = true
+	cc.config.WsHA = true
+
+	sub, err := streamsClient.StreamWithStatusCallback(context.Background(), []feed.ID{feed1, feed2}, func(connected bool, host string, origin string) {
+		t.Logf("status callback: connected=%v, host=%s, origin=%s", connected, host, origin)
+	})
+	if err != nil {
+		t.Fatalf("error subscribing %s", err)
+	}
+	defer sub.Close()
+
+	for connectAttempts.Load() != 2 {
+		time.Sleep(time.Millisecond)
+	}
+
+	time.Sleep(time.Millisecond * 5)
+	stats := sub.Stats()
+	if stats.ActiveConnections != 1 {
+		t.Errorf("expected 1 active connection before recovery, got %d", stats.ActiveConnections)
+	}
+
+	if stats.ConfiguredConnections != 2 {
+		t.Errorf("expected 2 configured connections before recovery, got %d", stats.ConfiguredConnections)
+	}
+
+	// Add two to count one for 001 connection and one for 002 connection
+	for connectAttempts.Load() != reconnectAttemptsBeforeRecovery+2 {
+		time.Sleep(time.Millisecond)
+	}
+
+	time.Sleep(time.Millisecond * 5)
+	stats = sub.Stats()
+	if stats.ActiveConnections != 2 {
+		t.Errorf("expected 2 active connection after recovery, got %d", stats.ActiveConnections)
+	}
+
+	if stats.ConfiguredConnections != 2 {
+		t.Errorf("expected 2 configured connections after recovery, got %d", stats.ConfiguredConnections)
+	}
+}

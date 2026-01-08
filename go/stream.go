@@ -294,10 +294,6 @@ func (s *stream) newWSconnWithRetry(origin string) (conn *wsConn, err error) {
 			time.Sleep(interval)
 			continue
 		}
-
-		if s.connStatusCallback != nil {
-			go s.connStatusCallback(true, conn.host, conn.origin)
-		}
 		return conn, nil
 	}
 }
