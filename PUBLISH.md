@@ -20,7 +20,32 @@ that, the release process is limited to tagging a commit and creating a GitHub r
 
 ## Rust
 
-1. Increment the version in all `Cargo.toml` files.
+1. Increment the version in all `Cargo.toml` files:
+
+rust/crates/report/Cargo.toml:
+
+```
+[package]
+name = "chainlink-data-streams-report"
+- version = "1.1.0"
++ version = "1.2.0"
+```
+
+rust/crates/sdk/Cargo.toml:
+
+```
+[package]
+name = "chainlink-data-streams-sdk"
+- version = "1.1.0"
++ version = "1.2.0"
+
+...
+
+[dependencies]
+- chainlink-data-streams-report = { path = "../report", version = "1.1.0" }
++ chainlink-data-streams-report = { path = "../report", version = "1.2.0" }
+```
+
 2. Run `cargo build` and `cargo publish --dry-run` in order to update `Cargo.lock`.
-3. Tag a `main` commit with `rust/chainlink-data-streams-report-vX.Y.Z`. This will trigger a GitHub action which will
-   publish the two crates. 
+3. Trigger the `Publish Chainlink Data Streams Report Crate` and `Publish Chainlink Data Streams SDK Crate` GitHub
+   actions which will publish the respective crates.
