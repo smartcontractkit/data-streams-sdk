@@ -130,6 +130,15 @@ func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs
 			if err != nil {
 				c.config.logInfo("client: failed to connect to origin %s: %s", origins[x], err)
 				errs = append(errs, fmt.Errorf("origin %s: %w", origins[x], err))
+				// Retry connecting to the origin in the background
+				go func() {
+					conn, err := s.newWSconnWithRetry(origins[x])
+					if err != nil {
+						return
+					}
+					go s.monitorConn(conn)
+					s.conns = append(s.conns, conn)
+				}()
 				continue
 			}
 			go s.monitorConn(conn)
@@ -138,7 +147,10 @@ func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs
 
 		// Only fail if we couldn't connect to ANY origins
 		if len(s.conns) == 0 {
-			return nil, fmt.Errorf("failed to connect to any origins in HA mode: %v", errs)
+			err = fmt.Errorf("failed to connect to any origins in HA mode: %v", errs)
+			s.closeError.CompareAndSwap(nil, err)
+			s.Close()
+			return nil, err
 		}
 		c.config.logInfo("client: connected to %d out of %d origins in HA mode", len(s.conns), len(origins))
 	} else {
@@ -237,52 +249,52 @@ func (s *stream) monitorConn(conn *wsConn) {
 		// ensure the current connection is closed
 		_ = conn.close()
 
-		// reconnect loop
-		// will try to reconnect until client is closed or
-		// we have no active connections and have exceeded maxWSReconnectAttempts
-		var attempts int
-		for {
-			var re *wsConn
-			var err error
-
-			if s.closed.Load() {
-				return
-			}
-
-			// fail the stream if we are over the maxWSReconnectAttempts
-			// and there are no other active connection
-			if attempts >= s.config.WsMaxReconnect && s.stats.activeConnections.Load() == 0 {
-				s.closeError.CompareAndSwap(nil, fmt.Errorf("stream has no active connections, last error: %w", err))
-				s.Close()
-				return
-			}
-			attempts++
-
-			ctx, cancel = context.WithTimeout(context.Background(), defaultWSConnectTimeout)
-			re, err = s.newWSconn(ctx, conn.origin)
-			cancel()
-
-			if err != nil {
-				interval := time.Millisecond * time.Duration(
-					rand.Intn(maxWSReconnectIntervalMIllis-minWSReconnectIntervalMillis)+minWSReconnectIntervalMillis) //nolint:gosec
-				s.config.logInfo(
-					"client: stream websocket %s: error reconnecting: %s, backing off: %s",
-					conn.origin, err, interval.String(),
-				)
-				time.Sleep(interval)
-				continue
-			}
-
-			conn.replace(re.conn)
-			if s.connStatusCallback != nil {
-				go s.connStatusCallback(true, conn.host, conn.origin)
-			}
-			s.config.logInfo(
-				"client: stream websocket %s: reconnected",
-				conn.origin,
-			)
-			break
+		re, err := s.newWSconnWithRetry(conn.origin)
+		if err != nil {
+			s.closeError.CompareAndSwap(nil, fmt.Errorf("stream has no active connections, last error: %w", err))
+			s.Close()
+			return
 		}
+		conn.replace(re.conn)
+		s.config.logInfo(
+			"client: stream websocket %s: reconnected",
+			conn.origin,
+		)
+	}
+}
+
+func (s *stream) newWSconnWithRetry(origin string) (conn *wsConn, err error) {
+	// reconnect loop
+	// will try to reconnect until client is closed or
+	// we have no active connections and have exceeded maxWSReconnectAttempts
+	var attempts int
+	for {
+		if s.closed.Load() || s.streamCtx.Err() != nil {
+			return nil, fmt.Errorf("Retry cancelled, stream is closed")
+		}
+
+		// fail the stream if we are over the maxWSReconnectAttempts
+		// and there are no other active connection
+		if attempts >= s.config.WsMaxReconnect && s.stats.activeConnections.Load() == 0 {
+			return nil, err
+		}
+		attempts++
+
+		ctx, cancel := context.WithTimeout(context.Background(), defaultWSConnectTimeout)
+		conn, err = s.newWSconn(ctx, origin)
+		cancel()
+
+		if err != nil {
+			interval := time.Millisecond * time.Duration(
+				rand.Intn(maxWSReconnectIntervalMIllis-minWSReconnectIntervalMillis)+minWSReconnectIntervalMillis) //nolint:gosec
+			s.config.logInfo(
+				"client: stream websocket %s: error reconnecting: %s, backing off: %s",
+				origin, err, interval.String(),
+			)
+			time.Sleep(interval)
+			continue
+		}
+		return conn, nil
 	}
 }
 
