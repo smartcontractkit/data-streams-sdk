@@ -35,9 +35,9 @@ use num_bigint::BigInt;
 ///     int192 mid;
 ///     uint64 last_seen_timestamp_ns;
 ///     int192 bid;
-///     uint64 bid_volume;
+///     int192 bid_volume;
 ///     int192 ask;
-///     uint64 ask_volume;
+///     int192 ask_volume;
 ///     int192 last_traded_price;
 ///     uint32 market_status;
 /// }
@@ -53,9 +53,9 @@ pub struct ReportDataV11 {
     pub mid: BigInt,
     pub last_seen_timestamp_ns: u64,
     pub bid: BigInt,
-    pub bid_volume: u64,
+    pub bid_volume: BigInt,
     pub ask: BigInt,
-    pub ask_volume: u64,
+    pub ask_volume: BigInt,
     pub last_traded_price: BigInt,
     pub market_status: u32,
 }
@@ -91,9 +91,9 @@ impl ReportDataV11 {
         let mid = ReportBase::read_int192(data, 6 * ReportBase::WORD_SIZE)?;
         let last_seen_timestamp_ns = ReportBase::read_uint64(data, 7 * ReportBase::WORD_SIZE)?;
         let bid = ReportBase::read_int192(data, 8 * ReportBase::WORD_SIZE)?;
-        let bid_volume = ReportBase::read_uint64(data, 9 * ReportBase::WORD_SIZE)?;
+        let bid_volume = ReportBase::read_int192(data, 9 * ReportBase::WORD_SIZE)?;
         let ask = ReportBase::read_int192(data, 10 * ReportBase::WORD_SIZE)?;
-        let ask_volume = ReportBase::read_uint64(data, 11 * ReportBase::WORD_SIZE)?;
+        let ask_volume = ReportBase::read_int192(data, 11 * ReportBase::WORD_SIZE)?;
         let last_traded_price = ReportBase::read_int192(data, 12 * ReportBase::WORD_SIZE)?;
         let market_status = ReportBase::read_uint32(data, 13 * ReportBase::WORD_SIZE)?;
 
@@ -136,9 +136,9 @@ impl ReportDataV11 {
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.mid)?);
         buffer.extend_from_slice(&ReportBase::encode_uint64(self.last_seen_timestamp_ns)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.bid)?);
-        buffer.extend_from_slice(&ReportBase::encode_uint64(self.bid_volume)?);
+        buffer.extend_from_slice(&ReportBase::encode_int192(&self.bid_volume)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.ask)?);
-        buffer.extend_from_slice(&ReportBase::encode_uint64(self.ask_volume)?);
+        buffer.extend_from_slice(&ReportBase::encode_int192(&self.ask_volume)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.last_traded_price)?);
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.market_status)?);
 
@@ -173,9 +173,9 @@ mod tests {
         let expected_mid = BigInt::from(MOCK_MID).checked_mul(&multiplier).unwrap();
         let expected_last_seen_timestamp_ns: u64 = MOCK_LAST_SEEN_TIMESTAMP_NS;
         let expected_bid = BigInt::from(MOCK_BID).checked_mul(&multiplier).unwrap();
-        let expected_bid_volume: u64 = MOCK_BID_VOLUME;
+        let expected_bid_volume = BigInt::from(MOCK_BID_VOLUME).checked_mul(&multiplier).unwrap();
         let expected_ask = BigInt::from(MOCK_ASK).checked_mul(&multiplier).unwrap();
-        let expected_ask_volume: u64 = MOCK_ASK_VOLUME;
+        let expected_ask_volume = BigInt::from(MOCK_ASK_VOLUME).checked_mul(&multiplier).unwrap();
         let expected_last_traded_price = BigInt::from(MOCK_LAST_TRADED_PRICE)
             .checked_mul(&multiplier)
             .unwrap();

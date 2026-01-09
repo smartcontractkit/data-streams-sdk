@@ -183,9 +183,9 @@ export interface DecodedV11Report extends DecodedReportFields {
   mid: bigint;
   lastSeenTimestampNs: bigint;
   bid: bigint;
-  bidVolume: number;
+  bidVolume: bigint;
   ask: bigint;
-  askVolume: number;
+  askVolume: bigint;
   lastTradedPrice: bigint;
   marketStatus: number;
 }
