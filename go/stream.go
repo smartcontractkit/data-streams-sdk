@@ -256,6 +256,9 @@ func (s *stream) monitorConn(conn *wsConn) {
 			return
 		}
 		conn.replace(re.conn)
+		if s.connStatusCallback != nil {
+			go s.connStatusCallback(true, conn.host, conn.origin)
+		}
 		s.config.logInfo(
 			"client: stream websocket %s: reconnected",
 			conn.origin,
