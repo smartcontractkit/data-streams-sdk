@@ -137,7 +137,9 @@ func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs
 						return
 					}
 					go s.monitorConn(conn)
+					s.closingMutex.Lock()
 					s.conns = append(s.conns, conn)
+					s.closingMutex.Unlock()
 				}()
 				continue
 			}
