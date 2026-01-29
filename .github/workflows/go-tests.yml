@@ -23,6 +23,7 @@ jobs:
           go-version: "1.24"
           cache-dependency-path: go/go.sum
 
+      # Runs test with shuffle and count to expose flaky tests.
       - name: Run tests
         working-directory: go
-        run: go test -race ./...
+        run: go test -count=10 -shuffle=on ./...
