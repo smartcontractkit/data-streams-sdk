@@ -137,6 +137,8 @@ func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs
 						return
 					}
 					go s.monitorConn(conn)
+					// Lock is aquired here to prevent race condition with Close() occuring
+					// during this background reconnect attempt
 					s.closingMutex.Lock()
 					s.conns = append(s.conns, conn)
 					s.closingMutex.Unlock()
