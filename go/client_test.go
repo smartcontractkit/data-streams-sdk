@@ -160,22 +160,22 @@ func TestClient_GetLatestReport(t *testing.T) {
 }
 
 func TestClient_GetReportPage(t *testing.T) {
-	expectedInitialTS := uint64(1234567891)
+	expectedInitialTS := uint64(1234567890)
 
 	expectedReportPage1 := &ReportPage{
 		Reports: []*ReportResponse{
-			{FeedID: feed1, FullReport: hexutil.Bytes(`report1 payload`)},
-			{FeedID: feed1, FullReport: hexutil.Bytes(`report2 payload`)},
+			{FeedID: feed1, ObservationsTimestamp: 1234567890, FullReport: hexutil.Bytes(`report1 payload`)},
+			{FeedID: feed1, ObservationsTimestamp: 1234567891, FullReport: hexutil.Bytes(`report2 payload`)},
 		},
-		NextPageTS: 1234567899,
+		NextPageTS: 1234567892,
 	}
 
 	expectedReportPage2 := &ReportPage{
 		Reports: []*ReportResponse{
-			{FeedID: feed1, FullReport: hexutil.Bytes(`report3 payload`)},
-			{FeedID: feed1, FullReport: hexutil.Bytes(`report4 payload`)},
+			{FeedID: feed1, ObservationsTimestamp: 1234567892, FullReport: hexutil.Bytes(`report3 payload`)},
+			{FeedID: feed1, ObservationsTimestamp: 1234567893, FullReport: hexutil.Bytes(`report4 payload`)},
 		},
-		NextPageTS: 1234567999,
+		NextPageTS: 1234567894,
 	}
 
 	ms := newMockServer(func(w http.ResponseWriter, r *http.Request) {
