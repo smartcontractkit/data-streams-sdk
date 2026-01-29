@@ -136,17 +136,11 @@ func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs
 					if err != nil {
 						return
 					}
-					go s.monitorConn(conn)
-					// Lock is aquired here to prevent race condition with Close() occuring
-					// during this background reconnect attempt
-					s.closingMutex.Lock()
-					s.conns = append(s.conns, conn)
-					s.closingMutex.Unlock()
+					s.addConn(conn)
 				}()
 				continue
 			}
-			go s.monitorConn(conn)
-			s.conns = append(s.conns, conn)
+			s.addConn(conn)
 		}
 
 		// Only fail if we couldn't connect to ANY origins
@@ -168,6 +162,16 @@ func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs
 	}
 
 	return s, nil
+}
+
+// addConn adds a connection to the monitoring goroutine aquires the closingMutex to append the connection
+// to the stream's connection list safely. It uses the closingMutex to prevent a race conditions with Close()
+// but is also using this mutex to prevent race conditions with other goroutines appending to conns.
+func (s *stream) addConn(conn *wsConn) {
+	go s.monitorConn(conn)
+	s.closingMutex.Lock()
+	s.conns = append(s.conns, conn)
+	s.closingMutex.Unlock()
 }
 
 func (s *stream) pingConn(ctx context.Context, conn *wsConn) {
