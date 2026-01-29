@@ -1,5 +1,9 @@
 name: Go Tests
 
+# Security: grants only the minimal scopes required.
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths:
