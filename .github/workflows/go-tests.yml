@@ -1,0 +1,29 @@
+name: Go Tests
+
+# Security: grants only the minimal scopes required.
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - "go/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache-dependency-path: go/go.sum
+
+      # Runs test with shuffle and count to expose flaky tests.
+      - name: Run tests
+        working-directory: go
+        run: go test -count=5 -shuffle=on ./...
