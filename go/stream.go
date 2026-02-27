@@ -438,7 +438,7 @@ func (s *stream) newWSconn(ctx context.Context, origin string) (ws *wsConn, err 
 	reqURL.RawQuery = url.Values{"feedIDs": {strings.Join(feedIdsToStringList(s.feedIDs), ",")}}.Encode()
 
 	headers := http.Header{}
-	generateAuthHeaders(headers, http.MethodGet, reqURL.RequestURI(), nil,
+	setRequestHeaders(headers, http.MethodGet, reqURL.RequestURI(), nil,
 		s.config.ApiKey, s.config.ApiSecret, time.Now().UnixMilli())
 
 	if origin != "" {

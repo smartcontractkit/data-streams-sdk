@@ -30,3 +30,8 @@ func generateAuthHeaders(h http.Header, method string, path string, body []byte,
 	h.Add(authzTSHeader, strconv.FormatInt(timestamp, 10))
 	h.Add(authzSigHeader, hmacString)
 }
+
+func setRequestHeaders(h http.Header, method string, path string, body []byte, clientId string, userSecret string, timestamp int64) {
+	h.Set("User-Agent", userAgent())
+	generateAuthHeaders(h, method, path, body, clientId, userSecret, timestamp)
+}
