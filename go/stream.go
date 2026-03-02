@@ -132,16 +132,16 @@ func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs
 				c.config.logInfo("client: failed to connect to origin %s: %s", origins[x], err)
 				errs = append(errs, fmt.Errorf("origin %s: %w", origins[x], err))
 				// Retry connecting to the origin in the background
-				go func() {
-					conn, err := s.newWSconnWithRetry(origins[x])
+				go func(st *stream) {
+					conn, err := st.newWSconnWithRetry(origins[x])
 					if err != nil {
 						return
 					}
-					go s.monitorConn(conn)
-					s.connMu.Lock()
-					s.conns = append(s.conns, conn)
-					s.connMu.Unlock()
-				}()
+					go st.monitorConn(conn)
+					st.connMu.Lock()
+					st.conns = append(st.conns, conn)
+					st.connMu.Unlock()
+				}(s)
 				continue
 			} else {
 				s.connMu.Lock()
