@@ -3,10 +3,11 @@ package v8
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
-	"github.com/smartcontractkit/data-streams-sdk/go/feed"
+	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
 )
 
 var schema = Schema()
@@ -22,11 +23,11 @@ func Schema() abi.Arguments {
 	}
 	return []abi.Argument{
 		{Name: "feedId", Type: mustNewType("bytes32")},
-		{Name: "validFromTimestamp", Type: mustNewType("uint32")},
-		{Name: "observationsTimestamp", Type: mustNewType("uint32")},
+		{Name: "validFromTimestamp", Type: mustNewType("uint64")},
+		{Name: "observationsTimestamp", Type: mustNewType("uint64")},
 		{Name: "nativeFee", Type: mustNewType("uint192")},
 		{Name: "linkFee", Type: mustNewType("uint192")},
-		{Name: "expiresAt", Type: mustNewType("uint32")},
+		{Name: "expiresAt", Type: mustNewType("uint64")},
 		{Name: "lastUpdateTimestamp", Type: mustNewType("uint64")},
 		{Name: "midPrice", Type: mustNewType("int192")},
 		{Name: "marketStatus", Type: mustNewType("uint32")},
@@ -36,12 +37,25 @@ func Schema() abi.Arguments {
 // Data is the container for this schema's attributes
 type Data struct {
 	FeedID                feed.ID `abi:"feedId"`
-	ObservationsTimestamp uint32
+	ObservationsTimestamp time.Time
+	MidPrice              *big.Int
+	MarketStatus          uint32
+	LastUpdateTimestamp   time.Time // nanoseconds precision
+	ValidFromTimestamp    time.Time
+	ExpiresAt             time.Time
+	LinkFee               *big.Int
+	NativeFee             *big.Int
+}
+
+// rawData is used internally for ABI decoding - types must match ABI schema
+type rawData struct {
+	FeedID                feed.ID `abi:"feedId"`
+	ObservationsTimestamp uint64
 	MidPrice              *big.Int
 	MarketStatus          uint32
 	LastUpdateTimestamp   uint64
-	ValidFromTimestamp    uint32
-	ExpiresAt             uint32
+	ValidFromTimestamp    uint64
+	ExpiresAt             uint64
 	LinkFee               *big.Int
 	NativeFee             *big.Int
 }
@@ -57,9 +71,24 @@ func Decode(data []byte) (*Data, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode report: %w", err)
 	}
-	decoded := new(Data)
-	if err = schema.Copy(decoded, values); err != nil {
+	raw := new(rawData)
+	if err = schema.Copy(raw, values); err != nil {
 		return nil, fmt.Errorf("failed to copy report values to struct: %w", err)
 	}
+
+	res := raw.FeedID.Resolution()
+
+	decoded := &Data{
+		FeedID:                raw.FeedID,
+		ValidFromTimestamp:    feed.ParseTimestamp(raw.ValidFromTimestamp, res),
+		ObservationsTimestamp: feed.ParseTimestamp(raw.ObservationsTimestamp, res),
+		NativeFee:             raw.NativeFee,
+		LinkFee:               raw.LinkFee,
+		ExpiresAt:             feed.ParseTimestamp(raw.ExpiresAt, res),
+		LastUpdateTimestamp:   time.Unix(0, int64(raw.LastUpdateTimestamp)), // Always nanoseconds
+		MidPrice:              raw.MidPrice,
+		MarketStatus:          raw.MarketStatus,
+	}
+
 	return decoded, nil
 }

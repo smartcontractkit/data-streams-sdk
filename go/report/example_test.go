@@ -4,9 +4,9 @@ import (
 	"encoding/hex"
 	"os"
 
-	streams "github.com/smartcontractkit/data-streams-sdk/go"
-	"github.com/smartcontractkit/data-streams-sdk/go/report"
-	v3 "github.com/smartcontractkit/data-streams-sdk/go/report/v3"
+	streams "github.com/smartcontractkit/data-streams-sdk/go/v2"
+	"github.com/smartcontractkit/data-streams-sdk/go/v2/report"
+	v3 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v3"
 )
 
 func ExampleDecode() {

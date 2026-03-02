@@ -2,48 +2,71 @@ package v8
 
 import (
 	"math/big"
-	"reflect"
 	"testing"
 	"time"
 
-	"github.com/smartcontractkit/data-streams-sdk/go/report/common"
+	"github.com/smartcontractkit/data-streams-sdk/go/v2/report/common"
 )
 
 func TestData(t *testing.T) {
-	r := &Data{
-		FeedID:                [32]uint8{00, 8, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114},
-		ValidFromTimestamp:    uint32(time.Now().Unix()),
-		ObservationsTimestamp: uint32(time.Now().Unix()),
-		NativeFee:             big.NewInt(10),
-		LinkFee:               big.NewInt(10),
-		ExpiresAt:             uint32(time.Now().Unix()) + 100,
-		LastUpdateTimestamp:   uint64(time.Now().UnixNano() - int64(10*time.Second)),
-		MidPrice:              big.NewInt(100),
-		MarketStatus:          common.MarketStatusOpen,
-	}
+	// Raw values for packing
+	feedID := [32]uint8{00, 8, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114}
+	validFromTS := uint64(time.Now().Unix())
+	observationsTS := uint64(time.Now().Unix())
+	nativeFee := big.NewInt(10)
+	linkFee := big.NewInt(10)
+	expiresAt := uint64(time.Now().Unix()) + 100
+	lastUpdateTS := uint64(time.Now().UnixNano() - int64(10*time.Second))
+	midPrice := big.NewInt(100)
+	marketStatus := common.MarketStatusOpen
 
 	b, err := schema.Pack(
-		r.FeedID,
-		r.ValidFromTimestamp,
-		r.ObservationsTimestamp,
-		r.NativeFee,
-		r.LinkFee,
-		r.ExpiresAt,
-		r.LastUpdateTimestamp,
-		r.MidPrice,
-		r.MarketStatus,
+		feedID,
+		validFromTS,
+		observationsTS,
+		nativeFee,
+		linkFee,
+		expiresAt,
+		lastUpdateTS,
+		midPrice,
+		marketStatus,
 	)
 
 	if err != nil {
-		t.Errorf("failed to serialize report: %s", err)
+		t.Fatalf("failed to serialize report: %s", err)
 	}
 
 	d, err := Decode(b)
 	if err != nil {
-		t.Errorf("failed to deserialize report: %s", err)
+		t.Fatalf("failed to deserialize report: %s", err)
 	}
 
-	if !reflect.DeepEqual(r, d) {
-		t.Errorf("expected: %#v, got %#v", r, d)
+	// Verify decoded values
+	if d.FeedID != feedID {
+		t.Errorf("FeedID mismatch: expected %v, got %v", feedID, d.FeedID)
+	}
+	if d.ValidFromTimestamp.Unix() != int64(validFromTS) {
+		t.Errorf("ValidFromTimestamp mismatch: expected %d, got %d", validFromTS, d.ValidFromTimestamp.Unix())
+	}
+	if d.ObservationsTimestamp.Unix() != int64(observationsTS) {
+		t.Errorf("ObservationsTimestamp mismatch: expected %d, got %d", observationsTS, d.ObservationsTimestamp.Unix())
+	}
+	if d.NativeFee.Cmp(nativeFee) != 0 {
+		t.Errorf("NativeFee mismatch: expected %v, got %v", nativeFee, d.NativeFee)
+	}
+	if d.LinkFee.Cmp(linkFee) != 0 {
+		t.Errorf("LinkFee mismatch: expected %v, got %v", linkFee, d.LinkFee)
+	}
+	if d.ExpiresAt.Unix() != int64(expiresAt) {
+		t.Errorf("ExpiresAt mismatch: expected %d, got %d", expiresAt, d.ExpiresAt.Unix())
+	}
+	if d.LastUpdateTimestamp.UnixNano() != int64(lastUpdateTS) {
+		t.Errorf("LastUpdateTimestamp mismatch: expected %d, got %d", lastUpdateTS, d.LastUpdateTimestamp.UnixNano())
+	}
+	if d.MidPrice.Cmp(midPrice) != 0 {
+		t.Errorf("MidPrice mismatch: expected %v, got %v", midPrice, d.MidPrice)
+	}
+	if d.MarketStatus != marketStatus {
+		t.Errorf("MarketStatus mismatch: expected %v, got %v", marketStatus, d.MarketStatus)
 	}
 }

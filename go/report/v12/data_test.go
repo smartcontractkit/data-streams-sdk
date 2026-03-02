@@ -2,51 +2,74 @@ package v12
 
 import (
 	"math/big"
-	"reflect"
 	"testing"
 	"time"
 )
 
 func TestData(t *testing.T) {
-	r := &Data{
-		// 0x000c6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472
-		FeedID:                [32]uint8{00, 12, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114},
-		ValidFromTimestamp:    uint32(time.Now().Unix()),
-		ObservationsTimestamp: uint32(time.Now().Unix()),
-		NativeFee:             big.NewInt(10),
-		LinkFee:               big.NewInt(10),
-		ExpiresAt:             uint32(time.Now().Unix()) + 100,
-
-		NavPerShare:     big.NewInt(1100),
-		NextNavPerShare: big.NewInt(1101),
-		NavDate:         uint64(time.Now().UnixNano()) - 100,
-		Ripcord:         108,
-	}
+	// Raw values for packing
+	feedID := [32]uint8{0, 12, 251, 109, 19, 88, 151, 228, 170, 245, 101, 123, 255, 211, 176, 180, 143, 142, 42, 81, 49, 33, 76, 158, 194, 214, 46, 172, 93, 83, 32, 103}
+	validFromTS := uint64(time.Now().Unix())
+	observationsTS := uint64(time.Now().Unix())
+	nativeFee := big.NewInt(10)
+	linkFee := big.NewInt(10)
+	expiresAt := uint64(time.Now().Unix()) + 100
+	navPerShare := big.NewInt(100)
+	nextNavPerShare := big.NewInt(101)
+	navDate := uint64(time.Now().UnixNano()) - 100
+	ripcord := uint32(1)
 
 	b, err := schema.Pack(
-		r.FeedID,
-		r.ValidFromTimestamp,
-		r.ObservationsTimestamp,
-		r.NativeFee,
-		r.LinkFee,
-		r.ExpiresAt,
-
-		r.NavPerShare,
-		r.NextNavPerShare,
-		r.NavDate,
-		r.Ripcord,
+		feedID,
+		validFromTS,
+		observationsTS,
+		nativeFee,
+		linkFee,
+		expiresAt,
+		navPerShare,
+		nextNavPerShare,
+		navDate,
+		ripcord,
 	)
 
 	if err != nil {
-		t.Errorf("failed to serialize report: %s", err)
+		t.Fatalf("failed to serialize report: %s", err)
 	}
 
 	d, err := Decode(b)
 	if err != nil {
-		t.Errorf("failed to deserialize report: %s", err)
+		t.Fatalf("failed to deserialize report: %s", err)
 	}
 
-	if !reflect.DeepEqual(r, d) {
-		t.Errorf("expected: %#v, got %#v", r, d)
+	// Verify decoded values
+	if d.FeedID != feedID {
+		t.Errorf("FeedID mismatch: expected %v, got %v", feedID, d.FeedID)
+	}
+	if d.ValidFromTimestamp.Unix() != int64(validFromTS) {
+		t.Errorf("ValidFromTimestamp mismatch: expected %d, got %d", validFromTS, d.ValidFromTimestamp.Unix())
+	}
+	if d.ObservationsTimestamp.Unix() != int64(observationsTS) {
+		t.Errorf("ObservationsTimestamp mismatch: expected %d, got %d", observationsTS, d.ObservationsTimestamp.Unix())
+	}
+	if d.NativeFee.Cmp(nativeFee) != 0 {
+		t.Errorf("NativeFee mismatch: expected %v, got %v", nativeFee, d.NativeFee)
+	}
+	if d.LinkFee.Cmp(linkFee) != 0 {
+		t.Errorf("LinkFee mismatch: expected %v, got %v", linkFee, d.LinkFee)
+	}
+	if d.ExpiresAt.Unix() != int64(expiresAt) {
+		t.Errorf("ExpiresAt mismatch: expected %d, got %d", expiresAt, d.ExpiresAt.Unix())
+	}
+	if d.NavPerShare.Cmp(navPerShare) != 0 {
+		t.Errorf("NavPerShare mismatch: expected %v, got %v", navPerShare, d.NavPerShare)
+	}
+	if d.NextNavPerShare.Cmp(nextNavPerShare) != 0 {
+		t.Errorf("NextNavPerShare mismatch: expected %v, got %v", nextNavPerShare, d.NextNavPerShare)
+	}
+	if d.NavDate.UnixNano() != int64(navDate) {
+		t.Errorf("NavDate mismatch: expected %d, got %d", navDate, d.NavDate.UnixNano())
+	}
+	if d.Ripcord != ripcord {
+		t.Errorf("Ripcord mismatch: expected %d, got %d", ripcord, d.Ripcord)
 	}
 }

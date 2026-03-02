@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/smartcontractkit/data-streams-sdk/go/feed"
+	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
 )
 
 // Client is the data streams client interface.
@@ -151,23 +151,39 @@ func (c *client) GetLatestReport(ctx context.Context, id feed.ID) (r *ReportResp
 // ReportResponse implements the report envelope that contains the full report payload,
 // its FeedID and timestamps. For decoding the Report Payload use report.Decode().
 type ReportResponse struct {
-	FeedID                feed.ID `json:"feedID"`
-	FullReport            []byte  `json:"fullReport"`
-	ValidFromTimestamp    uint64  `json:"validFromTimestamp"`
-	ObservationsTimestamp uint64  `json:"observationsTimestamp"`
+	FeedID                feed.ID   
+	FullReport            []byte    
+	ValidFromTimestamp    time.Time 
+	ObservationsTimestamp time.Time 
 }
 
 func (r *ReportResponse) UnmarshalJSON(b []byte) (err error) {
-	type Alias ReportResponse
 	aux := &struct {
-		FullReport string `json:"fullReport"`
-		*Alias
-	}{
-		Alias: (*Alias)(r),
-	}
+		FeedID                  feed.ID `json:"feedID"`
+		FullReport              string  `json:"fullReport"`
+		ValidFromTimestamp      uint64  `json:"validFromTimestamp"`
+		ObservationsTimestamp   uint64  `json:"observationsTimestamp"`
+		ValidFromTimestampMs    uint64  `json:"validFromTimestampMs"`
+		ObservationsTimestampMs uint64  `json:"observationsTimestampMs"`
+	}{}
 
 	if err := json.Unmarshal(b, aux); err != nil {
 		return err
+	}
+
+	r.FeedID = aux.FeedID
+
+	// V2 payloads use milliseconds, V1 payloads use seconds
+	if aux.ValidFromTimestampMs > 0 {
+		r.ValidFromTimestamp = time.UnixMilli(int64(aux.ValidFromTimestampMs))
+	} else if aux.ValidFromTimestamp > 0 {
+		r.ValidFromTimestamp = time.Unix(int64(aux.ValidFromTimestamp), 0)
+	}
+
+	if aux.ObservationsTimestampMs > 0 {
+		r.ObservationsTimestamp = time.UnixMilli(int64(aux.ObservationsTimestampMs))
+	} else if aux.ObservationsTimestamp > 0 {
+		r.ObservationsTimestamp = time.Unix(int64(aux.ObservationsTimestamp), 0)
 	}
 
 	if len(aux.FullReport) < 3 {
@@ -182,13 +198,26 @@ func (r *ReportResponse) UnmarshalJSON(b []byte) (err error) {
 }
 
 func (r *ReportResponse) MarshalJSON() ([]byte, error) {
-	type Alias ReportResponse
+	var validFrom, observationsTS uint64
+
+	// Wrapper timestamps are always in milliseconds
+	if !r.ValidFromTimestamp.IsZero() {
+		validFrom = uint64(r.ValidFromTimestamp.UnixMilli())
+	}
+	if !r.ObservationsTimestamp.IsZero() {
+		observationsTS = uint64(r.ObservationsTimestamp.UnixMilli())
+	}
+
 	return json.Marshal(&struct {
-		FullReport string `json:"fullReport"`
-		*Alias
+		FeedID                  feed.ID `json:"feedID"`
+		FullReport              string  `json:"fullReport"`
+		ValidFromTimestampMs    uint64  `json:"validFromTimestampMs"`
+		ObservationsTimestampMs uint64  `json:"observationsTimestampMs"`
 	}{
-		FullReport: "0x" + hex.EncodeToString(r.FullReport),
-		Alias:      (*Alias)(r),
+		FeedID:                  r.FeedID,
+		FullReport:              "0x" + hex.EncodeToString(r.FullReport),
+		ValidFromTimestampMs:    validFrom,
+		ObservationsTimestampMs: observationsTS,
 	})
 }
 
@@ -243,7 +272,7 @@ func (c *client) GetReportPage(ctx context.Context, id feed.ID, pageTS uint64) (
 	}
 	r.NextPageTS = 0
 	if len(r.Reports) > 0 {
-		r.NextPageTS = r.Reports[len(r.Reports)-1].ObservationsTimestamp + 1
+		r.NextPageTS = uint64(r.Reports[len(r.Reports)-1].ObservationsTimestamp.Unix()) + 1
 	}
 	return r, err
 }

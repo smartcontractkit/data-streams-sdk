@@ -5,10 +5,10 @@ import (
 	"os"
 	"time"
 
-	streams "github.com/smartcontractkit/data-streams-sdk/go"
-	"github.com/smartcontractkit/data-streams-sdk/go/feed"
-	streamsReport "github.com/smartcontractkit/data-streams-sdk/go/report"
-	v3 "github.com/smartcontractkit/data-streams-sdk/go/report/v3"
+	streams "github.com/smartcontractkit/data-streams-sdk/go/v2"
+	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
+	streamsReport "github.com/smartcontractkit/data-streams-sdk/go/v2/report"
+	v3 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v3"
 )
 
 func ExampleClient() {

@@ -3,7 +3,7 @@ package streams
 import "net/textproto"
 
 const (
-	apiV1WS            = "/api/v1/ws"
+	apiV2WS            = "/api/v2/ws"
 	apiV1Feeds         = "/api/v1/feeds"
 	apiV1Reports       = "/api/v1/reports"
 	apiV1ReportsBulk   = "/api/v1/reports/bulk"

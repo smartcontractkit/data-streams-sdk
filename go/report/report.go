@@ -5,19 +5,19 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
-	v1 "github.com/smartcontractkit/data-streams-sdk/go/report/v1"
-	v10 "github.com/smartcontractkit/data-streams-sdk/go/report/v10"
-	v11 "github.com/smartcontractkit/data-streams-sdk/go/report/v11"
-	v12 "github.com/smartcontractkit/data-streams-sdk/go/report/v12"
-	v13 "github.com/smartcontractkit/data-streams-sdk/go/report/v13"
-	v2 "github.com/smartcontractkit/data-streams-sdk/go/report/v2"
-	v3 "github.com/smartcontractkit/data-streams-sdk/go/report/v3"
-	v4 "github.com/smartcontractkit/data-streams-sdk/go/report/v4"
-	v5 "github.com/smartcontractkit/data-streams-sdk/go/report/v5"
-	v6 "github.com/smartcontractkit/data-streams-sdk/go/report/v6"
-	v7 "github.com/smartcontractkit/data-streams-sdk/go/report/v7"
-	v8 "github.com/smartcontractkit/data-streams-sdk/go/report/v8"
-	v9 "github.com/smartcontractkit/data-streams-sdk/go/report/v9"
+	v1 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v1"
+	v10 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v10"
+	v11 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v11"
+	v12 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v12"
+	v13 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v13"
+	v2 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v2"
+	v3 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v3"
+	v4 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v4"
+	v5 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v5"
+	v6 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v6"
+	v7 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v7"
+	v8 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v8"
+	v9 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v9"
 )
 
 // Data represents the actual report data and attributes
@@ -48,15 +48,47 @@ func Decode[T Data](fullReport []byte) (r *Report[T], err error) {
 		return nil, fmt.Errorf("report: failed to copy: %s", err)
 	}
 
-	dataSchema := r.Data.Schema()
-	dataValues, err := dataSchema.Unpack(r.ReportBlob)
-	if err != nil {
-		return nil, fmt.Errorf("report: failed to unpack data: %s", err)
+	var data any
+	switch any(r.Data).(type) {
+	case v1.Data:
+		data, err = v1.Decode(r.ReportBlob)
+	case v2.Data:
+		data, err = v2.Decode(r.ReportBlob)
+	case v3.Data:
+		data, err = v3.Decode(r.ReportBlob)
+	case v4.Data:
+		data, err = v4.Decode(r.ReportBlob)
+	case v5.Data:
+		data, err = v5.Decode(r.ReportBlob)
+	case v6.Data:
+		data, err = v6.Decode(r.ReportBlob)
+	case v7.Data:
+		data, err = v7.Decode(r.ReportBlob)
+	case v8.Data:
+		data, err = v8.Decode(r.ReportBlob)
+	case v9.Data:
+		data, err = v9.Decode(r.ReportBlob)
+	case v10.Data:
+		data, err = v10.Decode(r.ReportBlob)
+	case v11.Data:
+		data, err = v11.Decode(r.ReportBlob)
+	case v12.Data:
+		data, err = v12.Decode(r.ReportBlob)
+	case v13.Data:
+		data, err = v13.Decode(r.ReportBlob)
+	default:
+		return nil, fmt.Errorf("report: unsupported data type")
 	}
 
-	err = dataSchema.Copy(&r.Data, dataValues)
 	if err != nil {
-		return nil, fmt.Errorf("report: failed to copy data: %s", err)
+		return nil, fmt.Errorf("report: failed to decode data: %s", err)
+	}
+
+	// Required to return typed data as T
+	if d, ok := data.(*T); ok {
+		r.Data = *d
+	} else {
+		return nil, fmt.Errorf("report: could not cast data to T")
 	}
 
 	return r, nil

@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"time"
 )
 
 // FeedVersion represents the feed report schema version
@@ -26,6 +27,27 @@ const (
 	FeedVersion13
 	_
 )
+
+// Resolution represents the timestamp resolution for a feed
+type Resolution uint8
+
+const (
+	// ResolutionSeconds indicates timestamps are in seconds
+	ResolutionSeconds Resolution = 0
+	// ResolutionMilliseconds indicates timestamps are in milliseconds
+	ResolutionMilliseconds Resolution = 1
+)
+
+func (r Resolution) String() string {
+	switch r {
+	case ResolutionSeconds:
+		return "seconds"
+	case ResolutionMilliseconds:
+		return "milliseconds"
+	default:
+		return "undefined"
+	}
+}
 
 // ID type
 type ID [32]byte
@@ -76,6 +98,20 @@ type Feed struct {
 	FeedID ID `json:"feedID"`
 }
 
+// Version returns the feed schema version (masked to ignore resolution nibble)
 func (f *ID) Version() FeedVersion {
-	return FeedVersion(binary.BigEndian.Uint16(f[:2]))
+	return FeedVersion(binary.BigEndian.Uint16(f[:2]) & 0x0FFF)
+}
+
+// Resolution returns the timestamp resolution for this feed
+func (f *ID) Resolution() Resolution {
+	return Resolution(f[0] >> 4)
+}
+
+// ParseTimestamp converts a raw uint64 timestamp to time.Time based on resolution.
+func ParseTimestamp(ts uint64, res Resolution) time.Time {
+	if res == ResolutionMilliseconds {
+		return time.UnixMilli(int64(ts))
+	}
+	return time.Unix(int64(ts), 0)
 }

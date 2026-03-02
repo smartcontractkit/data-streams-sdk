@@ -1,6 +1,7 @@
 package streams
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,10 +11,52 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/smartcontractkit/data-streams-sdk/go/feed"
+	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
 )
+
+// reportResponseEqual compares two ReportResponse structs, handling time.Time comparison properly
+func reportResponseEqual(a, b *ReportResponse) bool {
+	if a.FeedID != b.FeedID {
+		return false
+	}
+	if !bytes.Equal(a.FullReport, b.FullReport) {
+		return false
+	}
+	if !a.ObservationsTimestamp.Equal(b.ObservationsTimestamp) {
+		return false
+	}
+	if !a.ValidFromTimestamp.Equal(b.ValidFromTimestamp) {
+		return false
+	}
+	return true
+}
+
+// reportResponsesEqual compares slices of ReportResponse
+func reportResponsesEqual(a, b []*ReportResponse) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if !reportResponseEqual(a[i], b[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// reportPageEqual compares two ReportPage structs
+func reportPageEqual(a, b *ReportPage) bool {
+	if !reportResponsesEqual(a.Reports, b.Reports) {
+		return false
+	}
+	if a.NextPageTS != b.NextPageTS {
+		return false
+	}
+	return true
+}
 
 func mustFeedIDfromString(s string) (f feed.ID) {
 	err := f.FromString(s)
@@ -68,8 +111,8 @@ func TestClient_GetFeeds(t *testing.T) {
 
 func TestClient_GetReports(t *testing.T) {
 	expectedReports := []*ReportResponse{
-		{FeedID: feed1, ObservationsTimestamp: 12344},
-		{FeedID: feed2, ObservationsTimestamp: 12344},
+		{FeedID: feed1, ObservationsTimestamp: time.Unix(12344, 0)},
+		{FeedID: feed2, ObservationsTimestamp: time.Unix(12344, 0)},
 	}
 	expectedFeedIdListStr := fmt.Sprintf("%s,%s", feed1.String(), feed2.String())
 
@@ -111,7 +154,7 @@ func TestClient_GetReports(t *testing.T) {
 
 	fmt.Println(expectedReports[0], reports[0])
 
-	if !reflect.DeepEqual(reports, expectedReports) {
+	if !reportResponsesEqual(reports, expectedReports) {
 		t.Errorf("GetFeeds() = %v, want %v", reports, expectedReports)
 	}
 }
@@ -155,7 +198,7 @@ func TestClient_GetLatestReport(t *testing.T) {
 		t.Fatalf("GetLatestReport() error = %v", err)
 	}
 
-	if !reflect.DeepEqual(report, expectedReport) {
+	if !reportResponseEqual(report, expectedReport) {
 		t.Errorf("GetLatestReport() = %v, want %v", report, expectedReport)
 	}
 }
@@ -165,18 +208,18 @@ func TestClient_GetReportPage(t *testing.T) {
 
 	expectedReportPage1 := &ReportPage{
 		Reports: []*ReportResponse{
-			{FeedID: feed1, ObservationsTimestamp: 1234567890, FullReport: hexutil.Bytes(`report1 payload`)},
-			{FeedID: feed1, ObservationsTimestamp: 1234567891, FullReport: hexutil.Bytes(`report2 payload`)},
+			{FeedID: feed1, FullReport: hexutil.Bytes(`report1 payload`), ObservationsTimestamp: time.Unix(1234567897, 0)},
+			{FeedID: feed1, FullReport: hexutil.Bytes(`report2 payload`), ObservationsTimestamp: time.Unix(1234567898, 0)},
 		},
-		NextPageTS: 1234567892,
+		NextPageTS: 1234567899, // Last ObservationsTimestamp (1234567898) + 1
 	}
 
 	expectedReportPage2 := &ReportPage{
 		Reports: []*ReportResponse{
-			{FeedID: feed1, ObservationsTimestamp: 1234567892, FullReport: hexutil.Bytes(`report3 payload`)},
-			{FeedID: feed1, ObservationsTimestamp: 1234567893, FullReport: hexutil.Bytes(`report4 payload`)},
+			{FeedID: feed1, FullReport: hexutil.Bytes(`report3 payload`), ObservationsTimestamp: time.Unix(1234567997, 0)},
+			{FeedID: feed1, FullReport: hexutil.Bytes(`report4 payload`), ObservationsTimestamp: time.Unix(1234567998, 0)},
 		},
-		NextPageTS: 1234567894,
+		NextPageTS: 1234567999, // Last ObservationsTimestamp (1234567998) + 1
 	}
 
 	ms := newMockServer(func(w http.ResponseWriter, r *http.Request) {
@@ -230,7 +273,7 @@ func TestClient_GetReportPage(t *testing.T) {
 		t.Fatalf("GetReportPage() error = %v", err)
 	}
 
-	if !reflect.DeepEqual(reportPage, expectedReportPage1) {
+	if !reportPageEqual(reportPage, expectedReportPage1) {
 		t.Errorf("GetReportPage() = %v, want %v", reportPage, expectedReportPage1)
 	}
 
@@ -239,7 +282,7 @@ func TestClient_GetReportPage(t *testing.T) {
 		t.Fatalf("GetReportPage() error = %v", err)
 	}
 
-	if !reflect.DeepEqual(reportPage, expectedReportPage2) {
+	if !reportPageEqual(reportPage, expectedReportPage2) {
 		t.Errorf("GetReportPage() = %v, want %v", reportPage, expectedReportPage2)
 	}
 }

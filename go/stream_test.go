@@ -6,20 +6,19 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/smartcontractkit/data-streams-sdk/go/feed"
+	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
 	"nhooyr.io/websocket"
 )
 
 func TestClient_Subscribe(t *testing.T) {
 	expectedReports := []*ReportResponse{
-		{FeedID: feed1, ObservationsTimestamp: 12344},
-		{FeedID: feed2, ObservationsTimestamp: 12344},
+		{FeedID: feed1, ObservationsTimestamp: time.Unix(12344, 0)},
+		{FeedID: feed2, ObservationsTimestamp: time.Unix(12344, 0)},
 	}
 	expectedFeedIdListStr := fmt.Sprintf("%s,%s", feed1.String(), feed2.String())
 
@@ -28,8 +27,8 @@ func TestClient_Subscribe(t *testing.T) {
 			return
 		}
 
-		if r.URL.Path != apiV1WS {
-			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		if r.URL.Path != apiV2WS {
+			t.Errorf("expected path %s, got %s", apiV2WS, r.URL.Path)
 		}
 
 		if r.URL.Query().Get("feedIDs") != expectedFeedIdListStr {
@@ -98,7 +97,7 @@ func TestClient_Subscribe(t *testing.T) {
 		reports = append(reports, rep)
 	}
 
-	if !reflect.DeepEqual(reports, expectedReports) {
+	if !reportResponsesEqual(reports, expectedReports) {
 		t.Errorf("Read() = %v, want %v", reports, expectedReports)
 	}
 
@@ -117,8 +116,8 @@ func TestClient_SubscribeWithCallback(t *testing.T) {
 		if r.Method == http.MethodHead {
 			return
 		}
-		if r.URL.Path != apiV1WS {
-			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		if r.URL.Path != apiV2WS {
+			t.Errorf("expected path %s, got %s", apiV2WS, r.URL.Path)
 		}
 		_, err := websocket.Accept(
 			w, r, &websocket.AcceptOptions{CompressionMode: websocket.CompressionContextTakeover},
@@ -223,8 +222,8 @@ func TestClient_SubscribeCanceledContext(t *testing.T) {
 			return
 		}
 
-		if r.URL.Path != apiV1WS {
-			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		if r.URL.Path != apiV2WS {
+			t.Errorf("expected path %s, got %s", apiV2WS, r.URL.Path)
 		}
 
 		if r.URL.Query().Get("feedIDs") != expectedFeedIdListStr {
@@ -257,8 +256,8 @@ func TestClient_SubscribeCanceledContext(t *testing.T) {
 
 func TestClient_StreamReconnectMerge(t *testing.T) {
 	expectedReports := []*ReportResponse{
-		{FeedID: feed1, ObservationsTimestamp: 12344},
-		{FeedID: feed2, ObservationsTimestamp: 12344},
+		{FeedID: feed1, ObservationsTimestamp: time.Unix(12344, 0)},
+		{FeedID: feed2, ObservationsTimestamp: time.Unix(12344, 0)},
 	}
 	expectedFeedIdListStr := fmt.Sprintf("%s,%s", feed1.String(), feed2.String())
 
@@ -268,8 +267,8 @@ func TestClient_StreamReconnectMerge(t *testing.T) {
 			return
 		}
 
-		if r.URL.Path != apiV1WS {
-			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		if r.URL.Path != apiV2WS {
+			t.Errorf("expected path %s, got %s", apiV2WS, r.URL.Path)
 		}
 
 		if r.URL.Query().Get("feedIDs") != expectedFeedIdListStr {
@@ -351,7 +350,7 @@ func TestClient_StreamReconnectMerge(t *testing.T) {
 	stats := sub.Stats()
 	sub.Close()
 
-	if !reflect.DeepEqual(reports, expectedReports) {
+	if !reportResponsesEqual(reports, expectedReports) {
 		t.Errorf("Read() = %v, want %v", reports, expectedReports)
 	}
 
@@ -366,14 +365,14 @@ func TestClient_StreamReconnectMerge(t *testing.T) {
 
 func TestClient_StreamHA(t *testing.T) {
 	expectedReports1 := []*ReportResponse{
-		{FeedID: feed1, ObservationsTimestamp: 12344},
-		{FeedID: feed2, ObservationsTimestamp: 12344},
+		{FeedID: feed1, ObservationsTimestamp: time.Unix(12344, 0)},
+		{FeedID: feed2, ObservationsTimestamp: time.Unix(12344, 0)},
 	}
 	expectedReports2 := []*ReportResponse{
-		{FeedID: feed1, ObservationsTimestamp: 12344},
-		{FeedID: feed2, ObservationsTimestamp: 12344},
-		{FeedID: feed1, ObservationsTimestamp: 12345},
-		{FeedID: feed2, ObservationsTimestamp: 12346},
+		{FeedID: feed1, ObservationsTimestamp: time.Unix(12344, 0)},
+		{FeedID: feed2, ObservationsTimestamp: time.Unix(12344, 0)},
+		{FeedID: feed1, ObservationsTimestamp: time.Unix(12345, 0)},
+		{FeedID: feed2, ObservationsTimestamp: time.Unix(12346, 0)},
 	}
 	expectedFeedIdListStr := fmt.Sprintf("%s,%s", feed1.String(), feed2.String())
 
@@ -384,8 +383,8 @@ func TestClient_StreamHA(t *testing.T) {
 			return
 		}
 
-		if r.URL.Path != apiV1WS {
-			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		if r.URL.Path != apiV2WS {
+			t.Errorf("expected path %s, got %s", apiV2WS, r.URL.Path)
 		}
 
 		if r.URL.Query().Get("feedIDs") != expectedFeedIdListStr {
@@ -465,7 +464,7 @@ func TestClient_StreamHA(t *testing.T) {
 		reports = append(reports, rep)
 	}
 
-	if !reflect.DeepEqual(reports, expectedReports2) {
+	if !reportResponsesEqual(reports, expectedReports2) {
 		t.Errorf("Read() = %v, want %v", reports, expectedReports2)
 	}
 
@@ -479,8 +478,8 @@ func TestClient_StreamHA(t *testing.T) {
 
 func TestClient_ReadCancel(t *testing.T) {
 	expectedReports := []*ReportResponse{
-		{FeedID: feed1, ObservationsTimestamp: 12344},
-		{FeedID: feed2, ObservationsTimestamp: 12344},
+		{FeedID: feed1, ObservationsTimestamp: time.Unix(12344, 0)},
+		{FeedID: feed2, ObservationsTimestamp: time.Unix(12344, 0)},
 	}
 	expectedFeedIdListStr := fmt.Sprintf("%s,%s", feed1.String(), feed2.String())
 
@@ -489,8 +488,8 @@ func TestClient_ReadCancel(t *testing.T) {
 			return
 		}
 
-		if r.URL.Path != apiV1WS {
-			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		if r.URL.Path != apiV2WS {
+			t.Errorf("expected path %s, got %s", apiV2WS, r.URL.Path)
 		}
 
 		if r.URL.Query().Get("feedIDs") != expectedFeedIdListStr {
@@ -579,7 +578,7 @@ func TestClient_ReadCancel(t *testing.T) {
 		t.Errorf("expected nil report, got %#v", rep)
 	}
 
-	if !reflect.DeepEqual(reports, expectedReports) {
+	if !reportResponsesEqual(reports, expectedReports) {
 		t.Errorf("Read() = %v, want %v", reports, expectedReports)
 	}
 
@@ -601,8 +600,8 @@ func TestClient_StreamHAPartialReconnect(t *testing.T) {
 			return
 		}
 
-		if r.URL.Path != apiV1WS {
-			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		if r.URL.Path != apiV2WS {
+			t.Errorf("expected path %s, got %s", apiV2WS, r.URL.Path)
 		}
 
 		conn, err := websocket.Accept(
@@ -662,8 +661,8 @@ func TestClient_StreamCustomHeader(t *testing.T) {
 			return
 		}
 
-		if r.URL.Path != apiV1WS {
-			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		if r.URL.Path != apiV2WS {
+			t.Errorf("expected path %s, got %s", apiV2WS, r.URL.Path)
 		}
 
 		if r.Header.Get("custom-header") != "custom-value" {
@@ -730,8 +729,8 @@ func TestClient_StreamHA_OneOriginDown(t *testing.T) {
 			return
 		}
 
-		if r.URL.Path != apiV1WS {
-			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		if r.URL.Path != apiV2WS {
+			t.Errorf("expected path %s, got %s", apiV2WS, r.URL.Path)
 		}
 
 		origin := r.Header.Get(cllOriginHeader)
@@ -814,8 +813,8 @@ func TestClient_StreamHA_OneOriginDownRecovery(t *testing.T) {
 			return
 		}
 
-		if r.URL.Path != apiV1WS {
-			t.Errorf("expected path %s, got %s", apiV1WS, r.URL.Path)
+		if r.URL.Path != apiV2WS {
+			t.Errorf("expected path %s, got %s", apiV2WS, r.URL.Path)
 		}
 
 		origin := r.Header.Get(cllOriginHeader)

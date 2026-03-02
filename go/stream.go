@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/smartcontractkit/data-streams-sdk/go/feed"
+	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
 	"nhooyr.io/websocket"
 )
 
@@ -84,7 +84,7 @@ type stream struct {
 	connMu             sync.Mutex
 
 	waterMarkMu sync.Mutex
-	waterMark   map[string]uint64
+	waterMark   map[string]time.Time
 
 	stats struct {
 		accepted              atomic.Uint64
@@ -108,7 +108,7 @@ func (c *client) newStream(ctx context.Context, httpClient *http.Client, feedIDs
 		config:             c.config,
 		output:             make(chan *ReportResponse, 1),
 		feedIDs:            feedIDs,
-		waterMark:          make(map[string]uint64),
+		waterMark:          make(map[string]time.Time),
 		streamCtx:          streamCtx,
 		streamCtxCancel:    streamCtxCancel,
 	}
@@ -181,24 +181,30 @@ func (s *stream) pingConn(ctx context.Context, conn *wsConn) {
 	for {
 		select {
 		case <-ctx.Done():
+			s.config.logDebug("client: stream websocket %s ping loop exiting: context done", conn.origin)
 			return
 
 		case <-ticker.C:
+			pingStart := time.Now()
 			pctx, pcancel := context.WithTimeout(context.Background(), 2*time.Second)
 			err := conn.conn.Ping(pctx)
 			pcancel()
+			pingDuration := time.Since(pingStart)
 
 			if s.closed.Load() {
+				s.config.logDebug("client: stream websocket %s ping loop exiting: stream closed", conn.origin)
 				return
 			}
 
 			if err != nil {
 				s.config.logInfo(
-					"client: stream websocket %s ping error: %s, closing client: %s",
-					conn.origin, err, conn.close(),
+					"client: stream websocket %s ping FAILED after %v: %s, closing connection: %s",
+					conn.origin, pingDuration, err, conn.close(),
 				)
 				return
 			}
+
+			s.config.logDebug("client: stream websocket %s ping OK (took %v)", conn.origin, pingDuration)
 		}
 	}
 }
@@ -369,7 +375,8 @@ func (s *stream) accept(ctx context.Context, m *message) (err error) {
 	id := m.Report.FeedID.String()
 
 	s.waterMarkMu.Lock()
-	if s.waterMark[id] >= m.Report.ObservationsTimestamp {
+	// Skip older reports and reports with the same timestamp
+	if !m.Report.ObservationsTimestamp.After(s.waterMark[id]) {
 		s.stats.skipped.Add(1)
 		s.waterMarkMu.Unlock()
 		return nil
@@ -434,7 +441,7 @@ func (ws *wsConn) replace(c *websocket.Conn) {
 }
 
 func (s *stream) newWSconn(ctx context.Context, origin string) (ws *wsConn, err error) {
-	reqURL := s.config.wsURL.ResolveReference(&url.URL{Path: apiV1WS})
+	reqURL := s.config.wsURL.ResolveReference(&url.URL{Path: apiV2WS})
 	reqURL.RawQuery = url.Values{"feedIDs": {strings.Join(feedIdsToStringList(s.feedIDs), ",")}}.Encode()
 
 	headers := http.Header{}

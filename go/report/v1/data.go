@@ -3,9 +3,10 @@ package v1
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/smartcontractkit/data-streams-sdk/go/feed"
+	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
 )
 
 var schema = Schema()
@@ -21,7 +22,7 @@ func Schema() abi.Arguments {
 	}
 	return abi.Arguments([]abi.Argument{
 		{Name: "feedId", Type: mustNewType("bytes32")},
-		{Name: "observationsTimestamp", Type: mustNewType("uint32")},
+		{Name: "observationsTimestamp", Type: mustNewType("uint64")},
 		{Name: "benchmarkPrice", Type: mustNewType("int192")},
 		{Name: "bid", Type: mustNewType("int192")},
 		{Name: "ask", Type: mustNewType("int192")},
@@ -35,7 +36,20 @@ func Schema() abi.Arguments {
 // Data is the container for this schema attributes
 type Data struct {
 	FeedID                feed.ID `abi:"feedId"`
-	ObservationsTimestamp uint32
+	ObservationsTimestamp time.Time
+	BenchmarkPrice        *big.Int
+	Bid                   *big.Int
+	Ask                   *big.Int
+	CurrentBlockNum       uint64
+	CurrentBlockHash      [32]byte
+	ValidFromBlockNum     uint64
+	CurrentBlockTimestamp time.Time
+}
+
+// rawData is used internally for ABI decoding - types must match ABI schema
+type rawData struct {
+	FeedID                feed.ID `abi:"feedId"`
+	ObservationsTimestamp uint64
 	BenchmarkPrice        *big.Int
 	Bid                   *big.Int
 	Ask                   *big.Int
@@ -56,9 +70,24 @@ func Decode(report []byte) (*Data, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode report: %w", err)
 	}
-	decoded := new(Data)
-	if err = schema.Copy(decoded, values); err != nil {
+	raw := new(rawData)
+	if err = schema.Copy(raw, values); err != nil {
 		return nil, fmt.Errorf("failed to copy report values to struct: %w", err)
 	}
+
+	res := raw.FeedID.Resolution()
+
+	decoded := &Data{
+		FeedID:                raw.FeedID,
+		ObservationsTimestamp: feed.ParseTimestamp(raw.ObservationsTimestamp, res),
+		BenchmarkPrice:        raw.BenchmarkPrice,
+		Bid:                   raw.Bid,
+		Ask:                   raw.Ask,
+		CurrentBlockNum:       raw.CurrentBlockNum,
+		CurrentBlockHash:      raw.CurrentBlockHash,
+		ValidFromBlockNum:     raw.ValidFromBlockNum,
+		CurrentBlockTimestamp: feed.ParseTimestamp(raw.CurrentBlockTimestamp, res),
+	}
+
 	return decoded, nil
 }
