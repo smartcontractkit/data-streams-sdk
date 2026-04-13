@@ -256,6 +256,9 @@ func (s *stream) monitorConn(conn *wsConn) {
 			return
 		}
 		conn.replace(re.conn)
+		if s.connStatusCallback != nil {
+			go s.connStatusCallback(true, conn.host, conn.origin)
+		}
 		s.config.logInfo(
 			"client: stream websocket %s: reconnected",
 			conn.origin,
@@ -421,7 +424,7 @@ func (s *stream) newWSconn(ctx context.Context, origin string) (ws *wsConn, err 
 	reqURL.RawQuery = url.Values{"feedIDs": {strings.Join(feedIdsToStringList(s.feedIDs), ",")}}.Encode()
 
 	headers := http.Header{}
-	generateAuthHeaders(headers, http.MethodGet, reqURL.RequestURI(), nil,
+	setRequestHeaders(headers, http.MethodGet, reqURL.RequestURI(), nil,
 		s.config.ApiKey, s.config.ApiSecret, time.Now().UnixMilli())
 
 	if origin != "" {

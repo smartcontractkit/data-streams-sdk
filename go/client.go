@@ -285,7 +285,7 @@ func (c *client) rest(ctx context.Context, d *request, dst interface{}) (err err
 		return err
 	}
 
-	generateAuthHeaders(req.Header, req.Method, reqURL.RequestURI(), d.body,
+	setRequestHeaders(req.Header, req.Method, reqURL.RequestURI(), d.body,
 		c.config.ApiKey, c.config.ApiSecret, time.Now().UnixMilli())
 
 	if value := ctx.Value(CustomHeadersCtxKey); value != nil {
@@ -357,7 +357,7 @@ func (c *client) serverHeaders(ctx context.Context, u *url.URL) (h http.Header, 
 		return nil, err
 	}
 
-	generateAuthHeaders(req.Header, req.Method, reqURL.RequestURI(), nil,
+	setRequestHeaders(req.Header, req.Method, reqURL.RequestURI(), nil,
 		c.config.ApiKey, c.config.ApiSecret, time.Now().UnixMilli())
 
 	c.config.logDebug(
