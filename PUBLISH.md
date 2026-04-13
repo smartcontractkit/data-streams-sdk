@@ -48,4 +48,5 @@ name = "chainlink-data-streams-sdk"
 
 2. Run `cargo build` and `cargo publish --dry-run` in order to update `Cargo.lock`.
 3. Trigger the `Publish Chainlink Data Streams Report Crate` and `Publish Chainlink Data Streams SDK Crate` GitHub
-   actions which will publish the respective crates.
+   actions by pushing the respective `rust/chainlink-data-streams-report-v*` and `rust/chainlink-data-streams-sdk-v*`
+   tags.
