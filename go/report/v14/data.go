@@ -1,4 +1,4 @@
-package v10
+package v14
 
 import (
 	"fmt"
@@ -27,50 +27,55 @@ func Schema() abi.Arguments {
 		{Name: "observationsTimestamp", Type: mustNewType("uint64")},
 		{Name: "nativeFee", Type: mustNewType("uint192")},
 		{Name: "linkFee", Type: mustNewType("uint192")},
-
 		{Name: "expiresAt", Type: mustNewType("uint64")},
-		{Name: "lastUpdateTimestamp", Type: mustNewType("uint64")},
-		{Name: "price", Type: mustNewType("int192")},
+
+		{Name: "midPrice", Type: mustNewType("int192")},
+		{Name: "bidPrice", Type: mustNewType("int192")},
+		{Name: "askPrice", Type: mustNewType("int192")},
+		{Name: "expiryTime", Type: mustNewType("uint64")},
+		{Name: "firstDayOfNotice", Type: mustNewType("uint64")},
+		{Name: "lastSeenTimestampNs", Type: mustNewType("uint64")},
 		{Name: "marketStatus", Type: mustNewType("uint32")},
-		{Name: "currentMultiplier", Type: mustNewType("int192")},
-		{Name: "newMultiplier", Type: mustNewType("int192")},
-		{Name: "activationDateTime", Type: mustNewType("uint64")},
-		{Name: "tokenizedPrice", Type: mustNewType("int192")},
+		{Name: "contractMonth", Type: mustNewType("string")},
 	})
 }
 
-// Data is the container for this schema attributes
+// Data is the container for this schema's attributes
 type Data struct {
 	FeedID                feed.ID `abi:"feedId"`
-	ObservationsTimestamp time.Time
 	ValidFromTimestamp    time.Time
-	ExpiresAt             time.Time
-	LinkFee               *big.Int
+	ObservationsTimestamp time.Time
 	NativeFee             *big.Int
-	LastUpdateTimestamp   time.Time // nanoseconds precision
-	Price                 *big.Int
-	MarketStatus          uint32
-	CurrentMultiplier     *big.Int
-	NewMultiplier         *big.Int
-	ActivationDateTime    time.Time // Always seconds
-	TokenizedPrice        *big.Int
+	LinkFee               *big.Int
+	ExpiresAt             time.Time
+
+	MidPrice            *big.Int
+	BidPrice            *big.Int
+	AskPrice            *big.Int
+	ExpiryTime          time.Time // nanoseconds precision
+	FirstDayOfNotice    time.Time // roll_date converted to UNIX timestamp, nanoseconds precision
+	LastSeenTimestampNs time.Time // Should reflect the timestamp of the last update from the DP, nanoseconds precision
+	MarketStatus        uint32
+	ContractMonth       string // A single capital letter F to Z for Jan to Dec.
 }
 
 // rawData is used internally for ABI decoding - types must match ABI schema
 type rawData struct {
 	FeedID                feed.ID `abi:"feedId"`
-	ObservationsTimestamp uint64
 	ValidFromTimestamp    uint64
-	ExpiresAt             uint64
-	LinkFee               *big.Int
+	ObservationsTimestamp uint64
 	NativeFee             *big.Int
-	LastUpdateTimestamp   uint64
-	Price                 *big.Int
-	MarketStatus          uint32
-	CurrentMultiplier     *big.Int
-	NewMultiplier         *big.Int
-	ActivationDateTime    uint64
-	TokenizedPrice        *big.Int
+	LinkFee               *big.Int
+	ExpiresAt             uint64
+
+	MidPrice            *big.Int
+	BidPrice            *big.Int
+	AskPrice            *big.Int
+	ExpiryTime          uint64
+	FirstDayOfNotice    uint64
+	LastSeenTimestampNs uint64
+	MarketStatus        uint32
+	ContractMonth       string
 }
 
 // Schema returns this data version schema
@@ -98,13 +103,14 @@ func Decode(data []byte) (*Data, error) {
 		NativeFee:             raw.NativeFee,
 		LinkFee:               raw.LinkFee,
 		ExpiresAt:             feed.ParseTimestamp(raw.ExpiresAt, res),
-		LastUpdateTimestamp:   time.Unix(0, int64(raw.LastUpdateTimestamp)), // Always nanoseconds
-		Price:                 raw.Price,
+		MidPrice:              raw.MidPrice,
+		BidPrice:              raw.BidPrice,
+		AskPrice:              raw.AskPrice,
+		ExpiryTime:            time.Unix(0, int64(raw.ExpiryTime)),
+		FirstDayOfNotice:      time.Unix(0, int64(raw.FirstDayOfNotice)),
+		LastSeenTimestampNs:   time.Unix(0, int64(raw.LastSeenTimestampNs)),
 		MarketStatus:          raw.MarketStatus,
-		CurrentMultiplier:     raw.CurrentMultiplier,
-		NewMultiplier:         raw.NewMultiplier,
-		ActivationDateTime:    time.Unix(int64(raw.ActivationDateTime), 0), // Always seconds
-		TokenizedPrice:        raw.TokenizedPrice,
+		ContractMonth:         raw.ContractMonth,
 	}
 
 	return decoded, nil
