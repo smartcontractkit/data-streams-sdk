@@ -529,10 +529,7 @@ describe("DataStreams Client", () => {
         Promise.resolve({
           ok: true,
           status: 200,
-          json: () =>
-            Promise.resolve({
-              /* missing report field */
-            }),
+          json: () => Promise.resolve({/* missing report field */}),
         } as Response)
       ) as FetchMock;
 
@@ -842,7 +839,15 @@ describe("DataStreams Client", () => {
     });
 
     it("should support mixed schema versions in bulk operations", async () => {
-      const mixedFeedIds = [TEST_FEED_IDS.V3, TEST_FEED_IDS.V8, TEST_FEED_IDS.V9, TEST_FEED_IDS.V10, TEST_FEED_IDS.V11, TEST_FEED_IDS.V12, TEST_FEED_IDS.V13];
+      const mixedFeedIds = [
+        TEST_FEED_IDS.V3,
+        TEST_FEED_IDS.V8,
+        TEST_FEED_IDS.V9,
+        TEST_FEED_IDS.V10,
+        TEST_FEED_IDS.V11,
+        TEST_FEED_IDS.V12,
+        TEST_FEED_IDS.V13,
+      ];
       const timestamp = Math.floor(Date.now() / 1000);
 
       const mockReports = mixedFeedIds.map(feedId => ({

@@ -93,7 +93,7 @@ export class ReportDeduplicator {
     if (ts > state.watermark) {
       state.watermark = ts;
     }
-    
+
     return Verdict.Accept;
   }
 

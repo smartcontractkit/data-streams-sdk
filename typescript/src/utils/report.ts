@@ -21,7 +21,9 @@ import {
  * @param feedId The feed ID to check
  * @returns "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13" or "V14" depending on the feed ID schema version
  */
-export function getReportVersion(feedId: string): "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V12" | "V13" | "V14" {
+export function getReportVersion(
+  feedId: string
+): "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V12" | "V13" | "V14" {
   const schemaVersion = feedId.slice(2, 6);
   switch (schemaVersion) {
     case "0002":

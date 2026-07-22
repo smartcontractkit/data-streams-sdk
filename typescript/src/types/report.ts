@@ -261,7 +261,7 @@ export type DecodedReport = (
   | DecodedV12Report
   | DecodedV13Report
   | DecodedV14Report
-  ) & {
+) & {
   /** Feed ID this report belongs to */
   feedID: string;
   /** Earliest timestamp this report is valid for */

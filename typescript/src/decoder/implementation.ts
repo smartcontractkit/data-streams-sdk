@@ -583,7 +583,6 @@ function decodeV12Report(reportBlob: string): DecodedV12Report {
   }
 }
 
-
 function decodeV13Report(reportBlob: string): DecodedV13Report {
   try {
     const decoded = globalAbiCoder.decode(

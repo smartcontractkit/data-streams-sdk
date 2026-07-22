@@ -253,7 +253,6 @@ const mockV11ReportBlob = abiCoder.encode(
   ]
 );
 
-
 // Create V12 report blob
 const mockV12ReportBlob = abiCoder.encode(
   ["bytes32", "uint32", "uint32", "uint192", "uint192", "uint32", "int192", "int192", "uint64", "uint32"],
@@ -275,16 +274,16 @@ const mockV12ReportBlob = abiCoder.encode(
 const mockV13ReportBlob = abiCoder.encode(
   [
     "bytes32", // feed id
-    "uint32",  // valid from ts
-    "uint32",  // observation ts
+    "uint32", // valid from ts
+    "uint32", // observation ts
     "uint192", // native fee
     "uint192", // link fee
-    "uint32",  // expires at
-    "int192",  // best ask
-    "int192",  // best bid
-    "uint64",  // ask volume
-    "uint64",  // bid volume
-    "int192",  // last traded price
+    "uint32", // expires at
+    "int192", // best ask
+    "int192", // best bid
+    "uint64", // ask volume
+    "uint64", // bid volume
+    "int192", // last traded price
   ],
   [
     mockV13FeedId,
@@ -305,19 +304,19 @@ const mockV13ReportBlob = abiCoder.encode(
 const mockV14ReportBlob = abiCoder.encode(
   [
     "bytes32", // feed id
-    "uint32",  // valid from ts
-    "uint32",  // observation ts
+    "uint32", // valid from ts
+    "uint32", // observation ts
     "uint192", // native fee
     "uint192", // link fee
-    "uint32",  // expires at
-    "int192",  // mid price
-    "int192",  // bid price
-    "int192",  // ask price
-    "uint64",  // expiry time (ns)
-    "uint64",  // first day of notice (ns)
-    "uint64",  // last seen timestamp (ns)
-    "uint32",  // market status
-    "string",  // contract month
+    "uint32", // expires at
+    "int192", // mid price
+    "int192", // bid price
+    "int192", // ask price
+    "uint64", // expiry time (ns)
+    "uint64", // first day of notice (ns)
+    "uint64", // last seen timestamp (ns)
+    "uint32", // market status
+    "string", // contract month
   ],
   [
     mockV14FeedId,
@@ -327,7 +326,7 @@ const mockV14ReportBlob = abiCoder.encode(
     2000000000000000000n, // 2 LINK
     Math.floor(Date.now() / 1000) + 3600, // expires in 1 hour
     100000000000000000000n, // mid price $100
-    99000000000000000000n,  // bid price $99
+    99000000000000000000n, // bid price $99
     101000000000000000000n, // ask price $101
     1700000010000000000n, // expiry time (ns)
     1700000005000000000n, // first day of notice (ns)
@@ -840,7 +839,6 @@ describe("Report Decoder", () => {
       expect(typeof decoded.askVolume).toBe("bigint");
       expect(typeof decoded.lastTradedPrice).toBe("bigint");
       expect(typeof decoded.marketStatus).toBe("number");
-
     });
   });
 

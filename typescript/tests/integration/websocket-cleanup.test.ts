@@ -326,4 +326,3 @@ describe("WebSocket Connection Cleanup Tests", () => {
     await mockServer2.close();
   }, 15000);
 });
-
