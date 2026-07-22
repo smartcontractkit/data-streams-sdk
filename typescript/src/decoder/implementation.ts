@@ -615,6 +615,14 @@ function decodeV14Report(reportBlob: string): DecodedV14Report {
       getBytes(reportBlob)
     );
 
+    // contractMonth must be a single letter from F to Z (Jan to Dec).
+    const contractMonth = decoded[13];
+    if (typeof contractMonth !== "string" || !/^[F-Z]$/.test(contractMonth)) {
+      throw new ReportDecodingError(
+        `Invalid contract month: ${contractMonth}. Must be a single letter from F to Z`
+      );
+    }
+
     return {
       version: "V14",
       nativeFee: decoded[3],
@@ -627,7 +635,7 @@ function decodeV14Report(reportBlob: string): DecodedV14Report {
       firstDayOfNotice: decoded[10],
       lastSeenTimestampNs: decoded[11],
       marketStatus: Number(decoded[12]),
-      contractMonth: decoded[13],
+      contractMonth,
     };
   } catch (error) {
     throw new ReportDecodingError(

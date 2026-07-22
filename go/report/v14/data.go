@@ -94,6 +94,11 @@ func Decode(data []byte) (*Data, error) {
 		return nil, fmt.Errorf("failed to copy report values to struct: %w", err)
 	}
 
+	// contractMonth must be a single letter from F to Z (Jan to Dec).
+	if len(raw.ContractMonth) != 1 || raw.ContractMonth[0] < 'F' || raw.ContractMonth[0] > 'Z' {
+		return nil, fmt.Errorf("invalid contractMonth %q: must be a single letter from F to Z", raw.ContractMonth)
+	}
+
 	res := raw.FeedID.Resolution()
 
 	decoded := &Data{

@@ -1014,6 +1014,55 @@ describe("Report Decoder", () => {
       expect(decoded.marketStatus).toBe(2);
       expect(decoded.contractMonth).toBe("F");
     });
+
+    it("should reject an invalid contract month", () => {
+      const invalidBlob = abiCoder.encode(
+        [
+          "bytes32",
+          "uint32",
+          "uint32",
+          "uint192",
+          "uint192",
+          "uint32",
+          "int192",
+          "int192",
+          "int192",
+          "uint64",
+          "uint64",
+          "uint64",
+          "uint32",
+          "string",
+        ],
+        [
+          mockV14FeedId,
+          Math.floor(Date.now() / 1000),
+          Math.floor(Date.now() / 1000),
+          1000000000000000000n,
+          2000000000000000000n,
+          Math.floor(Date.now() / 1000) + 3600,
+          100000000000000000000n,
+          99000000000000000000n,
+          101000000000000000000n,
+          1700000010000000000n,
+          1700000005000000000n,
+          1700000000000000000n,
+          2,
+          "A", // outside the valid F..Z range
+        ]
+      );
+      const invalidFullReport = abiCoder.encode(
+        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+        [
+          mockReportContext,
+          invalidBlob,
+          ["0x0000000000000000000000000000000000000000000000000000000000000013"],
+          ["0x0000000000000000000000000000000000000000000000000000000000000014"],
+          "0x0000000000000000000000000000000000000000000000000000000000000015",
+        ]
+      );
+
+      expect(() => decodeReport(invalidFullReport, mockV14FeedId)).toThrow("Invalid contract month");
+    });
   });
 
   describe("edge cases", () => {

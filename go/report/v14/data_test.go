@@ -93,3 +93,34 @@ func TestData(t *testing.T) {
 		t.Errorf("ContractMonth mismatch: expected %s, got %s", contractMonth, d.ContractMonth)
 	}
 }
+
+func TestDecodeInvalidContractMonth(t *testing.T) {
+	feedID := [32]uint8{00, 14, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114}
+
+	// Values that are outside the valid single-letter F..Z range must be rejected.
+	for _, cm := range []string{"", "A", "E", "AB", "n", "1"} {
+		b, err := schema.Pack(
+			feedID,
+			uint64(time.Now().Unix()),
+			uint64(time.Now().Unix()),
+			big.NewInt(10),
+			big.NewInt(10),
+			uint64(time.Now().Unix())+100,
+			big.NewInt(100),
+			big.NewInt(99),
+			big.NewInt(101),
+			uint64(time.Now().UnixNano()),
+			uint64(time.Now().UnixNano()),
+			uint64(time.Now().UnixNano()),
+			uint32(1),
+			cm,
+		)
+		if err != nil {
+			t.Fatalf("failed to serialize report: %s", err)
+		}
+
+		if _, err := Decode(b); err == nil {
+			t.Errorf("expected error decoding contractMonth %q, got nil", cm)
+		}
+	}
+}
