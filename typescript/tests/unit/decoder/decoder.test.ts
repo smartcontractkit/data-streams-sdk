@@ -18,6 +18,7 @@ import {
   DecodedV11Report,
   DecodedV12Report,
   DecodedV13Report,
+  DecodedV14Report,
   DecodedV2Report,
   DecodedV3Report,
   DecodedV4Report,
@@ -45,6 +46,7 @@ const mockV10FeedId = "0x000a" + "7".repeat(60);
 const mockV11FeedId = "0x000b" + "7".repeat(60);
 const mockV12FeedId = "0x000c" + "7".repeat(60);
 const mockV13FeedId = "0x000d" + "7".repeat(60);
+const mockV14FeedId = "0x000e" + "7".repeat(60);
 
 // Create a properly encoded full report
 const mockReportContext = [
@@ -299,6 +301,42 @@ const mockV13ReportBlob = abiCoder.encode(
   ]
 );
 
+// Create V14 report blob
+const mockV14ReportBlob = abiCoder.encode(
+  [
+    "bytes32", // feed id
+    "uint32",  // valid from ts
+    "uint32",  // observation ts
+    "uint192", // native fee
+    "uint192", // link fee
+    "uint32",  // expires at
+    "int192",  // mid price
+    "int192",  // bid price
+    "int192",  // ask price
+    "uint64",  // expiry time (ns)
+    "uint64",  // first day of notice (ns)
+    "uint64",  // last seen timestamp (ns)
+    "uint32",  // market status
+    "string",  // contract month
+  ],
+  [
+    mockV14FeedId,
+    Math.floor(Date.now() / 1000),
+    Math.floor(Date.now() / 1000),
+    1000000000000000000n, // 1 native token
+    2000000000000000000n, // 2 LINK
+    Math.floor(Date.now() / 1000) + 3600, // expires in 1 hour
+    100000000000000000000n, // mid price $100
+    99000000000000000000n,  // bid price $99
+    101000000000000000000n, // ask price $101
+    1700000010000000000n, // expiry time (ns)
+    1700000005000000000n, // first day of notice (ns)
+    1700000000000000000n, // last seen timestamp (ns)
+    2, // market status (open)
+    "F", // contract month (Jan)
+  ]
+);
+
 // Create full reports
 const mockV2FullReport = abiCoder.encode(
   ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
@@ -429,6 +467,17 @@ const mockV13FullReport = abiCoder.encode(
     ["0x0000000000000000000000000000000000000000000000000000000000000010"],
     ["0x0000000000000000000000000000000000000000000000000000000000000011"],
     "0x0000000000000000000000000000000000000000000000000000000000000012",
+  ]
+);
+
+const mockV14FullReport = abiCoder.encode(
+  ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+  [
+    mockReportContext,
+    mockV14ReportBlob,
+    ["0x0000000000000000000000000000000000000000000000000000000000000013"],
+    ["0x0000000000000000000000000000000000000000000000000000000000000014"],
+    "0x0000000000000000000000000000000000000000000000000000000000000015",
   ]
 );
 
@@ -917,6 +966,55 @@ describe("Report Decoder", () => {
       expect(typeof decoded.askVolume).toBe("number");
       expect(typeof decoded.bidVolume).toBe("number");
       expect(typeof decoded.lastTradedPrice).toBe("bigint");
+    });
+  });
+
+  describe("v14 reports", () => {
+    it("should decode valid v14 report", () => {
+      const decoded = decodeReport(mockV14FullReport, mockV14FeedId) as DecodedV14Report;
+
+      expect(decoded).toBeDefined();
+      expect(decoded.version).toBe("V14");
+      expect(decoded.nativeFee).toBeDefined();
+      expect(decoded.linkFee).toBeDefined();
+      expect(decoded.expiresAt).toBeDefined();
+      expect(decoded.midPrice).toBeDefined();
+      expect(decoded.bidPrice).toBeDefined();
+      expect(decoded.askPrice).toBeDefined();
+      expect(decoded.expiryTime).toBeDefined();
+      expect(decoded.firstDayOfNotice).toBeDefined();
+      expect(decoded.lastSeenTimestampNs).toBeDefined();
+      expect(decoded.marketStatus).toBeDefined();
+      expect(decoded.contractMonth).toBeDefined();
+    });
+
+    it("should handle malformed v14 report", () => {
+      const malformedReport = "0xinvalid";
+      expect(() => decodeReport(malformedReport, mockV14FeedId)).toThrow();
+    });
+
+    it("should decode all v14 fields correctly", () => {
+      const decoded = decodeReport(mockV14FullReport, mockV14FeedId) as DecodedV14Report;
+
+      // Verify field types
+      expect(typeof decoded.midPrice).toBe("bigint");
+      expect(typeof decoded.bidPrice).toBe("bigint");
+      expect(typeof decoded.askPrice).toBe("bigint");
+      expect(typeof decoded.expiryTime).toBe("bigint");
+      expect(typeof decoded.firstDayOfNotice).toBe("bigint");
+      expect(typeof decoded.lastSeenTimestampNs).toBe("bigint");
+      expect(typeof decoded.marketStatus).toBe("number");
+      expect(typeof decoded.contractMonth).toBe("string");
+
+      // Verify values round-trip from the encoded blob
+      expect(decoded.midPrice).toBe(100000000000000000000n);
+      expect(decoded.bidPrice).toBe(99000000000000000000n);
+      expect(decoded.askPrice).toBe(101000000000000000000n);
+      expect(decoded.expiryTime).toBe(1700000010000000000n);
+      expect(decoded.firstDayOfNotice).toBe(1700000005000000000n);
+      expect(decoded.lastSeenTimestampNs).toBe(1700000000000000000n);
+      expect(decoded.marketStatus).toBe(2);
+      expect(decoded.contractMonth).toBe("F");
     });
   });
 
