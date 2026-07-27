@@ -3,8 +3,8 @@ package streams
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,19 +12,21 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/coder/websocket"
+	"github.com/jpillora/backoff"
 	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
-	"nhooyr.io/websocket"
 )
 
 const (
-	defaultWSConnectTimeout      = time.Second * 5
-	minWSReconnectIntervalMillis = 1000
-	maxWSReconnectIntervalMIllis = 10000
-	maxWSReconnectAttempts       = 5
+	defaultWSConnectTimeout       = time.Second * 5
+	minWSReconnectIntervalSeconds = 1 * time.Second
+	maxWSReconnectIntervalSeconds = 20 * time.Second
+	maxWSReconnectAttempts        = 5
 )
 
 var (
-	ErrStreamClosed = fmt.Errorf("client: use of closed Stream")
+	ErrStreamClosed              = fmt.Errorf("client: use of closed Stream")
+	ErrStreamNoActiveConnections = fmt.Errorf("client: stream has no active connections, max reconnect attempts reached")
 )
 
 type message struct {
@@ -259,7 +261,9 @@ func (s *stream) monitorConn(conn *wsConn) {
 
 		re, err := s.newWSconnWithRetry(conn.origin)
 		if err != nil {
-			s.closeError.CompareAndSwap(nil, fmt.Errorf("stream has no active connections, last error: %w", err))
+			if errors.Is(err, ErrStreamNoActiveConnections) {
+				s.closeError.CompareAndSwap(nil, err)
+			}
 			s.Close()
 			return
 		}
@@ -279,15 +283,16 @@ func (s *stream) newWSconnWithRetry(origin string) (conn *wsConn, err error) {
 	// will try to reconnect until client is closed or
 	// we have no active connections and have exceeded maxWSReconnectAttempts
 	var attempts int
+	retryBackoff := &backoff.Backoff{Min: minWSReconnectIntervalSeconds, Max: maxWSReconnectIntervalSeconds, Jitter: true}
 	for {
 		if s.closed.Load() || s.streamCtx.Err() != nil {
-			return nil, fmt.Errorf("Retry cancelled, stream is closed")
+			return nil, ErrStreamClosed
 		}
 
 		// fail the stream if we are over the maxWSReconnectAttempts
 		// and there are no other active connection
 		if attempts >= s.config.WsMaxReconnect && s.stats.activeConnections.Load() == 0 {
-			return nil, err
+			return nil, fmt.Errorf("%w, last error: %w", ErrStreamNoActiveConnections, err)
 		}
 		attempts++
 
@@ -296,13 +301,19 @@ func (s *stream) newWSconnWithRetry(origin string) (conn *wsConn, err error) {
 		cancel()
 
 		if err != nil {
-			interval := time.Millisecond * time.Duration(
-				rand.Intn(maxWSReconnectIntervalMIllis-minWSReconnectIntervalMillis)+minWSReconnectIntervalMillis) //nolint:gosec
+			interval := retryBackoff.Duration()
 			s.config.logInfo(
 				"client: stream websocket %s: error reconnecting: %s, backing off: %s",
 				origin, err, interval.String(),
 			)
-			time.Sleep(interval)
+
+			timer := time.NewTimer(interval)
+			select {
+			case <-timer.C:
+			case <-s.streamCtx.Done():
+				timer.Stop()
+				return nil, ErrStreamClosed
+			}
 			continue
 		}
 		return conn, nil
