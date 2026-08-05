@@ -4,6 +4,7 @@ import {
   DecodedV11Report,
   DecodedV12Report,
   DecodedV13Report,
+  DecodedV14Report,
   DecodedV2Report,
   DecodedV3Report,
   DecodedV4Report,
@@ -18,9 +19,11 @@ import {
 /**
  * Determines the version of a feed based on its ID
  * @param feedId The feed ID to check
- * @returns "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12" or "V13 depending on the feed ID schema version
+ * @returns "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13" or "V14" depending on the feed ID schema version
  */
-export function getReportVersion(feedId: string): "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V12" | "V13" {
+export function getReportVersion(
+  feedId: string
+): "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V12" | "V13" | "V14" {
   const schemaVersion = feedId.slice(2, 6);
   switch (schemaVersion) {
     case "0002":
@@ -47,6 +50,8 @@ export function getReportVersion(feedId: string): "V2" | "V3" | "V4" | "V5" | "V
       return "V12";
     case "000d":
       return "V13";
+    case "000e":
+      return "V14";
     default:
       throw new Error(`Unknown schema version: 0x${schemaVersion}`);
   }
@@ -55,12 +60,12 @@ export function getReportVersion(feedId: string): "V2" | "V3" | "V4" | "V5" | "V
 /**
  * Formats a report as a human-readable string
  * @param report The report object to format
- * @param version The version of the report (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12 or V13)
+ * @param version The version of the report (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13 or V14)
  * @returns Formatted string representation of the report
  */
 export function formatReport(
   report: DecodedReport,
-  version: "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V12" | "V13"
+  version: "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V12" | "V13" | "V14"
 ): string {
   let output = "";
 
@@ -168,6 +173,18 @@ export function formatReport(
       output += `Ask Volume: ${r.askVolume.toString()}\n`;
       output += `Bid Volume: ${r.bidVolume.toString()}\n`;
       output += `Last Traded Price: ${r.lastTradedPrice.toString()}\n`;
+      break;
+    }
+    case "V14": {
+      const r = report as DecodedV14Report;
+      output += `Mid Price: ${r.midPrice.toString()}\n`;
+      output += `Bid Price: ${r.bidPrice.toString()}\n`;
+      output += `Ask Price: ${r.askPrice.toString()}\n`;
+      output += `Expiry Time: ${r.expiryTime.toString()}\n`;
+      output += `First Day of Notice: ${r.firstDayOfNotice.toString()}\n`;
+      output += `Last Seen Timestamp Nanos: ${r.lastSeenTimestampNs.toString()}\n`;
+      output += `Market Status: ${r.marketStatus.toString()}\n`;
+      output += `Contract Month: ${r.contractMonth}\n`;
       break;
     }
   }

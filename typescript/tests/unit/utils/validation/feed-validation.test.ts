@@ -39,6 +39,7 @@ describe("Feed ID Validation Tests", () => {
     V11: "0x000bfb6d135897e4aaf5657bffd3b0b48f8e2a5131214c9ec2d62eac5d532067",
     V12: "0x000c6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
     V13: "0x000d13a9b9c5e37a099f374e92c37914af5c268f3a8a9721f1725135bfb4cbb8",
+    V14: "0x000e6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
   };
 
   const REAL_WORLD_FEED_IDS = {
@@ -99,6 +100,10 @@ describe("Feed ID Validation Tests", () => {
 
     it("should accept valid V13 feed ID", () => {
       expect(() => validateFeedId(VALID_FEED_IDS.V13)).not.toThrow();
+    });
+
+    it("should accept valid V14 feed ID", () => {
+      expect(() => validateFeedId(VALID_FEED_IDS.V14)).not.toThrow();
     });
 
     it("should accept real-world feed IDs", () => {
@@ -342,7 +347,7 @@ describe("Feed ID Validation Tests", () => {
 
     it("should provide specific error for unsupported version", () => {
       expect(() => validateFeedId(VALID_FEED_IDS.V1)).toThrow(
-        "Invalid feed ID version. Must start with 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a, 0x000b, 0x000c or 0x000d"
+        "Invalid feed ID version. Must start with 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d or 0x000e"
       );
     });
 
@@ -406,6 +411,7 @@ describe("Feed ID Validation Tests", () => {
       expect(() => validateFeedId(VALID_FEED_IDS.V11)).not.toThrow();
       expect(() => validateFeedId(VALID_FEED_IDS.V12)).not.toThrow();
       expect(() => validateFeedId(VALID_FEED_IDS.V13)).not.toThrow();
+      expect(() => validateFeedId(VALID_FEED_IDS.V14)).not.toThrow();
       expect(() => validateFeedId(VALID_FEED_IDS.V1)).toThrow(); // V1 not supported in our implementation
     });
   });

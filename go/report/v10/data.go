@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+
 	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
 )
 
@@ -26,6 +27,7 @@ func Schema() abi.Arguments {
 		{Name: "observationsTimestamp", Type: mustNewType("uint64")},
 		{Name: "nativeFee", Type: mustNewType("uint192")},
 		{Name: "linkFee", Type: mustNewType("uint192")},
+
 		{Name: "expiresAt", Type: mustNewType("uint64")},
 		{Name: "lastUpdateTimestamp", Type: mustNewType("uint64")},
 		{Name: "price", Type: mustNewType("int192")},

@@ -11,6 +11,9 @@ pub enum ReportError {
 
     #[error("Failed to parse {0}")]
     ParseError(&'static str),
+
+    #[error("Invalid value for {0}")]
+    InvalidValue(&'static str),
 }
 
 pub(crate) struct ReportBase;
@@ -133,5 +136,69 @@ impl ReportBase {
 
         buffer[32 - len..32].copy_from_slice(&bytes_value);
         Ok(buffer)
+    }
+
+    /// Reads an ABI dynamic `string` referenced by the head word at `offset`.
+    ///
+    /// The head word holds a byte offset (relative to the start of `data`) pointing to the
+    /// string's tail, where the first word is the byte length followed by the UTF-8 data
+    /// padded to a multiple of `WORD_SIZE`.
+    pub(crate) fn read_string(data: &[u8], offset: usize) -> Result<String, ReportError> {
+        if offset + Self::WORD_SIZE > data.len() {
+            return Err(ReportError::DataTooShort("string offset"));
+        }
+
+        // The offset value is stored in the low 8 bytes of the head word.
+        let ptr = usize::from_be_bytes(
+            data[offset..offset + Self::WORD_SIZE][24..Self::WORD_SIZE]
+                .try_into()
+                .map_err(|_| ReportError::ParseError("string offset as usize"))?,
+        );
+
+        let ptr_end = ptr
+            .checked_add(Self::WORD_SIZE)
+            .ok_or(ReportError::InvalidLength("string offset overflow"))?;
+        if ptr_end > data.len() {
+            return Err(ReportError::InvalidLength("string offset"));
+        }
+
+        let length = usize::from_be_bytes(
+            data[ptr..ptr + Self::WORD_SIZE][24..Self::WORD_SIZE]
+                .try_into()
+                .map_err(|_| ReportError::ParseError("string length as usize"))?,
+        );
+
+        let start = ptr_end;
+        let end = start
+            .checked_add(length)
+            .ok_or(ReportError::InvalidLength("string length overflow"))?;
+        if end > data.len() {
+            return Err(ReportError::InvalidLength("string data"));
+        }
+
+        String::from_utf8(data[start..end].to_vec())
+            .map_err(|_| ReportError::ParseError("string (utf8)"))
+    }
+
+    /// Encodes an ABI dynamic `string` tail: a `WORD_SIZE` length word followed by the UTF-8
+    /// bytes right-padded with zeros to a multiple of `WORD_SIZE`.
+    ///
+    /// The caller is responsible for writing the corresponding head offset word.
+    pub(crate) fn encode_string_tail(value: &str) -> Vec<u8> {
+        let bytes = value.as_bytes();
+
+        let mut length_word = [0u8; Self::WORD_SIZE];
+        length_word[24..Self::WORD_SIZE].copy_from_slice(&(bytes.len() as u64).to_be_bytes());
+
+        let mut buffer = length_word.to_vec();
+
+        if !bytes.is_empty() {
+            let padded_len = bytes.len().div_ceil(Self::WORD_SIZE) * Self::WORD_SIZE;
+            let mut data_words = vec![0u8; padded_len];
+            data_words[..bytes.len()].copy_from_slice(bytes);
+            buffer.extend_from_slice(&data_words);
+        }
+
+        buffer
     }
 }

@@ -5,6 +5,7 @@ pub mod v10;
 pub mod v11;
 pub mod v12;
 pub mod v13;
+pub mod v14;
 pub mod v2;
 pub mod v3;
 pub mod v4;
@@ -128,8 +129,9 @@ mod tests {
     use super::*;
     use crate::report::{
         v1::ReportDataV1, v10::ReportDataV10, v11::ReportDataV11, v12::ReportDataV12,
-        v13::ReportDataV13, v2::ReportDataV2, v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5,
-        v6::ReportDataV6, v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9,
+        v13::ReportDataV13, v14::ReportDataV14, v2::ReportDataV2, v3::ReportDataV3,
+        v4::ReportDataV4, v5::ReportDataV5, v6::ReportDataV6, v7::ReportDataV7, v8::ReportDataV8,
+        v9::ReportDataV9,
     };
     use num_bigint::BigInt;
 
@@ -185,6 +187,10 @@ mod tests {
         00, 13, 19, 169, 185, 197, 227, 122, 9, 159, 55, 78, 146, 195, 121, 20, 175, 92, 38, 143,
         58, 138, 151, 33, 241, 114, 81, 53, 191, 180, 203, 184,
     ]);
+    const V14_FEED_ID: ID = ID([
+        00, 14, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
+        163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
+    ]);
 
     pub const MOCK_TIMESTAMP: u32 = 1718885772;
     pub const MOCK_LAST_SEEN_TIMESTAMP_NS: u64 = 1718885772000000000;
@@ -200,6 +206,9 @@ mod tests {
     pub const MOCK_LAST_TRADED_PRICE: isize = 228;
     pub const MOCK_MID: isize = 228;
     pub const MOCK_MARKET_STATUS: u32 = 2;
+    pub const MOCK_EXPIRY_TIME: u64 = 1718885872000000000;
+    pub const MOCK_FIRST_DAY_OF_NOTICE: u64 = 1718885822000000000;
+    pub const MOCK_CONTRACT_MONTH: &str = "F";
 
     pub fn generate_mock_report_data_v1() -> ReportDataV1 {
         let report_data = ReportDataV1 {
@@ -443,6 +452,29 @@ mod tests {
             last_traded_price: BigInt::from(MOCK_LAST_TRADED_PRICE)
                 .checked_mul(&multiplier)
                 .unwrap(),
+        };
+
+        report_data
+    }
+
+    pub fn generate_mock_report_data_v14() -> ReportDataV14 {
+        let multiplier: BigInt = "1000000000000000000".parse::<BigInt>().unwrap(); // 1.0 with 18 decimals
+
+        let report_data = ReportDataV14 {
+            feed_id: V14_FEED_ID,
+            valid_from_timestamp: MOCK_TIMESTAMP,
+            observations_timestamp: MOCK_TIMESTAMP,
+            native_fee: BigInt::from(MOCK_FEE),
+            link_fee: BigInt::from(MOCK_FEE),
+            expires_at: MOCK_TIMESTAMP + 100,
+            mid_price: BigInt::from(MOCK_MID).checked_mul(&multiplier).unwrap(),
+            bid_price: BigInt::from(MOCK_BID).checked_mul(&multiplier).unwrap(),
+            ask_price: BigInt::from(MOCK_ASK).checked_mul(&multiplier).unwrap(),
+            expiry_time: MOCK_EXPIRY_TIME,
+            first_day_of_notice: MOCK_FIRST_DAY_OF_NOTICE,
+            last_seen_timestamp_ns: MOCK_LAST_SEEN_TIMESTAMP_NS,
+            market_status: MOCK_MARKET_STATUS,
+            contract_month: MOCK_CONTRACT_MONTH.to_string(),
         };
 
         report_data
@@ -897,5 +929,32 @@ mod tests {
         let decoded_report = ReportDataV13::decode(&report_blob).unwrap();
 
         assert_eq!(decoded_report.feed_id, V13_FEED_ID);
+    }
+
+    #[test]
+    fn test_decode_report_v14() {
+        let report_data = generate_mock_report_data_v14();
+        let encoded_report_data = report_data.abi_encode().unwrap();
+
+        let report = generate_mock_report(&encoded_report_data);
+
+        let (_report_context, report_blob) = decode_full_report(&report).unwrap();
+
+        let decoded_report = ReportDataV14::decode(&report_blob).unwrap();
+
+        // V14 carries a dynamic `contractMonth` string, so assert the decoded values
+        // round-trip through the full-report path rather than comparing a fixed hex blob.
+        assert_eq!(decoded_report.feed_id, V14_FEED_ID);
+        assert_eq!(decoded_report.valid_from_timestamp, MOCK_TIMESTAMP);
+        assert_eq!(decoded_report.observations_timestamp, MOCK_TIMESTAMP);
+        assert_eq!(decoded_report.expires_at, MOCK_TIMESTAMP + 100);
+        assert_eq!(decoded_report.expiry_time, MOCK_EXPIRY_TIME);
+        assert_eq!(decoded_report.first_day_of_notice, MOCK_FIRST_DAY_OF_NOTICE);
+        assert_eq!(
+            decoded_report.last_seen_timestamp_ns,
+            MOCK_LAST_SEEN_TIMESTAMP_NS
+        );
+        assert_eq!(decoded_report.market_status, MOCK_MARKET_STATUS);
+        assert_eq!(decoded_report.contract_month, MOCK_CONTRACT_MONTH);
     }
 }

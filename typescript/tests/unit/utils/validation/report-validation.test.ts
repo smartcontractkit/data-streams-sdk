@@ -298,24 +298,11 @@ describe("Report Validation Tests", () => {
     );
   }
 
-
   // Helper function to create a valid V12 report blob
   function createV12ReportBlob(): string {
     const abiCoder = new AbiCoder();
     return abiCoder.encode(
-      [
-        "bytes32",
-        "uint32",
-        "uint32",
-        "uint192",
-        "uint192",
-        "uint32",
-
-        "int192",
-        "int192",
-        "uint64",
-        "uint32",
-      ],
+      ["bytes32", "uint32", "uint32", "uint192", "uint192", "uint32", "int192", "int192", "uint64", "uint32"],
       [
         FEED_IDS.V12,
         1640995200,
@@ -336,19 +323,7 @@ describe("Report Validation Tests", () => {
   function createV13ReportBlob(): string {
     const abiCoder = new AbiCoder();
     return abiCoder.encode(
-      [
-        "bytes32",
-        "uint32",
-        "uint32",
-        "uint192",
-        "uint192",
-        "uint32",
-        "int192",
-        "int192",
-        "uint64",
-        "uint64",
-        "int192",
-      ],
+      ["bytes32", "uint32", "uint32", "uint192", "uint192", "uint32", "int192", "int192", "uint64", "uint64", "int192"],
       [
         FEED_IDS.V13,
         1640995200,

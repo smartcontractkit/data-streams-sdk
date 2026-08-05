@@ -223,9 +223,7 @@ export class ConnectionManager extends EventEmitter {
       return;
     }
 
-    this.logger.connectionDebug(
-      `Cleaning up WebSocket for ${connection.id} (readyState: ${connection.ws.readyState})`
-    );
+    this.logger.connectionDebug(`Cleaning up WebSocket for ${connection.id} (readyState: ${connection.ws.readyState})`);
 
     // Store reference to WebSocket before cleanup
     const ws = connection.ws;

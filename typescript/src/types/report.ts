@@ -218,6 +218,30 @@ export interface DecodedV13Report extends DecodedReportFields {
 }
 
 /**
+ * Decoded V14 report format (Continuous Commodities Futures).
+ *
+ * Provides mid/bid/ask pricing alongside futures contract metadata such as
+ * the expiry time, first day of notice and contract month.
+ */
+export interface DecodedV14Report extends DecodedReportFields {
+  /** Report format version identifier */
+  version: "V14";
+  midPrice: bigint;
+  bidPrice: bigint;
+  askPrice: bigint;
+  /** Contract expiry time in nanoseconds */
+  expiryTime: bigint;
+  /** First day of notice, converted to a UNIX timestamp in nanoseconds */
+  firstDayOfNotice: bigint;
+  /** Timestamp of the last update seen from the data provider, in nanoseconds */
+  lastSeenTimestampNs: bigint;
+  /** Market status - 0 (Unknown), 1 (Closed), 2 (Open) */
+  marketStatus: number;
+  /** Contract month code: a single capital letter F to Z for Jan to Dec */
+  contractMonth: string;
+}
+
+/**
  * Complete decoded report structure received from Data Streams.
  *
  * This union type represents any valid decoded report format. The version field
@@ -236,7 +260,8 @@ export type DecodedReport = (
   | DecodedV11Report
   | DecodedV12Report
   | DecodedV13Report
-  ) & {
+  | DecodedV14Report
+) & {
   /** Feed ID this report belongs to */
   feedID: string;
   /** Earliest timestamp this report is valid for */
