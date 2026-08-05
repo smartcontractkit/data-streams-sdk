@@ -155,7 +155,10 @@ impl ReportBase {
                 .map_err(|_| ReportError::ParseError("string offset as usize"))?,
         );
 
-        if ptr + Self::WORD_SIZE > data.len() {
+        let ptr_end = ptr
+            .checked_add(Self::WORD_SIZE)
+            .ok_or(ReportError::InvalidLength("string offset overflow"))?;
+        if ptr_end > data.len() {
             return Err(ReportError::InvalidLength("string offset"));
         }
 
@@ -165,12 +168,15 @@ impl ReportBase {
                 .map_err(|_| ReportError::ParseError("string length as usize"))?,
         );
 
-        let start = ptr + Self::WORD_SIZE;
-        if start + length > data.len() {
+        let start = ptr_end;
+        let end = start
+            .checked_add(length)
+            .ok_or(ReportError::InvalidLength("string length overflow"))?;
+        if end > data.len() {
             return Err(ReportError::InvalidLength("string data"));
         }
 
-        String::from_utf8(data[start..start + length].to_vec())
+        String::from_utf8(data[start..end].to_vec())
             .map_err(|_| ReportError::ParseError("string (utf8)"))
     }
 
