@@ -99,6 +99,18 @@ func Decode(data []byte) (*Data, error) {
 		return nil, fmt.Errorf("invalid contractMonth %q: must be a single letter from F to Z", raw.ContractMonth)
 	}
 
+	// Validate uint64 nanosecond timestamps do not overflow int64
+	const maxInt64Ns = int64(^uint64(0) >> 1) // 2^63 - 1
+	if raw.ExpiryTime > uint64(maxInt64Ns) {
+		return nil, fmt.Errorf("ExpiryTime overflow: %d exceeds maximum nanosecond timestamp", raw.ExpiryTime)
+	}
+	if raw.FirstDayOfNotice > uint64(maxInt64Ns) {
+		return nil, fmt.Errorf("FirstDayOfNotice overflow: %d exceeds maximum nanosecond timestamp", raw.FirstDayOfNotice)
+	}
+	if raw.LastSeenTimestampNs > uint64(maxInt64Ns) {
+		return nil, fmt.Errorf("LastSeenTimestampNs overflow: %d exceeds maximum nanosecond timestamp", raw.LastSeenTimestampNs)
+	}
+
 	res := raw.FeedID.Resolution()
 
 	decoded := &Data{
