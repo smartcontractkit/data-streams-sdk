@@ -23,6 +23,8 @@ use num_bigint::BigInt;
 /// - `last_seen_timestamp_ns`: Timestamp of the last update seen from the data provider, in nanoseconds.
 /// - `market_status`: The DON's consensus on whether the market is currently open. Possible values: `0` (`Unknown`), `1` (`Closed`), `2` (`Open`).
 /// - `contract_month`: Contract month code: a single capital letter F to Z for Jan to Dec.
+/// - `goldman_roll_price`: The Goldman roll price (18 decimal precision).
+/// - `current_business_day`: The current business day, numbered.
 ///
 /// # Solidity Equivalent
 /// ```solidity
@@ -41,6 +43,8 @@ use num_bigint::BigInt;
 ///     uint64 lastSeenTimestampNs;
 ///     uint32 marketStatus;
 ///     string contractMonth;
+///     int192 goldmanRollPrice;
+///     uint32 currentBusinessDay;
 /// }
 /// ```
 #[derive(Debug)]
@@ -59,12 +63,14 @@ pub struct ReportDataV14 {
     pub last_seen_timestamp_ns: u64,
     pub market_status: u32,
     pub contract_month: String,
+    pub goldman_roll_price: BigInt,
+    pub current_business_day: u32,
 }
 
 impl ReportDataV14 {
-    /// Number of 32-byte head words: 13 static fields plus one offset word for the
+    /// Number of 32-byte head words: 15 static fields plus one offset word for the
     /// dynamic `contractMonth` string.
-    const HEAD_WORDS: usize = 14;
+    const HEAD_WORDS: usize = 16;
 
     /// Decodes an ABI-encoded `ReportDataV14` from bytes.
     ///
@@ -101,6 +107,8 @@ impl ReportDataV14 {
         let last_seen_timestamp_ns = ReportBase::read_uint64(data, 11 * ReportBase::WORD_SIZE)?;
         let market_status = ReportBase::read_uint32(data, 12 * ReportBase::WORD_SIZE)?;
         let contract_month = ReportBase::read_string(data, 13 * ReportBase::WORD_SIZE)?;
+        let goldman_roll_price = ReportBase::read_int192(data, 14 * ReportBase::WORD_SIZE)?;
+        let current_business_day = ReportBase::read_uint32(data, 15 * ReportBase::WORD_SIZE)?;
 
         // contract_month must be a single letter from F to Z (Jan to Dec).
         let month_bytes = contract_month.as_bytes();
@@ -123,6 +131,8 @@ impl ReportDataV14 {
             last_seen_timestamp_ns,
             market_status,
             contract_month,
+            goldman_roll_price,
+            current_business_day,
         })
     }
 
@@ -138,7 +148,7 @@ impl ReportDataV14 {
     pub fn abi_encode(&self) -> Result<Vec<u8>, ReportError> {
         let mut buffer = Vec::with_capacity((Self::HEAD_WORDS + 2) * ReportBase::WORD_SIZE);
 
-        // Head: 13 static fields.
+        // Head: the 13 static fields preceding the dynamic `contractMonth` string.
         buffer.extend_from_slice(&self.feed_id.0);
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.valid_from_timestamp)?);
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.observations_timestamp)?);
@@ -157,6 +167,10 @@ impl ReportDataV14 {
         let offset = (Self::HEAD_WORDS * ReportBase::WORD_SIZE) as u64;
         buffer.extend_from_slice(&ReportBase::encode_uint64(offset)?);
 
+        // Head: the static fields following the dynamic `contractMonth` string.
+        buffer.extend_from_slice(&ReportBase::encode_int192(&self.goldman_roll_price)?);
+        buffer.extend_from_slice(&ReportBase::encode_uint32(self.current_business_day)?);
+
         // Tail: the dynamic `contractMonth` string.
         buffer.extend_from_slice(&ReportBase::encode_string_tail(&self.contract_month));
 
@@ -168,9 +182,9 @@ impl ReportDataV14 {
 mod tests {
     use super::*;
     use crate::report::tests::{
-        generate_mock_report_data_v14, MARKET_STATUS_OPEN, MOCK_ASK, MOCK_BID,
-        MOCK_CONTRACT_MONTH, MOCK_EXPIRY_TIME, MOCK_FEE, MOCK_FIRST_DAY_OF_NOTICE,
-        MOCK_LAST_SEEN_TIMESTAMP_NS, MOCK_MID, MOCK_TIMESTAMP,
+        generate_mock_report_data_v14, MARKET_STATUS_OPEN, MOCK_ASK, MOCK_BID, MOCK_CONTRACT_MONTH,
+        MOCK_CURRENT_BUSINESS_DAY, MOCK_EXPIRY_TIME, MOCK_FEE, MOCK_FIRST_DAY_OF_NOTICE,
+        MOCK_GOLDMAN_ROLL_PRICE, MOCK_LAST_SEEN_TIMESTAMP_NS, MOCK_MID, MOCK_TIMESTAMP,
     };
 
     const V14_FEED_ID_STR: &str =
@@ -205,6 +219,13 @@ mod tests {
         assert_eq!(decoded.last_seen_timestamp_ns, MOCK_LAST_SEEN_TIMESTAMP_NS);
         assert_eq!(decoded.market_status, MARKET_STATUS_OPEN);
         assert_eq!(decoded.contract_month, MOCK_CONTRACT_MONTH);
+        assert_eq!(
+            decoded.goldman_roll_price,
+            BigInt::from(MOCK_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap()
+        );
+        assert_eq!(decoded.current_business_day, MOCK_CURRENT_BUSINESS_DAY);
     }
 
     #[test]

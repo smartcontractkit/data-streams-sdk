@@ -209,6 +209,8 @@ mod tests {
     pub const MOCK_EXPIRY_TIME: u64 = 1718885872000000000;
     pub const MOCK_FIRST_DAY_OF_NOTICE: u64 = 1718885822000000000;
     pub const MOCK_CONTRACT_MONTH: &str = "F";
+    pub const MOCK_GOLDMAN_ROLL_PRICE: isize = 230;
+    pub const MOCK_CURRENT_BUSINESS_DAY: u32 = 3;
 
     pub fn generate_mock_report_data_v1() -> ReportDataV1 {
         let report_data = ReportDataV1 {
@@ -475,6 +477,10 @@ mod tests {
             last_seen_timestamp_ns: MOCK_LAST_SEEN_TIMESTAMP_NS,
             market_status: MOCK_MARKET_STATUS,
             contract_month: MOCK_CONTRACT_MONTH.to_string(),
+            goldman_roll_price: BigInt::from(MOCK_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap(),
+            current_business_day: MOCK_CURRENT_BUSINESS_DAY,
         };
 
         report_data
@@ -956,5 +962,9 @@ mod tests {
         );
         assert_eq!(decoded_report.market_status, MOCK_MARKET_STATUS);
         assert_eq!(decoded_report.contract_month, MOCK_CONTRACT_MONTH);
+        assert_eq!(
+            decoded_report.current_business_day,
+            MOCK_CURRENT_BUSINESS_DAY
+        );
     }
 }

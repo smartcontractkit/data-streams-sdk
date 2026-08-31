@@ -317,6 +317,8 @@ const mockV14ReportBlob = abiCoder.encode(
     "uint64", // last seen timestamp (ns)
     "uint32", // market status
     "string", // contract month
+    "int192", // goldman roll price
+    "uint32", // current business day
   ],
   [
     mockV14FeedId,
@@ -333,6 +335,8 @@ const mockV14ReportBlob = abiCoder.encode(
     1700000000000000000n, // last seen timestamp (ns)
     2, // market status (open)
     "F", // contract month (Jan)
+    102000000000000000000n, // goldman roll price $102
+    3, // current business day
   ]
 );
 
@@ -984,6 +988,8 @@ describe("Report Decoder", () => {
       expect(decoded.lastSeenTimestampNs).toBeDefined();
       expect(decoded.marketStatus).toBeDefined();
       expect(decoded.contractMonth).toBeDefined();
+      expect(decoded.goldmanRollPrice).toBeDefined();
+      expect(decoded.currentBusinessDay).toBeDefined();
     });
 
     it("should handle malformed v14 report", () => {
@@ -1003,6 +1009,8 @@ describe("Report Decoder", () => {
       expect(typeof decoded.lastSeenTimestampNs).toBe("bigint");
       expect(typeof decoded.marketStatus).toBe("number");
       expect(typeof decoded.contractMonth).toBe("string");
+      expect(typeof decoded.goldmanRollPrice).toBe("bigint");
+      expect(typeof decoded.currentBusinessDay).toBe("number");
 
       // Verify values round-trip from the encoded blob
       expect(decoded.midPrice).toBe(100000000000000000000n);
@@ -1013,6 +1021,8 @@ describe("Report Decoder", () => {
       expect(decoded.lastSeenTimestampNs).toBe(1700000000000000000n);
       expect(decoded.marketStatus).toBe(2);
       expect(decoded.contractMonth).toBe("F");
+      expect(decoded.goldmanRollPrice).toBe(102000000000000000000n);
+      expect(decoded.currentBusinessDay).toBe(3);
     });
 
     it("should reject an invalid contract month", () => {
@@ -1032,6 +1042,8 @@ describe("Report Decoder", () => {
           "uint64",
           "uint32",
           "string",
+          "int192",
+          "uint32",
         ],
         [
           mockV14FeedId,
@@ -1048,6 +1060,8 @@ describe("Report Decoder", () => {
           1700000000000000000n,
           2,
           "A", // outside the valid F..Z range
+          102000000000000000000n,
+          3,
         ]
       );
       const invalidFullReport = abiCoder.encode(

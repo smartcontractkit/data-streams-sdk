@@ -531,6 +531,8 @@ var v14Data = v14.Data{
 	LastSeenTimestampNs:   time.Unix(0, 1700000000000000000),
 	MarketStatus:          common.MarketStatusOpen,
 	ContractMonth:         "F",
+	GoldmanRollPrice:      big.NewInt(102),
+	CurrentBusinessDay:    3,
 }
 
 func mustPackData(d interface{}) []byte {
@@ -734,6 +736,8 @@ func mustPackData(d interface{}) []byte {
 			uint64(v.LastSeenTimestampNs.UnixNano()),
 			v.MarketStatus,
 			v.ContractMonth,
+			v.GoldmanRollPrice,
+			v.CurrentBusinessDay,
 		}
 	default:
 		panic(fmt.Sprintf("invalid type to pack: %#v", v))

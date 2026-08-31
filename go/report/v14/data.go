@@ -37,6 +37,8 @@ func Schema() abi.Arguments {
 		{Name: "lastSeenTimestampNs", Type: mustNewType("uint64")},
 		{Name: "marketStatus", Type: mustNewType("uint32")},
 		{Name: "contractMonth", Type: mustNewType("string")},
+		{Name: "goldmanRollPrice", Type: mustNewType("int192")},
+		{Name: "currentBusinessDay", Type: mustNewType("uint32")},
 	})
 }
 
@@ -56,7 +58,9 @@ type Data struct {
 	FirstDayOfNotice    time.Time // roll_date converted to UNIX timestamp, nanoseconds precision
 	LastSeenTimestampNs time.Time // Should reflect the timestamp of the last update from the DP, nanoseconds precision
 	MarketStatus        uint32
-	ContractMonth       string // A single capital letter F to Z for Jan to Dec.
+	ContractMonth       string   // A single capital letter F to Z for Jan to Dec.
+	GoldmanRollPrice    *big.Int // The Goldman roll price (18 decimal precision)
+	CurrentBusinessDay  uint32   // The current business day, numbered
 }
 
 // rawData is used internally for ABI decoding - types must match ABI schema
@@ -76,6 +80,8 @@ type rawData struct {
 	LastSeenTimestampNs uint64
 	MarketStatus        uint32
 	ContractMonth       string
+	GoldmanRollPrice    *big.Int
+	CurrentBusinessDay  uint32
 }
 
 // Schema returns this data version schema
@@ -128,6 +134,8 @@ func Decode(data []byte) (*Data, error) {
 		LastSeenTimestampNs:   time.Unix(0, int64(raw.LastSeenTimestampNs)),
 		MarketStatus:          raw.MarketStatus,
 		ContractMonth:         raw.ContractMonth,
+		GoldmanRollPrice:      raw.GoldmanRollPrice,
+		CurrentBusinessDay:    raw.CurrentBusinessDay,
 	}
 
 	return decoded, nil

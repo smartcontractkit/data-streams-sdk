@@ -192,6 +192,8 @@ const reportSchemaV14 = [
   { type: "uint64", name: "lastSeenTimestampNs" },
   { type: "uint32", name: "marketStatus" },
   { type: "string", name: "contractMonth" },
+  { type: "int192", name: "goldmanRollPrice" },
+  { type: "uint32", name: "currentBusinessDay" },
 ];
 
 /**
@@ -636,6 +638,8 @@ function decodeV14Report(reportBlob: string): DecodedV14Report {
       lastSeenTimestampNs: decoded[11],
       marketStatus: Number(decoded[12]),
       contractMonth,
+      goldmanRollPrice: decoded[14],
+      currentBusinessDay: Number(decoded[15]),
     };
   } catch (error) {
     throw new ReportDecodingError(

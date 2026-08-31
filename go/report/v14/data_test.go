@@ -22,6 +22,8 @@ func TestData(t *testing.T) {
 	lastSeenTimestampNs := uint64(time.Now().UnixNano()) - 100
 	marketStatus := uint32(1)
 	contractMonth := "N"
+	goldmanRollPrice := big.NewInt(102)
+	currentBusinessDay := uint32(3)
 
 	b, err := schema.Pack(
 		feedID,
@@ -38,6 +40,8 @@ func TestData(t *testing.T) {
 		lastSeenTimestampNs,
 		marketStatus,
 		contractMonth,
+		goldmanRollPrice,
+		currentBusinessDay,
 	)
 
 	if err != nil {
@@ -92,6 +96,12 @@ func TestData(t *testing.T) {
 	if d.ContractMonth != contractMonth {
 		t.Errorf("ContractMonth mismatch: expected %s, got %s", contractMonth, d.ContractMonth)
 	}
+	if d.GoldmanRollPrice.Cmp(goldmanRollPrice) != 0 {
+		t.Errorf("GoldmanRollPrice mismatch: expected %v, got %v", goldmanRollPrice, d.GoldmanRollPrice)
+	}
+	if d.CurrentBusinessDay != currentBusinessDay {
+		t.Errorf("CurrentBusinessDay mismatch: expected %d, got %d", currentBusinessDay, d.CurrentBusinessDay)
+	}
 }
 
 func TestDecodeInvalidContractMonth(t *testing.T) {
@@ -114,6 +124,8 @@ func TestDecodeInvalidContractMonth(t *testing.T) {
 			uint64(time.Now().UnixNano()),
 			uint32(1),
 			cm,
+			big.NewInt(102),
+			uint32(3),
 		)
 		if err != nil {
 			t.Fatalf("failed to serialize report: %s", err)

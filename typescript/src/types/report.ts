@@ -221,7 +221,8 @@ export interface DecodedV13Report extends DecodedReportFields {
  * Decoded V14 report format (Continuous Commodities Futures).
  *
  * Provides mid/bid/ask pricing alongside futures contract metadata such as
- * the expiry time, first day of notice and contract month.
+ * the expiry time, first day of notice, contract month, Goldman roll price
+ * and current business day.
  */
 export interface DecodedV14Report extends DecodedReportFields {
   /** Report format version identifier */
@@ -239,6 +240,10 @@ export interface DecodedV14Report extends DecodedReportFields {
   marketStatus: number;
   /** Contract month code: a single capital letter F to Z for Jan to Dec */
   contractMonth: string;
+  /** The Goldman roll price (18 decimal precision) */
+  goldmanRollPrice: bigint;
+  /** The current business day, numbered */
+  currentBusinessDay: number;
 }
 
 /**
