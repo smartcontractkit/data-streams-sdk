@@ -962,9 +962,15 @@ mod tests {
         );
         assert_eq!(decoded_report.market_status, MOCK_MARKET_STATUS);
         assert_eq!(decoded_report.contract_month, MOCK_CONTRACT_MONTH);
+
+        let multiplier: BigInt = "1000000000000000000".parse::<BigInt>().unwrap(); // 1.0 with 18 decimals
         assert_eq!(
-            decoded_report.current_business_day,
-            MOCK_CURRENT_BUSINESS_DAY
+            decoded_report.goldman_roll_price,
+            BigInt::from(MOCK_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap()
         );
+
+        assert_eq!(decoded_report.current_business_day, MOCK_CURRENT_BUSINESS_DAY);
     }
 }
