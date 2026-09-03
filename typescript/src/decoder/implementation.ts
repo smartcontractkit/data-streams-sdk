@@ -23,6 +23,29 @@ import { SDKLogger } from "../utils/logger";
 const globalAbiCoder = new AbiCoder();
 const outerReportAbiCoder = new AbiCoder();
 
+/**
+ * Check whether a value is a valid calendar date formatted as YYYY-MM-DD.
+ *
+ * Rejects anything not in that exact shape, as well as month/day combinations
+ * that do not exist (including Feb 29 in non-leap years).
+ */
+function isValidIsoDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return false;
+  }
+
+  const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  if (month < 1 || month > 12 || day < 1) {
+    return false;
+  }
+
+  const isLeap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, isLeap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  return day <= daysInMonth[month - 1];
+}
+
 const reportSchemaV2 = [
   { type: "bytes32", name: "feedId" },
   { type: "uint32", name: "validFromTimestamp" },
@@ -187,11 +210,14 @@ const reportSchemaV14 = [
   { type: "int192", name: "midPrice" },
   { type: "int192", name: "bidPrice" },
   { type: "int192", name: "askPrice" },
-  { type: "uint64", name: "expiryTime" },
+  { type: "string", name: "expiryTime" },
   { type: "uint64", name: "firstDayOfNotice" },
   { type: "uint64", name: "lastSeenTimestampNs" },
   { type: "uint32", name: "marketStatus" },
-  { type: "string", name: "contractMonth" },
+  { type: "uint32", name: "contractMonth" },
+  { type: "int192", name: "goldmanRollPrice" },
+  { type: "uint32", name: "currentBusinessDay" },
+  { type: "int192", name: "interpolatedGoldmanRollPrice" },
 ];
 
 /**
@@ -615,11 +641,19 @@ function decodeV14Report(reportBlob: string): DecodedV14Report {
       getBytes(reportBlob)
     );
 
-    // contractMonth must be a single letter from F to Z (Jan to Dec).
-    const contractMonth = decoded[13];
-    if (typeof contractMonth !== "string" || !/^[F-Z]$/.test(contractMonth)) {
+    // contractMonth must be a number from 1 (Jan) to 12 (Dec).
+    const contractMonth = Number(decoded[13]);
+    if (!Number.isInteger(contractMonth) || contractMonth < 1 || contractMonth > 12) {
       throw new ReportDecodingError(
-        `Invalid contract month: ${contractMonth}. Must be a single letter from F to Z`
+        `Invalid contract month: ${contractMonth}. Must be a number from 1 to 12`
+      );
+    }
+
+    // expiryTime must be a valid calendar date formatted as YYYY-MM-DD.
+    const expiryTime = decoded[9];
+    if (typeof expiryTime !== "string" || !isValidIsoDate(expiryTime)) {
+      throw new ReportDecodingError(
+        `Invalid expiry time: ${expiryTime}. Must be a date formatted as YYYY-MM-DD`
       );
     }
 
@@ -631,11 +665,14 @@ function decodeV14Report(reportBlob: string): DecodedV14Report {
       midPrice: decoded[6],
       bidPrice: decoded[7],
       askPrice: decoded[8],
-      expiryTime: decoded[9],
+      expiryTime,
       firstDayOfNotice: decoded[10],
       lastSeenTimestampNs: decoded[11],
       marketStatus: Number(decoded[12]),
       contractMonth,
+      goldmanRollPrice: decoded[14],
+      currentBusinessDay: Number(decoded[15]),
+      interpolatedGoldmanRollPrice: decoded[16],
     };
   } catch (error) {
     throw new ReportDecodingError(

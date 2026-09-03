@@ -517,20 +517,23 @@ var v13Data = v13.Data{
 }
 
 var v14Data = v14.Data{
-	FeedID:                [32]uint8{00, 14, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114},
-	ValidFromTimestamp:    time.Unix(1700000000, 0),
-	ObservationsTimestamp: time.Unix(1700000000, 0),
-	NativeFee:             big.NewInt(10),
-	LinkFee:               big.NewInt(10),
-	ExpiresAt:             time.Unix(1700000100, 0),
-	MidPrice:              big.NewInt(100),
-	BidPrice:              big.NewInt(99),
-	AskPrice:              big.NewInt(101),
-	ExpiryTime:            time.Unix(0, 1700000010000000000),
-	FirstDayOfNotice:      time.Unix(0, 1700000005000000000),
-	LastSeenTimestampNs:   time.Unix(0, 1700000000000000000),
-	MarketStatus:          common.MarketStatusOpen,
-	ContractMonth:         "F",
+	FeedID:                       [32]uint8{00, 14, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114},
+	ValidFromTimestamp:           time.Unix(1700000000, 0),
+	ObservationsTimestamp:        time.Unix(1700000000, 0),
+	NativeFee:                    big.NewInt(10),
+	LinkFee:                      big.NewInt(10),
+	ExpiresAt:                    time.Unix(1700000100, 0),
+	MidPrice:                     big.NewInt(100),
+	BidPrice:                     big.NewInt(99),
+	AskPrice:                     big.NewInt(101),
+	ExpiryTime:                   "2026-09-22",
+	FirstDayOfNotice:             time.Unix(0, 1700000005000000000),
+	LastSeenTimestampNs:          time.Unix(0, 1700000000000000000),
+	MarketStatus:                 common.MarketStatusOpen,
+	ContractMonth:                1,
+	GoldmanRollPrice:             big.NewInt(102),
+	CurrentBusinessDay:           3,
+	InterpolatedGoldmanRollPrice: big.NewInt(103),
 }
 
 func mustPackData(d interface{}) []byte {
@@ -729,11 +732,14 @@ func mustPackData(d interface{}) []byte {
 			v.MidPrice,
 			v.BidPrice,
 			v.AskPrice,
-			uint64(v.ExpiryTime.UnixNano()),
+			v.ExpiryTime,
 			uint64(v.FirstDayOfNotice.UnixNano()),
 			uint64(v.LastSeenTimestampNs.UnixNano()),
 			v.MarketStatus,
 			v.ContractMonth,
+			v.GoldmanRollPrice,
+			v.CurrentBusinessDay,
+			v.InterpolatedGoldmanRollPrice,
 		}
 	default:
 		panic(fmt.Sprintf("invalid type to pack: %#v", v))

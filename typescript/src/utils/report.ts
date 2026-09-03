@@ -180,11 +180,14 @@ export function formatReport(
       output += `Mid Price: ${r.midPrice.toString()}\n`;
       output += `Bid Price: ${r.bidPrice.toString()}\n`;
       output += `Ask Price: ${r.askPrice.toString()}\n`;
-      output += `Expiry Time: ${r.expiryTime.toString()}\n`;
+      output += `Expiry Time: ${r.expiryTime}\n`;
       output += `First Day of Notice: ${r.firstDayOfNotice.toString()}\n`;
       output += `Last Seen Timestamp Nanos: ${r.lastSeenTimestampNs.toString()}\n`;
       output += `Market Status: ${r.marketStatus.toString()}\n`;
-      output += `Contract Month: ${r.contractMonth}\n`;
+      output += `Contract Month: ${r.contractMonth.toString()}\n`;
+      output += `Goldman Roll Price: ${r.goldmanRollPrice.toString()}\n`;
+      output += `Current Business Day: ${r.currentBusinessDay.toString()}\n`;
+      output += `Interpolated Goldman Roll Price: ${r.interpolatedGoldmanRollPrice.toString()}\n`;
       break;
     }
   }

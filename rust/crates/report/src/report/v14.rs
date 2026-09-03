@@ -3,6 +3,41 @@ use crate::report::base::{ReportBase, ReportError};
 
 use num_bigint::BigInt;
 
+/// Returns whether `value` is a valid calendar date formatted as `YYYY-MM-DD`.
+///
+/// Rejects anything that is not exactly ten ASCII characters in that shape, as well as
+/// month/day combinations that do not exist (including Feb 29 in non-leap years).
+fn is_valid_iso_date(value: &str) -> bool {
+    let b = value.as_bytes();
+    if b.len() != 10 || b[4] != b'-' || b[7] != b'-' {
+        return false;
+    }
+    if !b
+        .iter()
+        .enumerate()
+        .all(|(i, c)| matches!(i, 4 | 7) || c.is_ascii_digit())
+    {
+        return false;
+    }
+
+    let num = |s: &str| s.parse::<u32>().unwrap_or(0);
+    let (year, month, day) = (num(&value[0..4]), num(&value[5..7]), num(&value[8..10]));
+
+    if !(1..=12).contains(&month) || day < 1 {
+        return false;
+    }
+
+    let is_leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+    let days_in_month = match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        _ if is_leap => 29,
+        _ => 28,
+    };
+
+    day <= days_in_month
+}
+
 /// Represents a Report Data V14 Schema (Continuous Commodities Futures).
 ///
 /// This schema provides mid/bid/ask pricing alongside futures contract metadata such as
@@ -18,11 +53,14 @@ use num_bigint::BigInt;
 /// - `mid_price`: The mid price (18 decimal precision).
 /// - `bid_price`: The bid price (18 decimal precision).
 /// - `ask_price`: The ask price (18 decimal precision).
-/// - `expiry_time`: Contract expiry time in nanoseconds.
+/// - `expiry_time`: Contract expiry date, formatted as `YYYY-MM-DD`, e.g. `"2026-09-22"`.
 /// - `first_day_of_notice`: First day of notice, converted to a UNIX timestamp in nanoseconds.
 /// - `last_seen_timestamp_ns`: Timestamp of the last update seen from the data provider, in nanoseconds.
 /// - `market_status`: The DON's consensus on whether the market is currently open. Possible values: `0` (`Unknown`), `1` (`Closed`), `2` (`Open`).
-/// - `contract_month`: Contract month code: a single capital letter F to Z for Jan to Dec.
+/// - `contract_month`: The contract month, from `1` (Jan) to `12` (Dec).
+/// - `goldman_roll_price`: The Goldman roll price (18 decimal precision).
+/// - `current_business_day`: The current business day, numbered.
+/// - `interpolated_goldman_roll_price`: The interpolated Goldman roll price (18 decimal precision).
 ///
 /// # Solidity Equivalent
 /// ```solidity
@@ -36,11 +74,14 @@ use num_bigint::BigInt;
 ///     int192 midPrice;
 ///     int192 bidPrice;
 ///     int192 askPrice;
-///     uint64 expiryTime;
+///     string expiryTime;
 ///     uint64 firstDayOfNotice;
 ///     uint64 lastSeenTimestampNs;
 ///     uint32 marketStatus;
-///     string contractMonth;
+///     uint32 contractMonth;
+///     int192 goldmanRollPrice;
+///     uint32 currentBusinessDay;
+///     int192 interpolatedGoldmanRollPrice;
 /// }
 /// ```
 #[derive(Debug)]
@@ -54,17 +95,20 @@ pub struct ReportDataV14 {
     pub mid_price: BigInt,
     pub bid_price: BigInt,
     pub ask_price: BigInt,
-    pub expiry_time: u64,
+    pub expiry_time: String,
     pub first_day_of_notice: u64,
     pub last_seen_timestamp_ns: u64,
     pub market_status: u32,
-    pub contract_month: String,
+    pub contract_month: u32,
+    pub goldman_roll_price: BigInt,
+    pub current_business_day: u32,
+    pub interpolated_goldman_roll_price: BigInt,
 }
 
 impl ReportDataV14 {
-    /// Number of 32-byte head words: 13 static fields plus one offset word for the
-    /// dynamic `contractMonth` string.
-    const HEAD_WORDS: usize = 14;
+    /// Number of 32-byte head words: 16 static fields plus one offset word for the
+    /// dynamic `expiryTime` string.
+    const HEAD_WORDS: usize = 17;
 
     /// Decodes an ABI-encoded `ReportDataV14` from bytes.
     ///
@@ -96,16 +140,24 @@ impl ReportDataV14 {
         let mid_price = ReportBase::read_int192(data, 6 * ReportBase::WORD_SIZE)?;
         let bid_price = ReportBase::read_int192(data, 7 * ReportBase::WORD_SIZE)?;
         let ask_price = ReportBase::read_int192(data, 8 * ReportBase::WORD_SIZE)?;
-        let expiry_time = ReportBase::read_uint64(data, 9 * ReportBase::WORD_SIZE)?;
+        let expiry_time = ReportBase::read_string(data, 9 * ReportBase::WORD_SIZE)?;
         let first_day_of_notice = ReportBase::read_uint64(data, 10 * ReportBase::WORD_SIZE)?;
         let last_seen_timestamp_ns = ReportBase::read_uint64(data, 11 * ReportBase::WORD_SIZE)?;
         let market_status = ReportBase::read_uint32(data, 12 * ReportBase::WORD_SIZE)?;
-        let contract_month = ReportBase::read_string(data, 13 * ReportBase::WORD_SIZE)?;
+        let contract_month = ReportBase::read_uint32(data, 13 * ReportBase::WORD_SIZE)?;
+        let goldman_roll_price = ReportBase::read_int192(data, 14 * ReportBase::WORD_SIZE)?;
+        let current_business_day = ReportBase::read_uint32(data, 15 * ReportBase::WORD_SIZE)?;
+        let interpolated_goldman_roll_price =
+            ReportBase::read_int192(data, 16 * ReportBase::WORD_SIZE)?;
 
-        // contract_month must be a single letter from F to Z (Jan to Dec).
-        let month_bytes = contract_month.as_bytes();
-        if month_bytes.len() != 1 || !(b'F'..=b'Z').contains(&month_bytes[0]) {
+        // contract_month must be a number from 1 (Jan) to 12 (Dec).
+        if !(1..=12).contains(&contract_month) {
             return Err(ReportError::InvalidValue("contract_month"));
+        }
+
+        // expiry_time must be a valid calendar date formatted as YYYY-MM-DD.
+        if !is_valid_iso_date(&expiry_time) {
+            return Err(ReportError::InvalidValue("expiry_time"));
         }
 
         Ok(Self {
@@ -123,6 +175,9 @@ impl ReportDataV14 {
             last_seen_timestamp_ns,
             market_status,
             contract_month,
+            goldman_roll_price,
+            current_business_day,
+            interpolated_goldman_roll_price,
         })
     }
 
@@ -138,7 +193,7 @@ impl ReportDataV14 {
     pub fn abi_encode(&self) -> Result<Vec<u8>, ReportError> {
         let mut buffer = Vec::with_capacity((Self::HEAD_WORDS + 2) * ReportBase::WORD_SIZE);
 
-        // Head: 13 static fields.
+        // Head: the 9 static fields preceding the dynamic `expiryTime` string.
         buffer.extend_from_slice(&self.feed_id.0);
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.valid_from_timestamp)?);
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.observations_timestamp)?);
@@ -148,17 +203,24 @@ impl ReportDataV14 {
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.mid_price)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.bid_price)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.ask_price)?);
-        buffer.extend_from_slice(&ReportBase::encode_uint64(self.expiry_time)?);
-        buffer.extend_from_slice(&ReportBase::encode_uint64(self.first_day_of_notice)?);
-        buffer.extend_from_slice(&ReportBase::encode_uint64(self.last_seen_timestamp_ns)?);
-        buffer.extend_from_slice(&ReportBase::encode_uint32(self.market_status)?);
 
-        // Head: offset word pointing to the dynamic `contractMonth` string tail.
+        // Head: offset word pointing to the dynamic `expiryTime` string tail.
         let offset = (Self::HEAD_WORDS * ReportBase::WORD_SIZE) as u64;
         buffer.extend_from_slice(&ReportBase::encode_uint64(offset)?);
 
-        // Tail: the dynamic `contractMonth` string.
-        buffer.extend_from_slice(&ReportBase::encode_string_tail(&self.contract_month));
+        // Head: the static fields following the dynamic `expiryTime` string.
+        buffer.extend_from_slice(&ReportBase::encode_uint64(self.first_day_of_notice)?);
+        buffer.extend_from_slice(&ReportBase::encode_uint64(self.last_seen_timestamp_ns)?);
+        buffer.extend_from_slice(&ReportBase::encode_uint32(self.market_status)?);
+        buffer.extend_from_slice(&ReportBase::encode_uint32(self.contract_month)?);
+        buffer.extend_from_slice(&ReportBase::encode_int192(&self.goldman_roll_price)?);
+        buffer.extend_from_slice(&ReportBase::encode_uint32(self.current_business_day)?);
+        buffer.extend_from_slice(&ReportBase::encode_int192(
+            &self.interpolated_goldman_roll_price,
+        )?);
+
+        // Tail: the dynamic `expiryTime` string.
+        buffer.extend_from_slice(&ReportBase::encode_string_tail(&self.expiry_time));
 
         Ok(buffer)
     }
@@ -168,9 +230,10 @@ impl ReportDataV14 {
 mod tests {
     use super::*;
     use crate::report::tests::{
-        generate_mock_report_data_v14, MARKET_STATUS_OPEN, MOCK_ASK, MOCK_BID,
-        MOCK_CONTRACT_MONTH, MOCK_EXPIRY_TIME, MOCK_FEE, MOCK_FIRST_DAY_OF_NOTICE,
-        MOCK_LAST_SEEN_TIMESTAMP_NS, MOCK_MID, MOCK_TIMESTAMP,
+        generate_mock_report_data_v14, MARKET_STATUS_OPEN, MOCK_ASK, MOCK_BID, MOCK_CONTRACT_MONTH,
+        MOCK_CURRENT_BUSINESS_DAY, MOCK_EXPIRY_TIME, MOCK_FEE, MOCK_FIRST_DAY_OF_NOTICE,
+        MOCK_GOLDMAN_ROLL_PRICE, MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE, MOCK_LAST_SEEN_TIMESTAMP_NS,
+        MOCK_MID, MOCK_TIMESTAMP,
     };
 
     const V14_FEED_ID_STR: &str =
@@ -205,14 +268,27 @@ mod tests {
         assert_eq!(decoded.last_seen_timestamp_ns, MOCK_LAST_SEEN_TIMESTAMP_NS);
         assert_eq!(decoded.market_status, MARKET_STATUS_OPEN);
         assert_eq!(decoded.contract_month, MOCK_CONTRACT_MONTH);
+        assert_eq!(
+            decoded.goldman_roll_price,
+            BigInt::from(MOCK_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap()
+        );
+        assert_eq!(decoded.current_business_day, MOCK_CURRENT_BUSINESS_DAY);
+        assert_eq!(
+            decoded.interpolated_goldman_roll_price,
+            BigInt::from(MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap()
+        );
     }
 
     #[test]
     fn test_decode_report_data_v14_invalid_contract_month() {
-        // Values outside the valid single-letter F..Z range must be rejected.
-        for invalid in ["", "A", "E", "AB", "n", "1"] {
+        // Values outside the valid 1..=12 range must be rejected.
+        for invalid in [0, 13, 100, u32::MAX] {
             let mut report_data = generate_mock_report_data_v14();
-            report_data.contract_month = invalid.to_string();
+            report_data.contract_month = invalid;
             let encoded = report_data.abi_encode().unwrap();
 
             let result = ReportDataV14::decode(&encoded);
@@ -223,5 +299,59 @@ mod tests {
                 result
             );
         }
+    }
+
+    #[test]
+    fn test_decode_report_data_v14_invalid_expiry_time() {
+        // Values that are not a valid YYYY-MM-DD calendar date must be rejected.
+        for invalid in [
+            "",
+            "2026-9-22",
+            "22-09-2026",
+            "2026/09/22",
+            "2026-13-01",
+            "2026-00-01",
+            "2026-09-00",
+            "2026-09-31",
+            "2026-02-29", // 2026 is not a leap year
+            "not-a-date",
+            "2026-09-22T00:00:00Z",
+        ] {
+            let mut report_data = generate_mock_report_data_v14();
+            report_data.expiry_time = invalid.to_string();
+            let encoded = report_data.abi_encode().unwrap();
+
+            let result = ReportDataV14::decode(&encoded);
+            assert!(
+                matches!(result, Err(ReportError::InvalidValue("expiry_time"))),
+                "expected InvalidValue error for expiry_time {:?}, got {:?}",
+                invalid,
+                result
+            );
+        }
+    }
+
+    #[test]
+    fn test_valid_iso_dates_are_accepted() {
+        // Leap-year and month-length boundaries that must be accepted.
+        for valid in [
+            "2026-09-22",
+            "2024-02-29", // leap year
+            "2000-02-29", // divisible by 400
+            "2026-01-31",
+            "2026-04-30",
+            "2026-12-31",
+        ] {
+            let mut report_data = generate_mock_report_data_v14();
+            report_data.expiry_time = valid.to_string();
+            let encoded = report_data.abi_encode().unwrap();
+
+            let decoded = ReportDataV14::decode(&encoded)
+                .unwrap_or_else(|e| panic!("expected {:?} to decode, got {:?}", valid, e));
+            assert_eq!(decoded.expiry_time, valid);
+        }
+
+        // 1900 is divisible by 100 but not 400, so it is not a leap year.
+        assert!(!is_valid_iso_date("1900-02-29"));
     }
 }

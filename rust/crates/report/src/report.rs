@@ -206,9 +206,12 @@ mod tests {
     pub const MOCK_LAST_TRADED_PRICE: isize = 228;
     pub const MOCK_MID: isize = 228;
     pub const MOCK_MARKET_STATUS: u32 = 2;
-    pub const MOCK_EXPIRY_TIME: u64 = 1718885872000000000;
+    pub const MOCK_EXPIRY_TIME: &str = "2026-09-22";
     pub const MOCK_FIRST_DAY_OF_NOTICE: u64 = 1718885822000000000;
-    pub const MOCK_CONTRACT_MONTH: &str = "F";
+    pub const MOCK_CONTRACT_MONTH: u32 = 1;
+    pub const MOCK_GOLDMAN_ROLL_PRICE: isize = 230;
+    pub const MOCK_CURRENT_BUSINESS_DAY: u32 = 3;
+    pub const MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE: isize = 231;
 
     pub fn generate_mock_report_data_v1() -> ReportDataV1 {
         let report_data = ReportDataV1 {
@@ -470,11 +473,18 @@ mod tests {
             mid_price: BigInt::from(MOCK_MID).checked_mul(&multiplier).unwrap(),
             bid_price: BigInt::from(MOCK_BID).checked_mul(&multiplier).unwrap(),
             ask_price: BigInt::from(MOCK_ASK).checked_mul(&multiplier).unwrap(),
-            expiry_time: MOCK_EXPIRY_TIME,
+            expiry_time: MOCK_EXPIRY_TIME.to_string(),
             first_day_of_notice: MOCK_FIRST_DAY_OF_NOTICE,
             last_seen_timestamp_ns: MOCK_LAST_SEEN_TIMESTAMP_NS,
             market_status: MOCK_MARKET_STATUS,
-            contract_month: MOCK_CONTRACT_MONTH.to_string(),
+            contract_month: MOCK_CONTRACT_MONTH,
+            goldman_roll_price: BigInt::from(MOCK_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap(),
+            current_business_day: MOCK_CURRENT_BUSINESS_DAY,
+            interpolated_goldman_roll_price: BigInt::from(MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap(),
         };
 
         report_data
@@ -942,7 +952,7 @@ mod tests {
 
         let decoded_report = ReportDataV14::decode(&report_blob).unwrap();
 
-        // V14 carries a dynamic `contractMonth` string, so assert the decoded values
+        // V14 carries a dynamic `expiryTime` string, so assert the decoded values
         // round-trip through the full-report path rather than comparing a fixed hex blob.
         assert_eq!(decoded_report.feed_id, V14_FEED_ID);
         assert_eq!(decoded_report.valid_from_timestamp, MOCK_TIMESTAMP);
@@ -956,5 +966,23 @@ mod tests {
         );
         assert_eq!(decoded_report.market_status, MOCK_MARKET_STATUS);
         assert_eq!(decoded_report.contract_month, MOCK_CONTRACT_MONTH);
+
+        let multiplier: BigInt = "1000000000000000000".parse::<BigInt>().unwrap(); // 1.0 with 18 decimals
+        assert_eq!(
+            decoded_report.goldman_roll_price,
+            BigInt::from(MOCK_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap()
+        );
+        assert_eq!(
+            decoded_report.current_business_day,
+            MOCK_CURRENT_BUSINESS_DAY
+        );
+        assert_eq!(
+            decoded_report.interpolated_goldman_roll_price,
+            BigInt::from(MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&"1000000000000000000".parse::<BigInt>().unwrap())
+                .unwrap()
+        );
     }
 }
