@@ -17,11 +17,11 @@ func TestData(t *testing.T) {
 	midPrice := big.NewInt(100)
 	bidPrice := big.NewInt(99)
 	askPrice := big.NewInt(101)
-	expiryTime := uint64(time.Now().UnixNano()) + 100
+	expiryTime := "2026-09-22"
 	firstDayOfNotice := uint64(time.Now().UnixNano()) + 50
 	lastSeenTimestampNs := uint64(time.Now().UnixNano()) - 100
 	marketStatus := uint32(1)
-	contractMonth := "N"
+	contractMonth := uint32(7)
 	goldmanRollPrice := big.NewInt(102)
 	currentBusinessDay := uint32(3)
 	interpolatedGoldmanRollPrice := big.NewInt(103)
@@ -83,8 +83,8 @@ func TestData(t *testing.T) {
 	if d.AskPrice.Cmp(askPrice) != 0 {
 		t.Errorf("AskPrice mismatch: expected %v, got %v", askPrice, d.AskPrice)
 	}
-	if d.ExpiryTime.UnixNano() != int64(expiryTime) {
-		t.Errorf("ExpiryTime mismatch: expected %d, got %d", expiryTime, d.ExpiryTime.UnixNano())
+	if d.ExpiryTime != expiryTime {
+		t.Errorf("ExpiryTime mismatch: expected %s, got %s", expiryTime, d.ExpiryTime)
 	}
 	if d.FirstDayOfNotice.UnixNano() != int64(firstDayOfNotice) {
 		t.Errorf("FirstDayOfNotice mismatch: expected %d, got %d", firstDayOfNotice, d.FirstDayOfNotice.UnixNano())
@@ -96,7 +96,7 @@ func TestData(t *testing.T) {
 		t.Errorf("MarketStatus mismatch: expected %d, got %d", marketStatus, d.MarketStatus)
 	}
 	if d.ContractMonth != contractMonth {
-		t.Errorf("ContractMonth mismatch: expected %s, got %s", contractMonth, d.ContractMonth)
+		t.Errorf("ContractMonth mismatch: expected %d, got %d", contractMonth, d.ContractMonth)
 	}
 	if d.GoldmanRollPrice.Cmp(goldmanRollPrice) != 0 {
 		t.Errorf("GoldmanRollPrice mismatch: expected %v, got %v", goldmanRollPrice, d.GoldmanRollPrice)
@@ -112,8 +112,8 @@ func TestData(t *testing.T) {
 func TestDecodeInvalidContractMonth(t *testing.T) {
 	feedID := [32]uint8{00, 14, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114}
 
-	// Values that are outside the valid single-letter F..Z range must be rejected.
-	for _, cm := range []string{"", "A", "E", "AB", "n", "1"} {
+	// Values that are outside the valid 1..12 range must be rejected.
+	for _, cm := range []uint32{0, 13, 100, ^uint32(0)} {
 		b, err := schema.Pack(
 			feedID,
 			uint64(time.Now().Unix()),
@@ -124,7 +124,7 @@ func TestDecodeInvalidContractMonth(t *testing.T) {
 			big.NewInt(100),
 			big.NewInt(99),
 			big.NewInt(101),
-			uint64(time.Now().UnixNano()),
+			"2026-09-22",
 			uint64(time.Now().UnixNano()),
 			uint64(time.Now().UnixNano()),
 			uint32(1),
@@ -138,7 +138,41 @@ func TestDecodeInvalidContractMonth(t *testing.T) {
 		}
 
 		if _, err := Decode(b); err == nil {
-			t.Errorf("expected error decoding contractMonth %q, got nil", cm)
+			t.Errorf("expected error decoding contractMonth %d, got nil", cm)
+		}
+	}
+}
+
+func TestDecodeInvalidExpiryTime(t *testing.T) {
+	feedID := [32]uint8{00, 14, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114}
+
+	// Values that are not a valid YYYY-MM-DD calendar date must be rejected.
+	for _, et := range []string{"", "2026-9-22", "22-09-2026", "2026/09/22", "2026-13-01", "2026-09-31", "not-a-date", "2026-09-22T00:00:00Z"} {
+		b, err := schema.Pack(
+			feedID,
+			uint64(time.Now().Unix()),
+			uint64(time.Now().Unix()),
+			big.NewInt(10),
+			big.NewInt(10),
+			uint64(time.Now().Unix())+100,
+			big.NewInt(100),
+			big.NewInt(99),
+			big.NewInt(101),
+			et,
+			uint64(time.Now().UnixNano()),
+			uint64(time.Now().UnixNano()),
+			uint32(1),
+			uint32(7),
+			big.NewInt(102),
+			uint32(3),
+			big.NewInt(103),
+		)
+		if err != nil {
+			t.Fatalf("failed to serialize report: %s", err)
+		}
+
+		if _, err := Decode(b); err == nil {
+			t.Errorf("expected error decoding expiryTime %q, got nil", et)
 		}
 	}
 }
