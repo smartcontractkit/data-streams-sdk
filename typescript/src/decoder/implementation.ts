@@ -194,6 +194,7 @@ const reportSchemaV14 = [
   { type: "string", name: "contractMonth" },
   { type: "int192", name: "goldmanRollPrice" },
   { type: "uint32", name: "currentBusinessDay" },
+  { type: "int192", name: "interpolatedGoldmanRollPrice" },
 ];
 
 /**
@@ -640,6 +641,7 @@ function decodeV14Report(reportBlob: string): DecodedV14Report {
       contractMonth,
       goldmanRollPrice: decoded[14],
       currentBusinessDay: Number(decoded[15]),
+      interpolatedGoldmanRollPrice: decoded[16],
     };
   } catch (error) {
     throw new ReportDecodingError(

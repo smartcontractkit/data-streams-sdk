@@ -39,6 +39,7 @@ func Schema() abi.Arguments {
 		{Name: "contractMonth", Type: mustNewType("string")},
 		{Name: "goldmanRollPrice", Type: mustNewType("int192")},
 		{Name: "currentBusinessDay", Type: mustNewType("uint32")},
+		{Name: "interpolatedGoldmanRollPrice", Type: mustNewType("int192")},
 	})
 }
 
@@ -51,16 +52,17 @@ type Data struct {
 	LinkFee               *big.Int
 	ExpiresAt             time.Time
 
-	MidPrice            *big.Int
-	BidPrice            *big.Int
-	AskPrice            *big.Int
-	ExpiryTime          time.Time // nanoseconds precision
-	FirstDayOfNotice    time.Time // roll_date converted to UNIX timestamp, nanoseconds precision
-	LastSeenTimestampNs time.Time // Should reflect the timestamp of the last update from the DP, nanoseconds precision
-	MarketStatus        uint32
-	ContractMonth       string   // A single capital letter F to Z for Jan to Dec.
-	GoldmanRollPrice    *big.Int // The Goldman roll price (18 decimal precision)
-	CurrentBusinessDay  uint32   // The current business day, numbered
+	MidPrice                     *big.Int
+	BidPrice                     *big.Int
+	AskPrice                     *big.Int
+	ExpiryTime                   time.Time // nanoseconds precision
+	FirstDayOfNotice             time.Time // roll_date converted to UNIX timestamp, nanoseconds precision
+	LastSeenTimestampNs          time.Time // Should reflect the timestamp of the last update from the DP, nanoseconds precision
+	MarketStatus                 uint32
+	ContractMonth                string   // A single capital letter F to Z for Jan to Dec.
+	GoldmanRollPrice             *big.Int // The Goldman roll price (18 decimal precision)
+	CurrentBusinessDay           uint32   // The current business day, numbered
+	InterpolatedGoldmanRollPrice *big.Int // The interpolated Goldman roll price (18 decimal precision)
 }
 
 // rawData is used internally for ABI decoding - types must match ABI schema
@@ -72,16 +74,17 @@ type rawData struct {
 	LinkFee               *big.Int
 	ExpiresAt             uint64
 
-	MidPrice            *big.Int
-	BidPrice            *big.Int
-	AskPrice            *big.Int
-	ExpiryTime          uint64
-	FirstDayOfNotice    uint64
-	LastSeenTimestampNs uint64
-	MarketStatus        uint32
-	ContractMonth       string
-	GoldmanRollPrice    *big.Int
-	CurrentBusinessDay  uint32
+	MidPrice                     *big.Int
+	BidPrice                     *big.Int
+	AskPrice                     *big.Int
+	ExpiryTime                   uint64
+	FirstDayOfNotice             uint64
+	LastSeenTimestampNs          uint64
+	MarketStatus                 uint32
+	ContractMonth                string
+	GoldmanRollPrice             *big.Int
+	CurrentBusinessDay           uint32
+	InterpolatedGoldmanRollPrice *big.Int
 }
 
 // Schema returns this data version schema
@@ -120,22 +123,23 @@ func Decode(data []byte) (*Data, error) {
 	res := raw.FeedID.Resolution()
 
 	decoded := &Data{
-		FeedID:                raw.FeedID,
-		ValidFromTimestamp:    feed.ParseTimestamp(raw.ValidFromTimestamp, res),
-		ObservationsTimestamp: feed.ParseTimestamp(raw.ObservationsTimestamp, res),
-		NativeFee:             raw.NativeFee,
-		LinkFee:               raw.LinkFee,
-		ExpiresAt:             feed.ParseTimestamp(raw.ExpiresAt, res),
-		MidPrice:              raw.MidPrice,
-		BidPrice:              raw.BidPrice,
-		AskPrice:              raw.AskPrice,
-		ExpiryTime:            time.Unix(0, int64(raw.ExpiryTime)),
-		FirstDayOfNotice:      time.Unix(0, int64(raw.FirstDayOfNotice)),
-		LastSeenTimestampNs:   time.Unix(0, int64(raw.LastSeenTimestampNs)),
-		MarketStatus:          raw.MarketStatus,
-		ContractMonth:         raw.ContractMonth,
-		GoldmanRollPrice:      raw.GoldmanRollPrice,
-		CurrentBusinessDay:    raw.CurrentBusinessDay,
+		FeedID:                       raw.FeedID,
+		ValidFromTimestamp:           feed.ParseTimestamp(raw.ValidFromTimestamp, res),
+		ObservationsTimestamp:        feed.ParseTimestamp(raw.ObservationsTimestamp, res),
+		NativeFee:                    raw.NativeFee,
+		LinkFee:                      raw.LinkFee,
+		ExpiresAt:                    feed.ParseTimestamp(raw.ExpiresAt, res),
+		MidPrice:                     raw.MidPrice,
+		BidPrice:                     raw.BidPrice,
+		AskPrice:                     raw.AskPrice,
+		ExpiryTime:                   time.Unix(0, int64(raw.ExpiryTime)),
+		FirstDayOfNotice:             time.Unix(0, int64(raw.FirstDayOfNotice)),
+		LastSeenTimestampNs:          time.Unix(0, int64(raw.LastSeenTimestampNs)),
+		MarketStatus:                 raw.MarketStatus,
+		ContractMonth:                raw.ContractMonth,
+		GoldmanRollPrice:             raw.GoldmanRollPrice,
+		CurrentBusinessDay:           raw.CurrentBusinessDay,
+		InterpolatedGoldmanRollPrice: raw.InterpolatedGoldmanRollPrice,
 	}
 
 	return decoded, nil

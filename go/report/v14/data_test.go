@@ -24,6 +24,7 @@ func TestData(t *testing.T) {
 	contractMonth := "N"
 	goldmanRollPrice := big.NewInt(102)
 	currentBusinessDay := uint32(3)
+	interpolatedGoldmanRollPrice := big.NewInt(103)
 
 	b, err := schema.Pack(
 		feedID,
@@ -42,6 +43,7 @@ func TestData(t *testing.T) {
 		contractMonth,
 		goldmanRollPrice,
 		currentBusinessDay,
+		interpolatedGoldmanRollPrice,
 	)
 
 	if err != nil {
@@ -102,6 +104,9 @@ func TestData(t *testing.T) {
 	if d.CurrentBusinessDay != currentBusinessDay {
 		t.Errorf("CurrentBusinessDay mismatch: expected %d, got %d", currentBusinessDay, d.CurrentBusinessDay)
 	}
+	if d.InterpolatedGoldmanRollPrice.Cmp(interpolatedGoldmanRollPrice) != 0 {
+		t.Errorf("InterpolatedGoldmanRollPrice mismatch: expected %v, got %v", interpolatedGoldmanRollPrice, d.InterpolatedGoldmanRollPrice)
+	}
 }
 
 func TestDecodeInvalidContractMonth(t *testing.T) {
@@ -126,6 +131,7 @@ func TestDecodeInvalidContractMonth(t *testing.T) {
 			cm,
 			big.NewInt(102),
 			uint32(3),
+			big.NewInt(103),
 		)
 		if err != nil {
 			t.Fatalf("failed to serialize report: %s", err)

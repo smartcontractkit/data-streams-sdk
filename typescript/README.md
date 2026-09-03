@@ -282,7 +282,7 @@ interface BaseFields {
 - **V11**: `mid: bigint, LastSeenTimestampNs: number, bid: bigint, vidVolume: number, ask: bigint, askVolume: number, lastTradedPrice: bigint, marketStatus: MarketStatus` - Deutsche Boerse
 - **V12**: `navPerShare: bigint, nextNavPerShare: bigint, navDate: number, ripcord: number` - NAV fund data + Next
 - **V13**: `bestAsk: bigint, bestBid: bigint, askVolume: number, bidVolume: number, lastTradedPrice: bigint` - Best Bid/Ask
-- **V14**: `midPrice: bigint, bidPrice: bigint, askPrice: bigint, expiryTime: bigint, firstDayOfNotice: bigint, lastSeenTimestampNs: bigint, marketStatus: MarketStatus, contractMonth: string, goldmanRollPrice: bigint, currentBusinessDay: number` - Continuous Commodities Futures
+- **V14**: `midPrice: bigint, bidPrice: bigint, askPrice: bigint, expiryTime: bigint, firstDayOfNotice: bigint, lastSeenTimestampNs: bigint, marketStatus: MarketStatus, contractMonth: string, goldmanRollPrice: bigint, currentBusinessDay: number, interpolatedGoldmanRollPrice: bigint` - Continuous Commodities Futures
 
 For complete field definitions, see the [documentation](https://docs.chain.link/data-streams/reference/report-schema-v3).
 

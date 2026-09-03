@@ -25,6 +25,7 @@ use num_bigint::BigInt;
 /// - `contract_month`: Contract month code: a single capital letter F to Z for Jan to Dec.
 /// - `goldman_roll_price`: The Goldman roll price (18 decimal precision).
 /// - `current_business_day`: The current business day, numbered.
+/// - `interpolated_goldman_roll_price`: The interpolated Goldman roll price (18 decimal precision).
 ///
 /// # Solidity Equivalent
 /// ```solidity
@@ -45,6 +46,7 @@ use num_bigint::BigInt;
 ///     string contractMonth;
 ///     int192 goldmanRollPrice;
 ///     uint32 currentBusinessDay;
+///     int192 interpolatedGoldmanRollPrice;
 /// }
 /// ```
 #[derive(Debug)]
@@ -65,12 +67,13 @@ pub struct ReportDataV14 {
     pub contract_month: String,
     pub goldman_roll_price: BigInt,
     pub current_business_day: u32,
+    pub interpolated_goldman_roll_price: BigInt,
 }
 
 impl ReportDataV14 {
-    /// Number of 32-byte head words: 15 static fields plus one offset word for the
+    /// Number of 32-byte head words: 16 static fields plus one offset word for the
     /// dynamic `contractMonth` string.
-    const HEAD_WORDS: usize = 16;
+    const HEAD_WORDS: usize = 17;
 
     /// Decodes an ABI-encoded `ReportDataV14` from bytes.
     ///
@@ -109,6 +112,8 @@ impl ReportDataV14 {
         let contract_month = ReportBase::read_string(data, 13 * ReportBase::WORD_SIZE)?;
         let goldman_roll_price = ReportBase::read_int192(data, 14 * ReportBase::WORD_SIZE)?;
         let current_business_day = ReportBase::read_uint32(data, 15 * ReportBase::WORD_SIZE)?;
+        let interpolated_goldman_roll_price =
+            ReportBase::read_int192(data, 16 * ReportBase::WORD_SIZE)?;
 
         // contract_month must be a single letter from F to Z (Jan to Dec).
         let month_bytes = contract_month.as_bytes();
@@ -133,6 +138,7 @@ impl ReportDataV14 {
             contract_month,
             goldman_roll_price,
             current_business_day,
+            interpolated_goldman_roll_price,
         })
     }
 
@@ -170,6 +176,9 @@ impl ReportDataV14 {
         // Head: the static fields following the dynamic `contractMonth` string.
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.goldman_roll_price)?);
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.current_business_day)?);
+        buffer.extend_from_slice(&ReportBase::encode_int192(
+            &self.interpolated_goldman_roll_price,
+        )?);
 
         // Tail: the dynamic `contractMonth` string.
         buffer.extend_from_slice(&ReportBase::encode_string_tail(&self.contract_month));
@@ -184,7 +193,8 @@ mod tests {
     use crate::report::tests::{
         generate_mock_report_data_v14, MARKET_STATUS_OPEN, MOCK_ASK, MOCK_BID, MOCK_CONTRACT_MONTH,
         MOCK_CURRENT_BUSINESS_DAY, MOCK_EXPIRY_TIME, MOCK_FEE, MOCK_FIRST_DAY_OF_NOTICE,
-        MOCK_GOLDMAN_ROLL_PRICE, MOCK_LAST_SEEN_TIMESTAMP_NS, MOCK_MID, MOCK_TIMESTAMP,
+        MOCK_GOLDMAN_ROLL_PRICE, MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE, MOCK_LAST_SEEN_TIMESTAMP_NS,
+        MOCK_MID, MOCK_TIMESTAMP,
     };
 
     const V14_FEED_ID_STR: &str =
@@ -226,6 +236,12 @@ mod tests {
                 .unwrap()
         );
         assert_eq!(decoded.current_business_day, MOCK_CURRENT_BUSINESS_DAY);
+        assert_eq!(
+            decoded.interpolated_goldman_roll_price,
+            BigInt::from(MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap()
+        );
     }
 
     #[test]

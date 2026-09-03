@@ -319,6 +319,7 @@ const mockV14ReportBlob = abiCoder.encode(
     "string", // contract month
     "int192", // goldman roll price
     "uint32", // current business day
+    "int192", // interpolated goldman roll price
   ],
   [
     mockV14FeedId,
@@ -337,6 +338,7 @@ const mockV14ReportBlob = abiCoder.encode(
     "F", // contract month (Jan)
     102000000000000000000n, // goldman roll price $102
     3, // current business day
+    103000000000000000000n, // interpolated goldman roll price $103
   ]
 );
 
@@ -990,6 +992,7 @@ describe("Report Decoder", () => {
       expect(decoded.contractMonth).toBeDefined();
       expect(decoded.goldmanRollPrice).toBeDefined();
       expect(decoded.currentBusinessDay).toBeDefined();
+      expect(decoded.interpolatedGoldmanRollPrice).toBeDefined();
     });
 
     it("should handle malformed v14 report", () => {
@@ -1011,6 +1014,7 @@ describe("Report Decoder", () => {
       expect(typeof decoded.contractMonth).toBe("string");
       expect(typeof decoded.goldmanRollPrice).toBe("bigint");
       expect(typeof decoded.currentBusinessDay).toBe("number");
+      expect(typeof decoded.interpolatedGoldmanRollPrice).toBe("bigint");
 
       // Verify values round-trip from the encoded blob
       expect(decoded.midPrice).toBe(100000000000000000000n);
@@ -1023,6 +1027,7 @@ describe("Report Decoder", () => {
       expect(decoded.contractMonth).toBe("F");
       expect(decoded.goldmanRollPrice).toBe(102000000000000000000n);
       expect(decoded.currentBusinessDay).toBe(3);
+      expect(decoded.interpolatedGoldmanRollPrice).toBe(103000000000000000000n);
     });
 
     it("should reject an invalid contract month", () => {
@@ -1044,6 +1049,7 @@ describe("Report Decoder", () => {
           "string",
           "int192",
           "uint32",
+          "int192",
         ],
         [
           mockV14FeedId,
@@ -1062,6 +1068,7 @@ describe("Report Decoder", () => {
           "A", // outside the valid F..Z range
           102000000000000000000n,
           3,
+          103000000000000000000n,
         ]
       );
       const invalidFullReport = abiCoder.encode(

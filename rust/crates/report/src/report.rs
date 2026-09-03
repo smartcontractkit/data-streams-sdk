@@ -211,6 +211,7 @@ mod tests {
     pub const MOCK_CONTRACT_MONTH: &str = "F";
     pub const MOCK_GOLDMAN_ROLL_PRICE: isize = 230;
     pub const MOCK_CURRENT_BUSINESS_DAY: u32 = 3;
+    pub const MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE: isize = 231;
 
     pub fn generate_mock_report_data_v1() -> ReportDataV1 {
         let report_data = ReportDataV1 {
@@ -481,6 +482,9 @@ mod tests {
                 .checked_mul(&multiplier)
                 .unwrap(),
             current_business_day: MOCK_CURRENT_BUSINESS_DAY,
+            interpolated_goldman_roll_price: BigInt::from(MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&multiplier)
+                .unwrap(),
         };
 
         report_data
@@ -965,6 +969,12 @@ mod tests {
         assert_eq!(
             decoded_report.current_business_day,
             MOCK_CURRENT_BUSINESS_DAY
+        );
+        assert_eq!(
+            decoded_report.interpolated_goldman_roll_price,
+            BigInt::from(MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE)
+                .checked_mul(&"1000000000000000000".parse::<BigInt>().unwrap())
+                .unwrap()
         );
     }
 }

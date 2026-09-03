@@ -187,6 +187,7 @@ export function formatReport(
       output += `Contract Month: ${r.contractMonth}\n`;
       output += `Goldman Roll Price: ${r.goldmanRollPrice.toString()}\n`;
       output += `Current Business Day: ${r.currentBusinessDay.toString()}\n`;
+      output += `Interpolated Goldman Roll Price: ${r.interpolatedGoldmanRollPrice.toString()}\n`;
       break;
     }
   }
