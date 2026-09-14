@@ -12,9 +12,6 @@ import (
 
 var schema = Schema()
 
-// expiryTimeLayout is the date layout of the expiryTime field, e.g. "2026-09-22".
-const expiryTimeLayout = "2006-01-02"
-
 // Schema returns this data version schema
 func Schema() abi.Arguments {
 	mustNewType := func(t string) abi.Type {
@@ -35,7 +32,7 @@ func Schema() abi.Arguments {
 		{Name: "midPrice", Type: mustNewType("int192")},
 		{Name: "bidPrice", Type: mustNewType("int192")},
 		{Name: "askPrice", Type: mustNewType("int192")},
-		{Name: "expiryTime", Type: mustNewType("string")},
+		{Name: "expiryTime", Type: mustNewType("uint64")},
 		{Name: "firstDayOfNotice", Type: mustNewType("uint64")},
 		{Name: "lastSeenTimestampNs", Type: mustNewType("uint64")},
 		{Name: "marketStatus", Type: mustNewType("uint32")},
@@ -58,8 +55,8 @@ type Data struct {
 	MidPrice                     *big.Int
 	BidPrice                     *big.Int
 	AskPrice                     *big.Int
-	ExpiryTime                   string    // Contract expiry date, formatted as YYYY-MM-DD, e.g. "2026-09-22"
-	FirstDayOfNotice             time.Time // roll_date converted to UNIX timestamp, nanoseconds precision
+	ExpiryTime                   time.Time // Contract expiry time, UNIX timestamp in seconds
+	FirstDayOfNotice             time.Time // First day of notice, UNIX timestamp in seconds
 	LastSeenTimestampNs          time.Time // Should reflect the timestamp of the last update from the DP, nanoseconds precision
 	MarketStatus                 uint32
 	ContractMonth                uint32   // The contract month, from 1 (Jan) to 12 (Dec).
@@ -80,7 +77,7 @@ type rawData struct {
 	MidPrice                     *big.Int
 	BidPrice                     *big.Int
 	AskPrice                     *big.Int
-	ExpiryTime                   string
+	ExpiryTime                   uint64
 	FirstDayOfNotice             uint64
 	LastSeenTimestampNs          uint64
 	MarketStatus                 uint32
@@ -111,18 +108,16 @@ func Decode(data []byte) (*Data, error) {
 		return nil, fmt.Errorf("invalid contractMonth %d: must be a number from 1 to 12", raw.ContractMonth)
 	}
 
-	// expiryTime must be a valid calendar date formatted as YYYY-MM-DD.
-	if _, err := time.Parse(expiryTimeLayout, raw.ExpiryTime); err != nil {
-		return nil, fmt.Errorf("invalid expiryTime %q: must be a date formatted as YYYY-MM-DD: %w", raw.ExpiryTime, err)
+	// Validate timestamps do not overflow int64
+	const maxInt64 = int64(^uint64(0) >> 1) // 2^63 - 1
+	if raw.ExpiryTime > uint64(maxInt64) {
+		return nil, fmt.Errorf("ExpiryTime overflow: %d exceeds maximum timestamp", raw.ExpiryTime)
 	}
-
-	// Validate uint64 nanosecond timestamps do not overflow int64
-	const maxInt64Ns = int64(^uint64(0) >> 1) // 2^63 - 1
-	if raw.FirstDayOfNotice > uint64(maxInt64Ns) {
-		return nil, fmt.Errorf("FirstDayOfNotice overflow: %d exceeds maximum nanosecond timestamp", raw.FirstDayOfNotice)
+	if raw.FirstDayOfNotice > uint64(maxInt64) {
+		return nil, fmt.Errorf("FirstDayOfNotice overflow: %d exceeds maximum timestamp", raw.FirstDayOfNotice)
 	}
-	if raw.LastSeenTimestampNs > uint64(maxInt64Ns) {
-		return nil, fmt.Errorf("LastSeenTimestampNs overflow: %d exceeds maximum nanosecond timestamp", raw.LastSeenTimestampNs)
+	if raw.LastSeenTimestampNs > uint64(maxInt64) {
+		return nil, fmt.Errorf("LastSeenTimestampNs overflow: %d exceeds maximum timestamp", raw.LastSeenTimestampNs)
 	}
 
 	res := raw.FeedID.Resolution()
@@ -137,8 +132,8 @@ func Decode(data []byte) (*Data, error) {
 		MidPrice:                     raw.MidPrice,
 		BidPrice:                     raw.BidPrice,
 		AskPrice:                     raw.AskPrice,
-		ExpiryTime:                   raw.ExpiryTime,
-		FirstDayOfNotice:             time.Unix(0, int64(raw.FirstDayOfNotice)),
+		ExpiryTime:                   time.Unix(int64(raw.ExpiryTime), 0),
+		FirstDayOfNotice:             time.Unix(int64(raw.FirstDayOfNotice), 0),
 		LastSeenTimestampNs:          time.Unix(0, int64(raw.LastSeenTimestampNs)),
 		MarketStatus:                 raw.MarketStatus,
 		ContractMonth:                raw.ContractMonth,

@@ -312,8 +312,8 @@ const mockV14ReportBlob = abiCoder.encode(
     "int192", // mid price
     "int192", // bid price
     "int192", // ask price
-    "string", // expiry time (YYYY-MM-DD)
-    "uint64", // first day of notice (ns)
+    "uint64", // expiry time (epoch seconds)
+    "uint64", // first day of notice (epoch seconds)
     "uint64", // last seen timestamp (ns)
     "uint32", // market status
     "uint32", // contract month
@@ -331,8 +331,8 @@ const mockV14ReportBlob = abiCoder.encode(
     100000000000000000000n, // mid price $100
     99000000000000000000n, // bid price $99
     101000000000000000000n, // ask price $101
-    "2026-09-22", // expiry time
-    1700000005000000000n, // first day of notice (ns)
+    1790035200n, // expiry time (2026-09-22)
+    1700000005n, // first day of notice (epoch seconds)
     1700000000000000000n, // last seen timestamp (ns)
     2, // market status (open)
     1, // contract month (Jan)
@@ -1007,7 +1007,7 @@ describe("Report Decoder", () => {
       expect(typeof decoded.midPrice).toBe("bigint");
       expect(typeof decoded.bidPrice).toBe("bigint");
       expect(typeof decoded.askPrice).toBe("bigint");
-      expect(typeof decoded.expiryTime).toBe("string");
+      expect(typeof decoded.expiryTime).toBe("bigint");
       expect(typeof decoded.firstDayOfNotice).toBe("bigint");
       expect(typeof decoded.lastSeenTimestampNs).toBe("bigint");
       expect(typeof decoded.marketStatus).toBe("number");
@@ -1020,8 +1020,8 @@ describe("Report Decoder", () => {
       expect(decoded.midPrice).toBe(100000000000000000000n);
       expect(decoded.bidPrice).toBe(99000000000000000000n);
       expect(decoded.askPrice).toBe(101000000000000000000n);
-      expect(decoded.expiryTime).toBe("2026-09-22");
-      expect(decoded.firstDayOfNotice).toBe(1700000005000000000n);
+      expect(decoded.expiryTime).toBe(1790035200n);
+      expect(decoded.firstDayOfNotice).toBe(1700000005n);
       expect(decoded.lastSeenTimestampNs).toBe(1700000000000000000n);
       expect(decoded.marketStatus).toBe(2);
       expect(decoded.contractMonth).toBe(1);
@@ -1031,7 +1031,7 @@ describe("Report Decoder", () => {
     });
 
     // Build a full V14 report, overriding expiryTime and/or contractMonth.
-    const buildV14FullReport = (expiryTime: string, contractMonth: number) => {
+    const buildV14FullReport = (expiryTime: bigint, contractMonth: number) => {
       const blob = abiCoder.encode(
         [
           "bytes32",
@@ -1043,7 +1043,7 @@ describe("Report Decoder", () => {
           "int192",
           "int192",
           "int192",
-          "string",
+          "uint64",
           "uint64",
           "uint64",
           "uint32",
@@ -1063,7 +1063,7 @@ describe("Report Decoder", () => {
           99000000000000000000n,
           101000000000000000000n,
           expiryTime,
-          1700000005000000000n,
+          1700000005n,
           1700000000000000000n,
           2,
           contractMonth,
@@ -1087,40 +1087,19 @@ describe("Report Decoder", () => {
     it.each([0, 13, 100, 4294967295])(
       "should reject contract month %s, outside the valid 1-12 range",
       month => {
-        const report = buildV14FullReport("2026-09-22", month);
+        const report = buildV14FullReport(1790035200n, month);
         expect(() => decodeReport(report, mockV14FeedId)).toThrow("Invalid contract month");
       }
     );
 
-    it.each([
-      "",
-      "2026-9-22",
-      "22-09-2026",
-      "2026/09/22",
-      "2026-13-01",
-      "2026-00-01",
-      "2026-09-00",
-      "2026-09-31",
-      "2026-02-29", // 2026 is not a leap year
-      "not-a-date",
-      "2026-09-22T00:00:00Z",
-    ])("should reject expiry time %s, which is not a valid YYYY-MM-DD date", expiryTime => {
-      const report = buildV14FullReport(expiryTime, 1);
-      expect(() => decodeReport(report, mockV14FeedId)).toThrow("Invalid expiry time");
-    });
-
-    it.each([
-      "2026-09-22",
-      "2024-02-29", // leap year
-      "2000-02-29", // divisible by 400
-      "2026-01-31",
-      "2026-04-30",
-      "2026-12-31",
-    ])("should accept valid expiry time %s", expiryTime => {
-      const report = buildV14FullReport(expiryTime, 1);
-      const decoded = decodeReport(report, mockV14FeedId) as DecodedV14Report;
-      expect(decoded.expiryTime).toBe(expiryTime);
-    });
+    it.each([0n, 1790035200n, 18446744073709551615n])(
+      "should decode expiry time %s as a UNIX timestamp in epoch seconds",
+      expiryTime => {
+        const report = buildV14FullReport(expiryTime, 1);
+        const decoded = decodeReport(report, mockV14FeedId) as DecodedV14Report;
+        expect(decoded.expiryTime).toBe(expiryTime);
+      }
+    );
   });
 
   describe("edge cases", () => {

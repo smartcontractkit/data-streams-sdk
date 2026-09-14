@@ -17,8 +17,8 @@ func TestData(t *testing.T) {
 	midPrice := big.NewInt(100)
 	bidPrice := big.NewInt(99)
 	askPrice := big.NewInt(101)
-	expiryTime := "2026-09-22"
-	firstDayOfNotice := uint64(time.Now().UnixNano()) + 50
+	expiryTime := uint64(1790035200) // 2026-09-22 00:00:00 UTC
+	firstDayOfNotice := uint64(time.Now().Unix()) + 50
 	lastSeenTimestampNs := uint64(time.Now().UnixNano()) - 100
 	marketStatus := uint32(1)
 	contractMonth := uint32(7)
@@ -83,11 +83,11 @@ func TestData(t *testing.T) {
 	if d.AskPrice.Cmp(askPrice) != 0 {
 		t.Errorf("AskPrice mismatch: expected %v, got %v", askPrice, d.AskPrice)
 	}
-	if d.ExpiryTime != expiryTime {
-		t.Errorf("ExpiryTime mismatch: expected %s, got %s", expiryTime, d.ExpiryTime)
+	if d.ExpiryTime.Unix() != int64(expiryTime) {
+		t.Errorf("ExpiryTime mismatch: expected %d, got %d", expiryTime, d.ExpiryTime.Unix())
 	}
-	if d.FirstDayOfNotice.UnixNano() != int64(firstDayOfNotice) {
-		t.Errorf("FirstDayOfNotice mismatch: expected %d, got %d", firstDayOfNotice, d.FirstDayOfNotice.UnixNano())
+	if d.FirstDayOfNotice.Unix() != int64(firstDayOfNotice) {
+		t.Errorf("FirstDayOfNotice mismatch: expected %d, got %d", firstDayOfNotice, d.FirstDayOfNotice.Unix())
 	}
 	if d.LastSeenTimestampNs.UnixNano() != int64(lastSeenTimestampNs) {
 		t.Errorf("LastSeenTimestampNs mismatch: expected %d, got %d", lastSeenTimestampNs, d.LastSeenTimestampNs.UnixNano())
@@ -124,8 +124,8 @@ func TestDecodeInvalidContractMonth(t *testing.T) {
 			big.NewInt(100),
 			big.NewInt(99),
 			big.NewInt(101),
-			"2026-09-22",
-			uint64(time.Now().UnixNano()),
+			uint64(1790035200), // 2026-09-22 00:00:00 UTC
+			uint64(time.Now().Unix()),
 			uint64(time.Now().UnixNano()),
 			uint32(1),
 			cm,
@@ -139,40 +139,6 @@ func TestDecodeInvalidContractMonth(t *testing.T) {
 
 		if _, err := Decode(b); err == nil {
 			t.Errorf("expected error decoding contractMonth %d, got nil", cm)
-		}
-	}
-}
-
-func TestDecodeInvalidExpiryTime(t *testing.T) {
-	feedID := [32]uint8{00, 14, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114}
-
-	// Values that are not a valid YYYY-MM-DD calendar date must be rejected.
-	for _, et := range []string{"", "2026-9-22", "22-09-2026", "2026/09/22", "2026-13-01", "2026-09-31", "not-a-date", "2026-09-22T00:00:00Z"} {
-		b, err := schema.Pack(
-			feedID,
-			uint64(time.Now().Unix()),
-			uint64(time.Now().Unix()),
-			big.NewInt(10),
-			big.NewInt(10),
-			uint64(time.Now().Unix())+100,
-			big.NewInt(100),
-			big.NewInt(99),
-			big.NewInt(101),
-			et,
-			uint64(time.Now().UnixNano()),
-			uint64(time.Now().UnixNano()),
-			uint32(1),
-			uint32(7),
-			big.NewInt(102),
-			uint32(3),
-			big.NewInt(103),
-		)
-		if err != nil {
-			t.Fatalf("failed to serialize report: %s", err)
-		}
-
-		if _, err := Decode(b); err == nil {
-			t.Errorf("expected error decoding expiryTime %q, got nil", et)
 		}
 	}
 }
