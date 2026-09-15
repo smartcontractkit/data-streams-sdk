@@ -206,8 +206,8 @@ mod tests {
     pub const MOCK_LAST_TRADED_PRICE: isize = 228;
     pub const MOCK_MID: isize = 228;
     pub const MOCK_MARKET_STATUS: u32 = 2;
-    pub const MOCK_EXPIRY_TIME: &str = "2026-09-22";
-    pub const MOCK_FIRST_DAY_OF_NOTICE: u64 = 1718885822000000000;
+    pub const MOCK_EXPIRY_TIME: u64 = 1790035200; // 2026-09-22 00:00:00 UTC
+    pub const MOCK_FIRST_DAY_OF_NOTICE: u64 = 1718885822;
     pub const MOCK_CONTRACT_MONTH: u32 = 1;
     pub const MOCK_GOLDMAN_ROLL_PRICE: isize = 230;
     pub const MOCK_CURRENT_BUSINESS_DAY: u32 = 3;
@@ -473,7 +473,7 @@ mod tests {
             mid_price: BigInt::from(MOCK_MID).checked_mul(&multiplier).unwrap(),
             bid_price: BigInt::from(MOCK_BID).checked_mul(&multiplier).unwrap(),
             ask_price: BigInt::from(MOCK_ASK).checked_mul(&multiplier).unwrap(),
-            expiry_time: MOCK_EXPIRY_TIME.to_string(),
+            expiry_time: MOCK_EXPIRY_TIME,
             first_day_of_notice: MOCK_FIRST_DAY_OF_NOTICE,
             last_seen_timestamp_ns: MOCK_LAST_SEEN_TIMESTAMP_NS,
             market_status: MOCK_MARKET_STATUS,
@@ -952,8 +952,8 @@ mod tests {
 
         let decoded_report = ReportDataV14::decode(&report_blob).unwrap();
 
-        // V14 carries a dynamic `expiryTime` string, so assert the decoded values
-        // round-trip through the full-report path rather than comparing a fixed hex blob.
+        // Assert the decoded values round-trip through the full-report path rather
+        // than comparing a fixed hex blob.
         assert_eq!(decoded_report.feed_id, V14_FEED_ID);
         assert_eq!(decoded_report.valid_from_timestamp, MOCK_TIMESTAMP);
         assert_eq!(decoded_report.observations_timestamp, MOCK_TIMESTAMP);

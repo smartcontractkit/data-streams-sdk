@@ -230,9 +230,9 @@ export interface DecodedV14Report extends DecodedReportFields {
   midPrice: bigint;
   bidPrice: bigint;
   askPrice: bigint;
-  /** Contract expiry date, formatted as YYYY-MM-DD, e.g. "2026-09-22" */
-  expiryTime: string;
-  /** First day of notice, converted to a UNIX timestamp in nanoseconds */
+  /** Contract expiry time, as a UNIX timestamp in epoch seconds */
+  expiryTime: bigint;
+  /** First day of notice, as a UNIX timestamp in epoch seconds */
   firstDayOfNotice: bigint;
   /** Timestamp of the last update seen from the data provider, in nanoseconds */
   lastSeenTimestampNs: bigint;

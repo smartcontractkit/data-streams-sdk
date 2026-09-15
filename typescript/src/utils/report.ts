@@ -180,7 +180,7 @@ export function formatReport(
       output += `Mid Price: ${r.midPrice.toString()}\n`;
       output += `Bid Price: ${r.bidPrice.toString()}\n`;
       output += `Ask Price: ${r.askPrice.toString()}\n`;
-      output += `Expiry Time: ${r.expiryTime}\n`;
+      output += `Expiry Time: ${r.expiryTime.toString()}\n`;
       output += `First Day of Notice: ${r.firstDayOfNotice.toString()}\n`;
       output += `Last Seen Timestamp Nanos: ${r.lastSeenTimestampNs.toString()}\n`;
       output += `Market Status: ${r.marketStatus.toString()}\n`;
