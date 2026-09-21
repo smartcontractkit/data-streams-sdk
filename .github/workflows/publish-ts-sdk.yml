@@ -21,17 +21,20 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
+          cache: npm
+          cache-dependency-path: typescript/package-lock.json
+
+      # Ensure npm 11.5.1 is installed (pinned; npm@latest may require a newer Node runtime)
+      - name: Update npm
+        run: npm install --global npm@11.5.1
+
+      - name: Verify tool versions
+        run: |
+          node --version
+          npm --version
 
       - name: Install dependencies
         run: npm ci
-
-      #################################
-      # npm
-      #################################
-
-      # Ensure npm 11.5.1 or later is installed
-      - name: Update npm
-        run: npm install -g npm@latest
 
       - name: Publish
         run: npm publish --access public
