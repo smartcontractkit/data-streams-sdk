@@ -5,6 +5,8 @@ What this guide covers is how to publish a new SDK package on a package distribu
 or [crates.io](https://crates.io/crates/chainlink-data-streams-report) for Rust. As Go doesn't use a package system like
 that, the release process is limited to tagging a commit and creating a GitHub release.
 
+Before publishing, make sure the version-bump commit is merged to `main`, then trigger the workflows/tags from there.
+
 ## Go
 
 1. Tag a `main` commit with `go/vX.Y.X`. This is enough for the new version to be considered released.
