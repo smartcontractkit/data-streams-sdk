@@ -13,6 +13,7 @@ use tokio_tungstenite::{
 enum ServerCommand {
     Send(Vec<u8>),
     DropConnections,
+    CloseConnections,
 }
 
 #[derive(Clone)]
@@ -96,6 +97,13 @@ impl MockWebSocketServer {
                         println!("Dropping all client connections");
                         clients_command.lock().await.clear();
                     }
+                    ServerCommand::CloseConnections => {
+                        println!("Sending graceful Close frame to all client connections");
+                        let clients = clients_command.lock().await;
+                        for client in clients.iter() {
+                            let _ = client.send(Message::Close(None)).await;
+                        }
+                    }
                 }
             }
         });
@@ -121,6 +129,13 @@ impl MockWebSocketServer {
         let _ = self
             .command_sender
             .send(ServerCommand::DropConnections)
+            .await;
+    }
+
+    pub async fn close_connections(&self) {
+        let _ = self
+            .command_sender
+            .send(ServerCommand::CloseConnections)
             .await;
     }
 
