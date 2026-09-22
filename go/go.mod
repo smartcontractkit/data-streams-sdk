@@ -3,8 +3,9 @@ module github.com/smartcontractkit/data-streams-sdk/go/v2
 go 1.24.0
 
 require (
+	github.com/coder/websocket v1.8.15
 	github.com/ethereum/go-ethereum v1.17.0
-	nhooyr.io/websocket v1.8.17
+	github.com/jpillora/backoff v1.0.0
 )
 
 require (
