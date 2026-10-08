@@ -17,6 +17,19 @@ import {
 } from "../types";
 
 /**
+ * Extracts the report schema version from a feed ID.
+ *
+ * The first two bytes of a feed ID encode the schema version in the low 12 bits;
+ * the high nibble of the first byte encodes the timestamp resolution
+ * (see go/feed/feed.go), so it must be masked off before dispatching.
+ * @param feedId The feed ID to extract the schema version from
+ * @returns The 4-character hex schema version, e.g. "0003" for V3 feeds
+ */
+export function getSchemaVersion(feedId: string): string {
+  return (parseInt(feedId.slice(2, 6), 16) & 0x0fff).toString(16).padStart(4, "0");
+}
+
+/**
  * Determines the version of a feed based on its ID
  * @param feedId The feed ID to check
  * @returns "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13" or "V14" depending on the feed ID schema version
@@ -24,7 +37,7 @@ import {
 export function getReportVersion(
   feedId: string
 ): "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V12" | "V13" | "V14" {
-  const schemaVersion = feedId.slice(2, 6);
+  const schemaVersion = getSchemaVersion(feedId);
   switch (schemaVersion) {
     case "0002":
       return "V2";

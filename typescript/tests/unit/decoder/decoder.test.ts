@@ -554,6 +554,45 @@ describe("Report Decoder", () => {
       expect(decoded.observationsTimestamp).toBe(MS_TIMESTAMP + 1000);
       expect(decoded.expiresAt).toBe(MS_TIMESTAMP + 2000);
     });
+
+    it("should decode reports for millisecond-resolution feed IDs (resolution nibble masked)", () => {
+      // Real ms-resolution feeds set the high nibble of the first feed ID byte,
+      // e.g. 0x1003... for V3. The version dispatch must mask it off (see
+      // go/feed/feed.go) instead of treating it as "Unknown report version: 0x1003".
+      const msFeedId = "0x1003" + "1".repeat(60);
+      const blob = abiCoder.encode(
+        ["bytes32", "uint64", "uint64", "uint192", "uint192", "uint64", "int192", "int192", "int192"],
+        [
+          msFeedId,
+          MS_TIMESTAMP,
+          MS_TIMESTAMP + 1000,
+          1000000000000000000n,
+          2000000000000000000n,
+          MS_TIMESTAMP + 2000,
+          50000000000000000000n,
+          49000000000000000000n,
+          51000000000000000000n,
+        ]
+      );
+      const fullReport = abiCoder.encode(
+        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+        [
+          mockReportContext,
+          blob,
+          ["0x0000000000000000000000000000000000000000000000000000000000000004"],
+          ["0x0000000000000000000000000000000000000000000000000000000000000005"],
+          "0x0000000000000000000000000000000000000000000000000000000000000006",
+        ]
+      );
+
+      const decoded = decodeReport(fullReport, msFeedId) as DecodedV3Report;
+
+      expect(decoded.version).toBe("V3");
+      expect(decoded.feedID).toBe(msFeedId);
+      expect(decoded.validFromTimestamp).toBe(MS_TIMESTAMP);
+      expect(decoded.observationsTimestamp).toBe(MS_TIMESTAMP + 1000);
+      expect(decoded.expiresAt).toBe(MS_TIMESTAMP + 2000);
+    });
   });
 
   describe("v2 reports", () => {

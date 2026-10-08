@@ -19,6 +19,7 @@ import {
 } from "../types";
 
 import { SDKLogger } from "../utils/logger";
+import { getSchemaVersion } from "../utils/report";
 
 const globalAbiCoder = new AbiCoder();
 const outerReportAbiCoder = new AbiCoder();
@@ -230,8 +231,8 @@ export function decodeReport(
       throw new ReportDecodingError("Report hex string must start with 0x");
     }
 
-    // Extract version from feed ID (first 4 bytes after 0x)
-    const version = feedId.slice(2, 6);
+    // Extract version from feed ID, masking the resolution nibble
+    const version = getSchemaVersion(feedId);
     logger?.debug(`Detected report version: V${version.slice(2)}`);
 
     // First decode the full report structure to get the report blob

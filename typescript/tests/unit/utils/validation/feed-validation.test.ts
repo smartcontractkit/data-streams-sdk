@@ -204,6 +204,13 @@ describe("Feed ID Validation Tests", () => {
       expect(() => validateFeedId(highVersionFeedId)).toThrow(ValidationError);
       expect(() => validateFeedId(highVersionFeedId)).toThrow("Invalid feed ID version");
     });
+
+    it("should accept millisecond-resolution feed IDs (resolution nibble in high nibble of byte 0)", () => {
+      // e.g. a V3 ms feed is 0x1003... — the high nibble encodes the resolution,
+      // so validation must check the masked schema version (see go/feed/feed.go)
+      const msV3FeedId = "0x10036b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472";
+      expect(() => validateFeedId(msV3FeedId)).not.toThrow();
+    });
   });
 
   describe("edge cases and error scenarios", () => {
@@ -347,7 +354,7 @@ describe("Feed ID Validation Tests", () => {
 
     it("should provide specific error for unsupported version", () => {
       expect(() => validateFeedId(VALID_FEED_IDS.V1)).toThrow(
-        "Invalid feed ID version. Must start with 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d or 0x000e"
+        "Invalid feed ID version. Schema version must be one of 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d or 0x000e (a resolution nibble may prefix the schema version, e.g. 0x1003)"
       );
     });
 
