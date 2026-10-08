@@ -64,7 +64,7 @@ const reportSchemaV5 = [
   { type: "uint192", name: "linkFee" },
   { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "rate" },
-  { type: "uint64", name: "timestamp" },
+  { type: "uint32", name: "timestamp" },
   { type: "uint32", name: "duration" },
 ];
 
@@ -129,7 +129,7 @@ const reportSchemaV10 = [
   { type: "uint32", name: "marketStatus" },
   { type: "int192", name: "currentMultiplier" },
   { type: "int192", name: "newMultiplier" },
-  { type: "uint64", name: "activationDateTime" },
+  { type: "uint32", name: "activationDateTime" },
   { type: "int192", name: "tokenizedPrice" },
 ];
 
