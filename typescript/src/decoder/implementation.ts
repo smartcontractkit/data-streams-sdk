@@ -25,21 +25,21 @@ const outerReportAbiCoder = new AbiCoder();
 
 const reportSchemaV2 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "price" },
 ];
 
 const reportSchemaV3 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "price" },
   { type: "int192", name: "bid" },
   { type: "int192", name: "ask" },
@@ -47,34 +47,34 @@ const reportSchemaV3 = [
 
 const reportSchemaV4 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "price" },
   { type: "uint8", name: "marketStatus" },
 ];
 
 const reportSchemaV5 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "rate" },
-  { type: "uint32", name: "timestamp" },
+  { type: "uint64", name: "timestamp" },
   { type: "uint32", name: "duration" },
 ];
 
 const reportSchemaV6 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "price" },
   { type: "int192", name: "price2" },
   { type: "int192", name: "price3" },
@@ -84,21 +84,21 @@ const reportSchemaV6 = [
 
 const reportSchemaV7 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "exchangeRate" },
 ];
 
 const reportSchemaV8 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "uint64", name: "lastUpdateTimestamp" },
   { type: "int192", name: "midPrice" },
   { type: "uint32", name: "marketStatus" },
@@ -106,11 +106,11 @@ const reportSchemaV8 = [
 
 const reportSchemaV9 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "navPerShare" },
   { type: "uint64", name: "navDate" },
   { type: "int192", name: "aum" },
@@ -119,27 +119,27 @@ const reportSchemaV9 = [
 
 const reportSchemaV10 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "uint64", name: "lastUpdateTimestamp" },
   { type: "int192", name: "price" },
   { type: "uint32", name: "marketStatus" },
   { type: "int192", name: "currentMultiplier" },
   { type: "int192", name: "newMultiplier" },
-  { type: "uint32", name: "activationDateTime" },
+  { type: "uint64", name: "activationDateTime" },
   { type: "int192", name: "tokenizedPrice" },
 ];
 
 const reportSchemaV11 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "mid" },
   { type: "uint64", name: "lastSeenTimestampNs" },
   { type: "int192", name: "bid" },
@@ -152,11 +152,11 @@ const reportSchemaV11 = [
 
 const reportSchemaV12 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "navPerShare" },
   { type: "int192", name: "nextNavPerShare" },
   { type: "uint64", name: "navDate" },
@@ -165,11 +165,11 @@ const reportSchemaV12 = [
 
 const reportSchemaV13 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "bestAsk" },
   { type: "int192", name: "bestBid" },
   { type: "uint64", name: "askVolume" },
@@ -179,11 +179,11 @@ const reportSchemaV13 = [
 
 const reportSchemaV14 = [
   { type: "bytes32", name: "feedId" },
-  { type: "uint32", name: "validFromTimestamp" },
-  { type: "uint32", name: "observationsTimestamp" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
   { type: "uint192", name: "nativeFee" },
   { type: "uint192", name: "linkFee" },
-  { type: "uint32", name: "expiresAt" },
+  { type: "uint64", name: "expiresAt" },
   { type: "int192", name: "midPrice" },
   { type: "int192", name: "bidPrice" },
   { type: "int192", name: "askPrice" },
@@ -297,6 +297,9 @@ function decodeV2Report(reportBlob: string): DecodedV2Report {
 
     return {
       version: "V2",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -318,6 +321,9 @@ function decodeV3Report(reportBlob: string): DecodedV3Report {
 
     return {
       version: "V3",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -350,6 +356,9 @@ function decodeV4Report(reportBlob: string): DecodedV4Report {
 
     return {
       version: "V4",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -372,6 +381,9 @@ function decodeV5Report(reportBlob: string): DecodedV5Report {
 
     return {
       version: "V5",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -395,6 +407,9 @@ function decodeV6Report(reportBlob: string): DecodedV6Report {
 
     return {
       version: "V6",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -420,6 +435,9 @@ function decodeV7Report(reportBlob: string): DecodedV7Report {
 
     return {
       version: "V7",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -450,6 +468,9 @@ function decodeV8Report(reportBlob: string): DecodedV8Report {
 
     return {
       version: "V8",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -478,6 +499,9 @@ function decodeV9Report(reportBlob: string): DecodedV9Report {
 
     return {
       version: "V9",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -511,6 +535,9 @@ function decodeV10Report(reportBlob: string): DecodedV10Report {
 
     return {
       version: "V10",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -538,6 +565,9 @@ function decodeV11Report(reportBlob: string): DecodedV11Report {
 
     return {
       version: "V11",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -571,6 +601,9 @@ function decodeV12Report(reportBlob: string): DecodedV12Report {
 
     return {
       version: "V12",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -595,6 +628,9 @@ function decodeV13Report(reportBlob: string): DecodedV13Report {
 
     return {
       version: "V13",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
@@ -621,13 +657,14 @@ function decodeV14Report(reportBlob: string): DecodedV14Report {
     // contractMonth must be a number from 1 (Jan) to 12 (Dec).
     const contractMonth = Number(decoded[13]);
     if (!Number.isInteger(contractMonth) || contractMonth < 1 || contractMonth > 12) {
-      throw new ReportDecodingError(
-        `Invalid contract month: ${contractMonth}. Must be a number from 1 to 12`
-      );
+      throw new ReportDecodingError(`Invalid contract month: ${contractMonth}. Must be a number from 1 to 12`);
     }
 
     return {
       version: "V14",
+      feedID: decoded[0],
+      validFromTimestamp: Number(decoded[1]),
+      observationsTimestamp: Number(decoded[2]),
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),

@@ -14,6 +14,7 @@
 
 import { describe, expect, it } from "@jest/globals";
 import {
+  DecodedReport,
   DecodedV10Report,
   DecodedV11Report,
   DecodedV12Report,
@@ -487,6 +488,74 @@ const mockV14FullReport = abiCoder.encode(
 );
 
 describe("Report Decoder", () => {
+  describe("common signed metadata", () => {
+    const MS_TIMESTAMP = 1759800000000; // millisecond-resolution timestamp, > 2^32
+
+    it("should return the signed feedId, validFromTimestamp and observationsTimestamp for all versions", () => {
+      const cases: Array<[string, string, string]> = [
+        [mockV2FullReport, mockV2FeedId, mockV2ReportBlob],
+        [mockV3FullReport, mockV3FeedId, mockV3ReportBlob],
+        [mockV4FullReport, mockV4FeedId, mockV4ReportBlob],
+        [mockV5FullReport, mockV5FeedId, mockV5ReportBlob],
+        [mockV6FullReport, mockV6FeedId, mockV6ReportBlob],
+        [mockV7FullReport, mockV7FeedId, mockV7ReportBlob],
+        [mockV8FullReport, mockV8FeedId, mockV8ReportBlob],
+        [mockV9FullReport, mockV9FeedId, mockV9ReportBlob],
+        [mockV10FullReport, mockV10FeedId, mockV10ReportBlob],
+        [mockV11FullReport, mockV11FeedId, mockV11ReportBlob],
+        [mockV12FullReport, mockV12FeedId, mockV12ReportBlob],
+        [mockV13FullReport, mockV13FeedId, mockV13ReportBlob],
+        [mockV14FullReport, mockV14FeedId, mockV14ReportBlob],
+      ];
+
+      for (const [fullReport, feedId, blob] of cases) {
+        const decoded = decodeReport(fullReport, feedId) as DecodedReport;
+
+        expect(decoded.feedID).toBe(feedId);
+        // The signed metadata must be present (not undefined) and non-zero
+        expect(decoded.validFromTimestamp).toBeGreaterThan(0);
+        expect(decoded.observationsTimestamp).toBeGreaterThan(0);
+        expect(decoded.expiresAt).toBeGreaterThan(0);
+        expect(blob).toBeDefined();
+      }
+    });
+
+    it("should not truncate timestamps that exceed uint32 (millisecond resolution)", () => {
+      // Go SDK types these fields as uint64, and ms-resolution feeds report
+      // epoch-ms values in them. Decoding as uint32 silently wraps mod 2^32.
+      const blob = abiCoder.encode(
+        ["bytes32", "uint64", "uint64", "uint192", "uint192", "uint64", "int192", "int192", "int192"],
+        [
+          mockV3FeedId,
+          MS_TIMESTAMP,
+          MS_TIMESTAMP + 1000,
+          1000000000000000000n,
+          2000000000000000000n,
+          MS_TIMESTAMP + 2000,
+          50000000000000000000n,
+          49000000000000000000n,
+          51000000000000000000n,
+        ]
+      );
+      const fullReport = abiCoder.encode(
+        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+        [
+          mockReportContext,
+          blob,
+          ["0x0000000000000000000000000000000000000000000000000000000000000004"],
+          ["0x0000000000000000000000000000000000000000000000000000000000000005"],
+          "0x0000000000000000000000000000000000000000000000000000000000000006",
+        ]
+      );
+
+      const decoded = decodeReport(fullReport, mockV3FeedId) as DecodedV3Report;
+
+      expect(decoded.validFromTimestamp).toBe(MS_TIMESTAMP);
+      expect(decoded.observationsTimestamp).toBe(MS_TIMESTAMP + 1000);
+      expect(decoded.expiresAt).toBe(MS_TIMESTAMP + 2000);
+    });
+  });
+
   describe("v2 reports", () => {
     it("should decode valid v2 report", () => {
       const decoded = decodeReport(mockV2FullReport, mockV2FeedId) as DecodedV2Report;
@@ -1084,13 +1153,10 @@ describe("Report Decoder", () => {
       );
     };
 
-    it.each([0, 13, 100, 4294967295])(
-      "should reject contract month %s, outside the valid 1-12 range",
-      month => {
-        const report = buildV14FullReport(1790035200n, month);
-        expect(() => decodeReport(report, mockV14FeedId)).toThrow("Invalid contract month");
-      }
-    );
+    it.each([0, 13, 100, 4294967295])("should reject contract month %s, outside the valid 1-12 range", month => {
+      const report = buildV14FullReport(1790035200n, month);
+      expect(() => decodeReport(report, mockV14FeedId)).toThrow("Invalid contract month");
+    });
 
     it.each([0n, 1790035200n, 18446744073709551615n])(
       "should decode expiry time %s as a UNIX timestamp in epoch seconds",

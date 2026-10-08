@@ -51,6 +51,12 @@ export interface BaseReport {
  * Common fields present in all decoded Data Streams reports.
  */
 export interface DecodedReportFields {
+  /** Signed feed ID (stream ID) this report belongs to */
+  feedID: string;
+  /** Earliest timestamp this report is valid for, as a UNIX timestamp in epoch seconds */
+  validFromTimestamp: number;
+  /** Observation time of the report data, as a UNIX timestamp in epoch seconds */
+  observationsTimestamp: number;
   nativeFee: bigint;
   linkFee: bigint;
   expiresAt: number;
