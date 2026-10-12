@@ -29,6 +29,7 @@ import {
   DecodedV8Report,
   DecodedV9Report,
   decodeReport,
+  getReportVersion,
 } from "../../../src";
 import { AbiCoder } from "ethers";
 
@@ -591,6 +592,14 @@ describe("Report Decoder", () => {
       expect(decoded.validFromTimestamp).toBe(MS_TIMESTAMP);
       expect(decoded.observationsTimestamp).toBe(MS_TIMESTAMP + 1000);
       expect(decoded.expiresAt).toBe(MS_TIMESTAMP + 2000);
+    });
+
+    it.each(["0x2003", "0xf003"])("should reject feed IDs with an undefined resolution nibble (%s)", prefix => {
+      // Only 0 (seconds) and 1 (milliseconds) are defined (see go/feed/feed.go);
+      // anything else would decode timestamps in an unknown unit
+      const feedId = prefix + "1".repeat(60);
+      expect(() => decodeReport(mockV3FullReport, feedId)).toThrow("Unknown feed ID resolution");
+      expect(() => getReportVersion(feedId)).toThrow("Unknown feed ID resolution");
     });
 
     it("should not truncate v5 timestamp or v10 activationDateTime values that exceed uint32", () => {

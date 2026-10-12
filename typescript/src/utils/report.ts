@@ -29,6 +29,27 @@ export function getSchemaVersion(feedId: string): string {
   return (parseInt(feedId.slice(2, 6), 16) & 0x0fff).toString(16).padStart(4, "0");
 }
 
+/**
+ * Extracts the timestamp resolution nibble from a feed ID (the high nibble of the first byte).
+ *
+ * Only 0 (seconds) and 1 (milliseconds) are defined (see go/feed/feed.go); any other
+ * value is undefined and must be rejected rather than decoded with unknown timestamp units.
+ * @param feedId The feed ID to extract the resolution from
+ * @returns The resolution nibble, from 0x0 to 0xf
+ */
+export function getResolution(feedId: string): number {
+  return parseInt(feedId.slice(2, 3), 16);
+}
+
+/**
+ * Checks whether a feed ID encodes a defined timestamp resolution (seconds or milliseconds)
+ * @param feedId The feed ID to check
+ */
+export function hasKnownResolution(feedId: string): boolean {
+  const resolution = getResolution(feedId);
+  return resolution === 0 || resolution === 1;
+}
+
 const REPORT_VERSIONS = {
   "0002": "V2",
   "0003": "V3",
@@ -51,13 +72,16 @@ export type ReportVersion = (typeof REPORT_VERSIONS)[keyof typeof REPORT_VERSION
  * Determines the version of a feed based on its ID
  * @param feedId The feed ID to check
  * @returns "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13" or "V14" depending on the feed ID schema version
- * @throws Error if the feed ID has an unknown schema version
+ * @throws Error if the feed ID has an unknown schema version or timestamp resolution
  */
 export function getReportVersion(feedId: string): ReportVersion {
   const schemaVersion = getSchemaVersion(feedId);
   const version = REPORT_VERSIONS[schemaVersion as keyof typeof REPORT_VERSIONS];
   if (!version) {
     throw new Error(`Unknown report version: 0x${schemaVersion}`);
+  }
+  if (!hasKnownResolution(feedId)) {
+    throw new Error(`Unknown feed ID resolution: 0x${getResolution(feedId).toString(16)}`);
   }
   return version;
 }

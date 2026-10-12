@@ -211,6 +211,13 @@ describe("Feed ID Validation Tests", () => {
       const msV3FeedId = "0x10036b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472";
       expect(() => validateFeedId(msV3FeedId)).not.toThrow();
     });
+
+    it.each(["0x2003", "0x7003", "0xf003"])("should reject undefined resolution nibble in %s feed IDs", prefix => {
+      // Only 0 (seconds) and 1 (milliseconds) are defined resolutions (see go/feed/feed.go)
+      const feedId = prefix + "6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472";
+      expect(() => validateFeedId(feedId)).toThrow(ValidationError);
+      expect(() => validateFeedId(feedId)).toThrow("Invalid feed ID resolution");
+    });
   });
 
   describe("edge cases and error scenarios", () => {

@@ -1,5 +1,5 @@
 import { ValidationError } from "../types/errors";
-import { getSchemaVersion } from "./report";
+import { getResolution, getSchemaVersion, hasKnownResolution } from "./report";
 import { VALIDATION_REGEX } from "./constants";
 
 /**
@@ -18,6 +18,11 @@ export function validateFeedId(feedId: string): void {
   if (!VALIDATION_REGEX.SCHEMA_VERSION.test(`0x${version}`)) {
     throw new ValidationError(
       "Invalid feed ID version. Schema version must be one of 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d or 0x000e (a resolution nibble may prefix the schema version, e.g. 0x1003)"
+    );
+  }
+  if (!hasKnownResolution(feedId)) {
+    throw new ValidationError(
+      `Invalid feed ID resolution: 0x${getResolution(feedId).toString(16)}. The high nibble of the first byte must be 0 (seconds) or 1 (milliseconds)`
     );
   }
 }
