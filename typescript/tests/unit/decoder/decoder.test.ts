@@ -602,6 +602,20 @@ describe("Report Decoder", () => {
       expect(() => getReportVersion(feedId)).toThrow("Unknown feed ID resolution");
     });
 
+    it("should reject a feed ID that does not match the signed feed ID in the report", () => {
+      // Decoding a V3 report with a V2 feed ID would otherwise apply the V2 schema to V3 data
+      expect(() => decodeReport(mockV3FullReport, mockV2FeedId)).toThrow("Feed ID mismatch");
+      // Same schema version, different stream
+      const otherV3FeedId = "0x0003" + "f".repeat(60);
+      expect(() => decodeReport(mockV3FullReport, otherV3FeedId)).toThrow("Feed ID mismatch");
+    });
+
+    it("should match the signed feed ID case-insensitively", () => {
+      const upperFeedId = "0x000A" + "7".repeat(60);
+      const decoded = decodeReport(mockV10FullReport, upperFeedId);
+      expect(decoded.version).toBe("V10");
+    });
+
     it("should not truncate v5 timestamp or v10 activationDateTime values that exceed uint32", () => {
       // Go SDK types both fields as uint64
       const v5Blob = abiCoder.encode(

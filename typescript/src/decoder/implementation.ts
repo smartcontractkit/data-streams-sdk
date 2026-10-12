@@ -1,4 +1,4 @@
-import { AbiCoder, getBytes, isHexString, Result } from "ethers";
+import { AbiCoder, dataSlice, getBytes, isHexString, Result } from "ethers";
 import { ReportDecodingError } from "../types/errors";
 import {
   DecodedReport,
@@ -252,6 +252,12 @@ export function decodeReport(
     );
 
     const reportBlob = decodedFullReport[1];
+
+    // The schema is selected from the caller's feed ID, so it must match the signed one
+    const signedFeedId = dataSlice(reportBlob, 0, 32);
+    if (signedFeedId.toLowerCase() !== feedId.toLowerCase()) {
+      throw new ReportDecodingError(`Feed ID mismatch: expected ${feedId}, but report is signed for ${signedFeedId}`);
+    }
 
     return reportDecoders[version](reportBlob);
   } catch (error) {
