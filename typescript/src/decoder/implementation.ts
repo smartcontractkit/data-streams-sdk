@@ -1,6 +1,8 @@
-import { AbiCoder, getBytes, isHexString } from "ethers";
+import { AbiCoder, getBytes, isHexString, Result } from "ethers";
 import { ReportDecodingError } from "../types/errors";
 import {
+  DecodedReport,
+  DecodedReportFields,
   DecodedV10Report,
   DecodedV11Report,
   DecodedV12Report,
@@ -19,7 +21,7 @@ import {
 } from "../types";
 
 import { SDKLogger } from "../utils/logger";
-import { getSchemaVersion } from "../utils/report";
+import { getReportVersion, ReportVersion } from "../utils/report";
 
 const globalAbiCoder = new AbiCoder();
 const outerReportAbiCoder = new AbiCoder();
@@ -232,8 +234,8 @@ export function decodeReport(
     }
 
     // Extract version from feed ID, masking the resolution nibble
-    const version = getSchemaVersion(feedId);
-    logger?.debug(`Detected report version: V${version.slice(2)}`);
+    const version = getReportVersion(feedId);
+    logger?.debug(`Detected report version: ${version}`);
 
     // First decode the full report structure to get the report blob
     const fullReportAbi = [
@@ -251,42 +253,43 @@ export function decodeReport(
 
     const reportBlob = decodedFullReport[1];
 
-    switch (version) {
-      case "0002":
-        return decodeV2Report(reportBlob);
-      case "0003":
-        return decodeV3Report(reportBlob);
-      case "0004":
-        return decodeV4Report(reportBlob);
-      case "0005":
-        return decodeV5Report(reportBlob);
-      case "0006":
-        return decodeV6Report(reportBlob);
-      case "0007":
-        return decodeV7Report(reportBlob);
-      case "0008":
-        return decodeV8Report(reportBlob);
-      case "0009":
-        return decodeV9Report(reportBlob);
-      case "000a":
-        return decodeV10Report(reportBlob);
-      case "000b":
-        return decodeV11Report(reportBlob);
-      case "000c":
-        return decodeV12Report(reportBlob);
-      case "000d":
-        return decodeV13Report(reportBlob);
-      case "000e":
-        return decodeV14Report(reportBlob);
-      default:
-        throw new ReportDecodingError(`Unknown report version: 0x${version}`);
-    }
+    return reportDecoders[version](reportBlob);
   } catch (error) {
     if (error instanceof ReportDecodingError) {
       throw error;
     }
     throw new ReportDecodingError(`Failed to decode report: ${error instanceof Error ? error.message : String(error)}`);
   }
+}
+
+const reportDecoders: Record<ReportVersion, (reportBlob: string) => DecodedReport> = {
+  V2: decodeV2Report,
+  V3: decodeV3Report,
+  V4: decodeV4Report,
+  V5: decodeV5Report,
+  V6: decodeV6Report,
+  V7: decodeV7Report,
+  V8: decodeV8Report,
+  V9: decodeV9Report,
+  V10: decodeV10Report,
+  V11: decodeV11Report,
+  V12: decodeV12Report,
+  V13: decodeV13Report,
+  V14: decodeV14Report,
+};
+
+/**
+ * Decode the fields shared by every report schema, which occupy the first six ABI slots
+ */
+function decodeCommonFields(decoded: Result): DecodedReportFields {
+  return {
+    feedID: decoded[0],
+    validFromTimestamp: Number(decoded[1]),
+    observationsTimestamp: Number(decoded[2]),
+    nativeFee: decoded[3],
+    linkFee: decoded[4],
+    expiresAt: Number(decoded[5]),
+  };
 }
 
 function decodeV2Report(reportBlob: string): DecodedV2Report {
@@ -298,12 +301,7 @@ function decodeV2Report(reportBlob: string): DecodedV2Report {
 
     return {
       version: "V2",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       price: decoded[6],
     };
   } catch (error) {
@@ -322,12 +320,7 @@ function decodeV3Report(reportBlob: string): DecodedV3Report {
 
     return {
       version: "V3",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       price: decoded[6],
       bid: decoded[7],
       ask: decoded[8],
@@ -357,12 +350,7 @@ function decodeV4Report(reportBlob: string): DecodedV4Report {
 
     return {
       version: "V4",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       price: decoded[6],
       marketStatus,
     };
@@ -382,12 +370,7 @@ function decodeV5Report(reportBlob: string): DecodedV5Report {
 
     return {
       version: "V5",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       rate: decoded[6],
       timestamp: Number(decoded[7]),
       duration: Number(decoded[8]),
@@ -408,12 +391,7 @@ function decodeV6Report(reportBlob: string): DecodedV6Report {
 
     return {
       version: "V6",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       price: decoded[6],
       price2: decoded[7],
       price3: decoded[8],
@@ -436,12 +414,7 @@ function decodeV7Report(reportBlob: string): DecodedV7Report {
 
     return {
       version: "V7",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       exchangeRate: decoded[6],
     } as unknown as DecodedV7Report;
   } catch (error) {
@@ -469,12 +442,7 @@ function decodeV8Report(reportBlob: string): DecodedV8Report {
 
     return {
       version: "V8",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       lastUpdateTimestamp: decoded[6],
       midPrice: decoded[7],
       marketStatus,
@@ -500,12 +468,7 @@ function decodeV9Report(reportBlob: string): DecodedV9Report {
 
     return {
       version: "V9",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       navPerShare: decoded[6],
       navDate: Number(decoded[7]),
       aum: decoded[8],
@@ -536,12 +499,7 @@ function decodeV10Report(reportBlob: string): DecodedV10Report {
 
     return {
       version: "V10",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       lastUpdateTimestamp: decoded[6],
       price: decoded[7],
       marketStatus,
@@ -566,12 +524,7 @@ function decodeV11Report(reportBlob: string): DecodedV11Report {
 
     return {
       version: "V11",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       mid: decoded[6],
       lastSeenTimestampNs: decoded[7],
       bid: decoded[8],
@@ -602,12 +555,7 @@ function decodeV12Report(reportBlob: string): DecodedV12Report {
 
     return {
       version: "V12",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       navPerShare: decoded[6],
       nextNavPerShare: decoded[7],
       navDate: Number(decoded[8]),
@@ -629,12 +577,7 @@ function decodeV13Report(reportBlob: string): DecodedV13Report {
 
     return {
       version: "V13",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       bestAsk: decoded[6],
       bestBid: decoded[7],
       askVolume: Number(decoded[8]),
@@ -663,12 +606,7 @@ function decodeV14Report(reportBlob: string): DecodedV14Report {
 
     return {
       version: "V14",
-      feedID: decoded[0],
-      validFromTimestamp: Number(decoded[1]),
-      observationsTimestamp: Number(decoded[2]),
-      nativeFee: decoded[3],
-      linkFee: decoded[4],
-      expiresAt: Number(decoded[5]),
+      ...decodeCommonFields(decoded),
       midPrice: decoded[6],
       bidPrice: decoded[7],
       askPrice: decoded[8],

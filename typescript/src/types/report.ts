@@ -260,7 +260,7 @@ export interface DecodedV14Report extends DecodedReportFields {
  * This union type represents any valid decoded report format. The version field
  * can be used to determine the specific format and access version-specific fields.
  */
-export type DecodedReport = (
+export type DecodedReport =
   | DecodedV2Report
   | DecodedV3Report
   | DecodedV4Report
@@ -273,12 +273,4 @@ export type DecodedReport = (
   | DecodedV11Report
   | DecodedV12Report
   | DecodedV13Report
-  | DecodedV14Report
-) & {
-  /** Feed ID this report belongs to */
-  feedID: string;
-  /** Earliest timestamp this report is valid for */
-  validFromTimestamp: number;
-  /** Latest timestamp this report applies to */
-  observationsTimestamp: number;
-};
+  | DecodedV14Report;

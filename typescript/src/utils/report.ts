@@ -29,45 +29,37 @@ export function getSchemaVersion(feedId: string): string {
   return (parseInt(feedId.slice(2, 6), 16) & 0x0fff).toString(16).padStart(4, "0");
 }
 
+const REPORT_VERSIONS = {
+  "0002": "V2",
+  "0003": "V3",
+  "0004": "V4",
+  "0005": "V5",
+  "0006": "V6",
+  "0007": "V7",
+  "0008": "V8",
+  "0009": "V9",
+  "000a": "V10",
+  "000b": "V11",
+  "000c": "V12",
+  "000d": "V13",
+  "000e": "V14",
+} as const;
+
+export type ReportVersion = (typeof REPORT_VERSIONS)[keyof typeof REPORT_VERSIONS];
+
 /**
  * Determines the version of a feed based on its ID
  * @param feedId The feed ID to check
  * @returns "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13" or "V14" depending on the feed ID schema version
+ * @throws Error if the feed ID has an unknown schema version
  */
-export function getReportVersion(
-  feedId: string
-): "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V12" | "V13" | "V14" {
+export function getReportVersion(feedId: string): ReportVersion {
   const schemaVersion = getSchemaVersion(feedId);
-  switch (schemaVersion) {
-    case "0002":
-      return "V2";
-    case "0003":
-      return "V3";
-    case "0004":
-      return "V4";
-    case "0005":
-      return "V5";
-    case "0006":
-      return "V6";
-    case "0007":
-      return "V7";
-    case "0008":
-      return "V8";
-    case "0009":
-      return "V9";
-    case "000a":
-      return "V10";
-    case "000b":
-      return "V11";
-    case "000c":
-      return "V12";
-    case "000d":
-      return "V13";
-    case "000e":
-      return "V14";
-    default:
-      throw new Error(`Unknown schema version: 0x${schemaVersion}`);
+  const version = REPORT_VERSIONS[schemaVersion as keyof typeof REPORT_VERSIONS];
+  if (!version) {
+    throw new Error(`Unknown report version: 0x${schemaVersion}`);
   }
+  return version;
 }
 
 /**
@@ -76,10 +68,7 @@ export function getReportVersion(
  * @param version The version of the report (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13 or V14)
  * @returns Formatted string representation of the report
  */
-export function formatReport(
-  report: DecodedReport,
-  version: "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11" | "V12" | "V13" | "V14"
-): string {
+export function formatReport(report: DecodedReport, version: ReportVersion): string {
   let output = "";
 
   output += "\nReport Metadata:\n";
