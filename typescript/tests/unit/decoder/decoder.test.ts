@@ -694,6 +694,38 @@ describe("Report Decoder", () => {
       expect(decoded.marketStatus).toBeDefined();
     });
 
+    it("should preserve nanosecond-precision lastUpdateTimestamp for v8 reports", () => {
+      const nsTimestamp = 1790587056509123457n; // exceeds Number.MAX_SAFE_INTEGER
+      const reportBlob = abiCoder.encode(
+        ["bytes32", "uint32", "uint32", "uint192", "uint192", "uint32", "uint64", "int192", "uint32"],
+        [
+          mockV8FeedId,
+          Math.floor(Date.now() / 1000),
+          Math.floor(Date.now() / 1000),
+          1000000000000000000n,
+          2000000000000000000n,
+          Math.floor(Date.now() / 1000) + 3600,
+          nsTimestamp,
+          60000000000000000000n,
+          2,
+        ]
+      );
+      const fullReport = abiCoder.encode(
+        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+        [
+          mockReportContext,
+          reportBlob,
+          ["0x0000000000000000000000000000000000000000000000000000000000000007"],
+          ["0x0000000000000000000000000000000000000000000000000000000000000008"],
+          "0x0000000000000000000000000000000000000000000000000000000000000009",
+        ]
+      );
+
+      const decoded = decodeReport(fullReport, mockV8FeedId) as DecodedV8Report;
+
+      expect(decoded.lastUpdateTimestamp).toBe(nsTimestamp);
+    });
+
     it("should handle malformed v8 report", () => {
       const malformedReport = "0xinvalid";
       expect(() => decodeReport(malformedReport, mockV8FeedId)).toThrow();
@@ -899,7 +931,7 @@ describe("Report Decoder", () => {
       const decoded = decodeReport(mockV10FullReport, mockV10FeedId) as DecodedV10Report;
 
       // Verify all numeric fields are properly parsed
-      expect(typeof decoded.lastUpdateTimestamp).toBe("number");
+      expect(typeof decoded.lastUpdateTimestamp).toBe("bigint");
       expect(typeof decoded.marketStatus).toBe("number");
       expect(typeof decoded.activationDateTime).toBe("number");
       expect(typeof decoded.price).toBe("bigint");
@@ -913,6 +945,56 @@ describe("Report Decoder", () => {
       expect(decoded.currentMultiplier).toBeGreaterThan(0n);
       expect(decoded.newMultiplier).toBeGreaterThan(0n);
       expect(decoded.currentMultiplier).not.toBe(decoded.newMultiplier);
+    });
+
+    it("should preserve nanosecond-precision lastUpdateTimestamp for v10 reports", () => {
+      const nsTimestamp = 1790587056509123457n; // exceeds Number.MAX_SAFE_INTEGER
+      const reportBlob = abiCoder.encode(
+        [
+          "bytes32",
+          "uint32",
+          "uint32",
+          "uint192",
+          "uint192",
+          "uint32",
+          "uint64",
+          "int192",
+          "uint32",
+          "int192",
+          "int192",
+          "uint32",
+          "int192",
+        ],
+        [
+          mockV10FeedId,
+          Math.floor(Date.now() / 1000),
+          Math.floor(Date.now() / 1000),
+          1000000000000000000n,
+          2000000000000000000n,
+          Math.floor(Date.now() / 1000) + 3600,
+          nsTimestamp,
+          75000000000000000000n,
+          2,
+          1000000000000000000n,
+          1100000000000000000n,
+          Math.floor(Date.now() / 1000) + 86400,
+          150000000000000000000n,
+        ]
+      );
+      const fullReport = abiCoder.encode(
+        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+        [
+          mockReportContext,
+          reportBlob,
+          ["0x0000000000000000000000000000000000000000000000000000000000000007"],
+          ["0x0000000000000000000000000000000000000000000000000000000000000008"],
+          "0x0000000000000000000000000000000000000000000000000000000000000009",
+        ]
+      );
+
+      const decoded = decodeReport(fullReport, mockV10FeedId) as DecodedV10Report;
+
+      expect(decoded.lastUpdateTimestamp).toBe(nsTimestamp);
     });
   });
 

@@ -475,7 +475,7 @@ function decodeV8Report(reportBlob: string): DecodedV8Report {
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
-      lastUpdateTimestamp: Number(decoded[6]),
+      lastUpdateTimestamp: decoded[6],
       midPrice: decoded[7],
       marketStatus,
     };
@@ -542,7 +542,7 @@ function decodeV10Report(reportBlob: string): DecodedV10Report {
       nativeFee: decoded[3],
       linkFee: decoded[4],
       expiresAt: Number(decoded[5]),
-      lastUpdateTimestamp: Number(decoded[6]),
+      lastUpdateTimestamp: decoded[6],
       price: decoded[7],
       marketStatus,
       currentMultiplier: decoded[9],

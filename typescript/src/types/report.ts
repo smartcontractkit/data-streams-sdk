@@ -139,8 +139,8 @@ export interface DecodedV8Report extends DecodedReportFields {
   version: "V8";
   /** DON's consensus median price (18 decimal precision) */
   midPrice: bigint;
-  /** Timestamp of the last valid price update */
-  lastUpdateTimestamp: number;
+  /** Timestamp of the last valid price update, as an exact uint64 in nanoseconds */
+  lastUpdateTimestamp: bigint;
   /** Market status - 0 (Unknown), 1 (Closed), 2 (Open) */
   marketStatus: MarketStatus;
 }
@@ -167,8 +167,8 @@ export interface DecodedV9Report extends DecodedReportFields {
 export interface DecodedV10Report extends DecodedReportFields {
   version: "V10";
   price: bigint;
-  /** Timestamp of the last valid price update */
-  lastUpdateTimestamp: number;
+  /** Timestamp of the last valid price update, as an exact uint64 in nanoseconds */
+  lastUpdateTimestamp: bigint;
   /** Market status - 0 (Unknown), 1 (Closed), 2 (Open) */
   marketStatus: MarketStatus;
   /** Currently applied multiplier accounting for past corporate actions */
