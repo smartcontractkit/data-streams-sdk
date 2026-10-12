@@ -593,6 +593,43 @@ describe("Report Decoder", () => {
       expect(decoded.observationsTimestamp).toBe(MS_TIMESTAMP + 1000);
       expect(decoded.expiresAt).toBe(MS_TIMESTAMP + 2000);
     });
+
+    it("should not truncate v5 timestamp or v10 activationDateTime values that exceed uint32", () => {
+      // Go SDK types both fields as uint64
+      const v5Blob = abiCoder.encode(
+        ["bytes32", "uint64", "uint64", "uint192", "uint192", "uint64", "int192", "uint64", "uint32"],
+        [mockV5FeedId, 1, 1, 0n, 0n, 1, 1n, MS_TIMESTAMP, 3600]
+      );
+      const v10Blob = abiCoder.encode(
+        [
+          "bytes32",
+          "uint64",
+          "uint64",
+          "uint192",
+          "uint192",
+          "uint64",
+          "uint64",
+          "int192",
+          "uint32",
+          "int192",
+          "int192",
+          "uint64",
+          "int192",
+        ],
+        [mockV10FeedId, 1, 1, 0n, 0n, 1, 1n, 1n, 2, 1n, 1n, MS_TIMESTAMP, 1n]
+      );
+      const wrap = (blob: string) =>
+        abiCoder.encode(
+          ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+          [mockReportContext, blob, [], [], "0x" + "0".repeat(64)]
+        );
+
+      const v5 = decodeReport(wrap(v5Blob), mockV5FeedId) as DecodedV5Report;
+      const v10 = decodeReport(wrap(v10Blob), mockV10FeedId) as DecodedV10Report;
+
+      expect(v5.timestamp).toBe(MS_TIMESTAMP);
+      expect(v10.activationDateTime).toBe(MS_TIMESTAMP);
+    });
   });
 
   describe("v2 reports", () => {
