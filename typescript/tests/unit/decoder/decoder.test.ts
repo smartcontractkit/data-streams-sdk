@@ -492,23 +492,23 @@ describe("Report Decoder", () => {
     const MS_TIMESTAMP = 1759800000000; // millisecond-resolution timestamp, > 2^32
 
     it("should return the signed feedId, validFromTimestamp and observationsTimestamp for all versions", () => {
-      const cases: Array<[string, string, string]> = [
-        [mockV2FullReport, mockV2FeedId, mockV2ReportBlob],
-        [mockV3FullReport, mockV3FeedId, mockV3ReportBlob],
-        [mockV4FullReport, mockV4FeedId, mockV4ReportBlob],
-        [mockV5FullReport, mockV5FeedId, mockV5ReportBlob],
-        [mockV6FullReport, mockV6FeedId, mockV6ReportBlob],
-        [mockV7FullReport, mockV7FeedId, mockV7ReportBlob],
-        [mockV8FullReport, mockV8FeedId, mockV8ReportBlob],
-        [mockV9FullReport, mockV9FeedId, mockV9ReportBlob],
-        [mockV10FullReport, mockV10FeedId, mockV10ReportBlob],
-        [mockV11FullReport, mockV11FeedId, mockV11ReportBlob],
-        [mockV12FullReport, mockV12FeedId, mockV12ReportBlob],
-        [mockV13FullReport, mockV13FeedId, mockV13ReportBlob],
-        [mockV14FullReport, mockV14FeedId, mockV14ReportBlob],
+      const cases: Array<[string, string]> = [
+        [mockV2FullReport, mockV2FeedId],
+        [mockV3FullReport, mockV3FeedId],
+        [mockV4FullReport, mockV4FeedId],
+        [mockV5FullReport, mockV5FeedId],
+        [mockV6FullReport, mockV6FeedId],
+        [mockV7FullReport, mockV7FeedId],
+        [mockV8FullReport, mockV8FeedId],
+        [mockV9FullReport, mockV9FeedId],
+        [mockV10FullReport, mockV10FeedId],
+        [mockV11FullReport, mockV11FeedId],
+        [mockV12FullReport, mockV12FeedId],
+        [mockV13FullReport, mockV13FeedId],
+        [mockV14FullReport, mockV14FeedId],
       ];
 
-      for (const [fullReport, feedId, blob] of cases) {
+      for (const [fullReport, feedId] of cases) {
         const decoded = decodeReport(fullReport, feedId) as DecodedReport;
 
         expect(decoded.feedID).toBe(feedId);
@@ -516,7 +516,6 @@ describe("Report Decoder", () => {
         expect(decoded.validFromTimestamp).toBeGreaterThan(0);
         expect(decoded.observationsTimestamp).toBeGreaterThan(0);
         expect(decoded.expiresAt).toBeGreaterThan(0);
-        expect(blob).toBeDefined();
       }
     });
 
