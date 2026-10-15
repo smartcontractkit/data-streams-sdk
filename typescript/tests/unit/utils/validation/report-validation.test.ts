@@ -394,7 +394,7 @@ describe("Report Validation Tests", () => {
       expect(decoded.linkFee).toBe(500000000000000000n);
       expect(decoded.expiresAt).toBe(1640995400);
       expect((decoded as any).midPrice).toBe(2500000000000000000000n);
-      expect((decoded as any).lastUpdateTimestamp).toBe(1640995250);
+      expect((decoded as any).lastUpdateTimestamp).toBe(1640995250n);
       expect((decoded as any).marketStatus).toBe(MarketStatus.ACTIVE);
     });
 
@@ -1105,7 +1105,33 @@ describe("Report Validation Tests", () => {
       const fullReport = createFullReport(reportBlob);
       const decoded = decodeReport(fullReport, FEED_IDS.V8);
 
-      expect((decoded as any).lastUpdateTimestamp).toBe(Number(maxUint64));
+      expect((decoded as any).lastUpdateTimestamp).toBe(BigInt(maxUint64));
+    });
+
+    it("should preserve nanosecond-precision lastUpdateTimestamp for V8 reports", () => {
+      const abiCoder = new AbiCoder();
+      const nsTimestamp = "1790587056509123457"; // exceeds Number.MAX_SAFE_INTEGER
+
+      const reportBlob = abiCoder.encode(
+        ["bytes32", "uint32", "uint32", "uint192", "uint192", "uint32", "uint64", "int192", "uint32"],
+        [
+          FEED_IDS.V8,
+          1640995200,
+          1640995300,
+          "1000000000000000000",
+          "500000000000000000",
+          1640995400,
+          nsTimestamp, // lastUpdateTimestamp
+          "2500000000000000000000",
+          MarketStatus.ACTIVE,
+        ]
+      );
+
+      const fullReport = createFullReport(reportBlob);
+      const decoded = decodeReport(fullReport, FEED_IDS.V8);
+
+      // The decoded value is exact, unlike the previous Number() conversion
+      expect((decoded as any).lastUpdateTimestamp).toBe(BigInt(nsTimestamp));
     });
 
     it("should handle large V8 midPrice values", () => {

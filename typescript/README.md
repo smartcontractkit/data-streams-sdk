@@ -276,9 +276,9 @@ interface BaseFields {
 - **V5**: `rate: bigint, timestamp: number, duration: number` - Interest rate data with observation timestamp and duration
 - **V6**: `price: bigint, price2: bigint, price3: bigint, price4: bigint, price5: bigint` - Multiple price values in a single payload
 - **V7**: `exchangeRate: bigint` - Exchange rate data
-- **V8**: `midPrice: bigint, lastUpdateTimestamp: number, marketStatus: MarketStatus` - Non-OTC RWA data
+- **V8**: `midPrice: bigint, lastUpdateTimestamp: bigint, marketStatus: MarketStatus` - Non-OTC RWA data (`lastUpdateTimestamp` is the exact nanosecond `uint64`)
 - **V9**: `navPerShare: bigint, navDate: number, aum: bigint, ripcord: number` - NAV fund data
-- **V10**: `price: bigint, lastUpdateTimestamp: number, marketStatus: MarketStatus, currentMultiplier: bigint, newMultiplier: bigint, activationDateTime: number, tokenizedPrice: bigint` - Tokenized equity data
+- **V10**: `price: bigint, lastUpdateTimestamp: bigint, marketStatus: MarketStatus, currentMultiplier: bigint, newMultiplier: bigint, activationDateTime: number, tokenizedPrice: bigint` - Tokenized equity data (`lastUpdateTimestamp` is the exact nanosecond `uint64`)
 - **V11**: `mid: bigint, LastSeenTimestampNs: number, bid: bigint, vidVolume: number, ask: bigint, askVolume: number, lastTradedPrice: bigint, marketStatus: MarketStatus` - Deutsche Boerse
 - **V12**: `navPerShare: bigint, nextNavPerShare: bigint, navDate: number, ripcord: number` - NAV fund data + Next
 - **V13**: `bestAsk: bigint, bestBid: bigint, askVolume: number, bidVolume: number, lastTradedPrice: bigint` - Best Bid/Ask

@@ -14,6 +14,7 @@
 
 import { describe, expect, it } from "@jest/globals";
 import {
+  DecodedReport,
   DecodedV10Report,
   DecodedV11Report,
   DecodedV12Report,
@@ -28,6 +29,7 @@ import {
   DecodedV8Report,
   DecodedV9Report,
   decodeReport,
+  getReportVersion,
 } from "../../../src";
 import { AbiCoder } from "ethers";
 
@@ -487,6 +489,171 @@ const mockV14FullReport = abiCoder.encode(
 );
 
 describe("Report Decoder", () => {
+  describe("common signed metadata", () => {
+    const MS_TIMESTAMP = 1759800000000; // millisecond-resolution timestamp, > 2^32
+
+    it("should return the signed feedId, validFromTimestamp and observationsTimestamp for all versions", () => {
+      const cases: Array<[string, string]> = [
+        [mockV2FullReport, mockV2FeedId],
+        [mockV3FullReport, mockV3FeedId],
+        [mockV4FullReport, mockV4FeedId],
+        [mockV5FullReport, mockV5FeedId],
+        [mockV6FullReport, mockV6FeedId],
+        [mockV7FullReport, mockV7FeedId],
+        [mockV8FullReport, mockV8FeedId],
+        [mockV9FullReport, mockV9FeedId],
+        [mockV10FullReport, mockV10FeedId],
+        [mockV11FullReport, mockV11FeedId],
+        [mockV12FullReport, mockV12FeedId],
+        [mockV13FullReport, mockV13FeedId],
+        [mockV14FullReport, mockV14FeedId],
+      ];
+
+      for (const [fullReport, feedId] of cases) {
+        const decoded = decodeReport(fullReport, feedId) as DecodedReport;
+
+        expect(decoded.feedID).toBe(feedId);
+        // The signed metadata must be present (not undefined) and non-zero
+        expect(decoded.validFromTimestamp).toBeGreaterThan(0);
+        expect(decoded.observationsTimestamp).toBeGreaterThan(0);
+        expect(decoded.expiresAt).toBeGreaterThan(0);
+      }
+    });
+
+    it("should not truncate timestamps that exceed uint32 (millisecond resolution)", () => {
+      // Go SDK types these fields as uint64, and ms-resolution feeds report
+      // epoch-ms values in them. Decoding as uint32 silently wraps mod 2^32.
+      const blob = abiCoder.encode(
+        ["bytes32", "uint64", "uint64", "uint192", "uint192", "uint64", "int192", "int192", "int192"],
+        [
+          mockV3FeedId,
+          MS_TIMESTAMP,
+          MS_TIMESTAMP + 1000,
+          1000000000000000000n,
+          2000000000000000000n,
+          MS_TIMESTAMP + 2000,
+          50000000000000000000n,
+          49000000000000000000n,
+          51000000000000000000n,
+        ]
+      );
+      const fullReport = abiCoder.encode(
+        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+        [
+          mockReportContext,
+          blob,
+          ["0x0000000000000000000000000000000000000000000000000000000000000004"],
+          ["0x0000000000000000000000000000000000000000000000000000000000000005"],
+          "0x0000000000000000000000000000000000000000000000000000000000000006",
+        ]
+      );
+
+      const decoded = decodeReport(fullReport, mockV3FeedId) as DecodedV3Report;
+
+      expect(decoded.validFromTimestamp).toBe(MS_TIMESTAMP);
+      expect(decoded.observationsTimestamp).toBe(MS_TIMESTAMP + 1000);
+      expect(decoded.expiresAt).toBe(MS_TIMESTAMP + 2000);
+    });
+
+    it("should decode reports for millisecond-resolution feed IDs (resolution nibble masked)", () => {
+      // Real ms-resolution feeds set the high nibble of the first feed ID byte,
+      // e.g. 0x1003... for V3. The version dispatch must mask it off (see
+      // go/feed/feed.go) instead of treating it as "Unknown report version: 0x1003".
+      const msFeedId = "0x1003" + "1".repeat(60);
+      const blob = abiCoder.encode(
+        ["bytes32", "uint64", "uint64", "uint192", "uint192", "uint64", "int192", "int192", "int192"],
+        [
+          msFeedId,
+          MS_TIMESTAMP,
+          MS_TIMESTAMP + 1000,
+          1000000000000000000n,
+          2000000000000000000n,
+          MS_TIMESTAMP + 2000,
+          50000000000000000000n,
+          49000000000000000000n,
+          51000000000000000000n,
+        ]
+      );
+      const fullReport = abiCoder.encode(
+        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+        [
+          mockReportContext,
+          blob,
+          ["0x0000000000000000000000000000000000000000000000000000000000000004"],
+          ["0x0000000000000000000000000000000000000000000000000000000000000005"],
+          "0x0000000000000000000000000000000000000000000000000000000000000006",
+        ]
+      );
+
+      const decoded = decodeReport(fullReport, msFeedId) as DecodedV3Report;
+
+      expect(decoded.version).toBe("V3");
+      expect(decoded.feedID).toBe(msFeedId);
+      expect(decoded.validFromTimestamp).toBe(MS_TIMESTAMP);
+      expect(decoded.observationsTimestamp).toBe(MS_TIMESTAMP + 1000);
+      expect(decoded.expiresAt).toBe(MS_TIMESTAMP + 2000);
+    });
+
+    it.each(["0x2003", "0xf003"])("should reject feed IDs with an undefined resolution nibble (%s)", prefix => {
+      // Only 0 (seconds) and 1 (milliseconds) are defined (see go/feed/feed.go);
+      // anything else would decode timestamps in an unknown unit
+      const feedId = prefix + "1".repeat(60);
+      expect(() => decodeReport(mockV3FullReport, feedId)).toThrow("Unknown feed ID resolution");
+      expect(() => getReportVersion(feedId)).toThrow("Unknown feed ID resolution");
+    });
+
+    it("should reject a feed ID that does not match the signed feed ID in the report", () => {
+      // Decoding a V3 report with a V2 feed ID would otherwise apply the V2 schema to V3 data
+      expect(() => decodeReport(mockV3FullReport, mockV2FeedId)).toThrow("Feed ID mismatch");
+      // Same schema version, different stream
+      const otherV3FeedId = "0x0003" + "f".repeat(60);
+      expect(() => decodeReport(mockV3FullReport, otherV3FeedId)).toThrow("Feed ID mismatch");
+    });
+
+    it("should match the signed feed ID case-insensitively", () => {
+      const upperFeedId = "0x000A" + "7".repeat(60);
+      const decoded = decodeReport(mockV10FullReport, upperFeedId);
+      expect(decoded.version).toBe("V10");
+    });
+
+    it("should not truncate v5 timestamp or v10 activationDateTime values that exceed uint32", () => {
+      // Go SDK types both fields as uint64
+      const v5Blob = abiCoder.encode(
+        ["bytes32", "uint64", "uint64", "uint192", "uint192", "uint64", "int192", "uint64", "uint32"],
+        [mockV5FeedId, 1, 1, 0n, 0n, 1, 1n, MS_TIMESTAMP, 3600]
+      );
+      const v10Blob = abiCoder.encode(
+        [
+          "bytes32",
+          "uint64",
+          "uint64",
+          "uint192",
+          "uint192",
+          "uint64",
+          "uint64",
+          "int192",
+          "uint32",
+          "int192",
+          "int192",
+          "uint64",
+          "int192",
+        ],
+        [mockV10FeedId, 1, 1, 0n, 0n, 1, 1n, 1n, 2, 1n, 1n, MS_TIMESTAMP, 1n]
+      );
+      const wrap = (blob: string) =>
+        abiCoder.encode(
+          ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+          [mockReportContext, blob, [], [], "0x" + "0".repeat(64)]
+        );
+
+      const v5 = decodeReport(wrap(v5Blob), mockV5FeedId) as DecodedV5Report;
+      const v10 = decodeReport(wrap(v10Blob), mockV10FeedId) as DecodedV10Report;
+
+      expect(v5.timestamp).toBe(MS_TIMESTAMP);
+      expect(v10.activationDateTime).toBe(MS_TIMESTAMP);
+    });
+  });
+
   describe("v2 reports", () => {
     it("should decode valid v2 report", () => {
       const decoded = decodeReport(mockV2FullReport, mockV2FeedId) as DecodedV2Report;
@@ -584,6 +751,38 @@ describe("Report Decoder", () => {
       expect(decoded.midPrice).toBeDefined();
       expect(decoded.lastUpdateTimestamp).toBeDefined();
       expect(decoded.marketStatus).toBeDefined();
+    });
+
+    it("should preserve nanosecond-precision lastUpdateTimestamp for v8 reports", () => {
+      const nsTimestamp = 1790587056509123457n; // exceeds Number.MAX_SAFE_INTEGER
+      const reportBlob = abiCoder.encode(
+        ["bytes32", "uint32", "uint32", "uint192", "uint192", "uint32", "uint64", "int192", "uint32"],
+        [
+          mockV8FeedId,
+          Math.floor(Date.now() / 1000),
+          Math.floor(Date.now() / 1000),
+          1000000000000000000n,
+          2000000000000000000n,
+          Math.floor(Date.now() / 1000) + 3600,
+          nsTimestamp,
+          60000000000000000000n,
+          2,
+        ]
+      );
+      const fullReport = abiCoder.encode(
+        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+        [
+          mockReportContext,
+          reportBlob,
+          ["0x0000000000000000000000000000000000000000000000000000000000000007"],
+          ["0x0000000000000000000000000000000000000000000000000000000000000008"],
+          "0x0000000000000000000000000000000000000000000000000000000000000009",
+        ]
+      );
+
+      const decoded = decodeReport(fullReport, mockV8FeedId) as DecodedV8Report;
+
+      expect(decoded.lastUpdateTimestamp).toBe(nsTimestamp);
     });
 
     it("should handle malformed v8 report", () => {
@@ -791,7 +990,7 @@ describe("Report Decoder", () => {
       const decoded = decodeReport(mockV10FullReport, mockV10FeedId) as DecodedV10Report;
 
       // Verify all numeric fields are properly parsed
-      expect(typeof decoded.lastUpdateTimestamp).toBe("number");
+      expect(typeof decoded.lastUpdateTimestamp).toBe("bigint");
       expect(typeof decoded.marketStatus).toBe("number");
       expect(typeof decoded.activationDateTime).toBe("number");
       expect(typeof decoded.price).toBe("bigint");
@@ -805,6 +1004,56 @@ describe("Report Decoder", () => {
       expect(decoded.currentMultiplier).toBeGreaterThan(0n);
       expect(decoded.newMultiplier).toBeGreaterThan(0n);
       expect(decoded.currentMultiplier).not.toBe(decoded.newMultiplier);
+    });
+
+    it("should preserve nanosecond-precision lastUpdateTimestamp for v10 reports", () => {
+      const nsTimestamp = 1790587056509123457n; // exceeds Number.MAX_SAFE_INTEGER
+      const reportBlob = abiCoder.encode(
+        [
+          "bytes32",
+          "uint32",
+          "uint32",
+          "uint192",
+          "uint192",
+          "uint32",
+          "uint64",
+          "int192",
+          "uint32",
+          "int192",
+          "int192",
+          "uint32",
+          "int192",
+        ],
+        [
+          mockV10FeedId,
+          Math.floor(Date.now() / 1000),
+          Math.floor(Date.now() / 1000),
+          1000000000000000000n,
+          2000000000000000000n,
+          Math.floor(Date.now() / 1000) + 3600,
+          nsTimestamp,
+          75000000000000000000n,
+          2,
+          1000000000000000000n,
+          1100000000000000000n,
+          Math.floor(Date.now() / 1000) + 86400,
+          150000000000000000000n,
+        ]
+      );
+      const fullReport = abiCoder.encode(
+        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+        [
+          mockReportContext,
+          reportBlob,
+          ["0x0000000000000000000000000000000000000000000000000000000000000007"],
+          ["0x0000000000000000000000000000000000000000000000000000000000000008"],
+          "0x0000000000000000000000000000000000000000000000000000000000000009",
+        ]
+      );
+
+      const decoded = decodeReport(fullReport, mockV10FeedId) as DecodedV10Report;
+
+      expect(decoded.lastUpdateTimestamp).toBe(nsTimestamp);
     });
   });
 
@@ -1084,13 +1333,10 @@ describe("Report Decoder", () => {
       );
     };
 
-    it.each([0, 13, 100, 4294967295])(
-      "should reject contract month %s, outside the valid 1-12 range",
-      month => {
-        const report = buildV14FullReport(1790035200n, month);
-        expect(() => decodeReport(report, mockV14FeedId)).toThrow("Invalid contract month");
-      }
-    );
+    it.each([0, 13, 100, 4294967295])("should reject contract month %s, outside the valid 1-12 range", month => {
+      const report = buildV14FullReport(1790035200n, month);
+      expect(() => decodeReport(report, mockV14FeedId)).toThrow("Invalid contract month");
+    });
 
     it.each([0n, 1790035200n, 18446744073709551615n])(
       "should decode expiry time %s as a UNIX timestamp in epoch seconds",

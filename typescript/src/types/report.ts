@@ -51,6 +51,12 @@ export interface BaseReport {
  * Common fields present in all decoded Data Streams reports.
  */
 export interface DecodedReportFields {
+  /** Signed feed ID (stream ID) this report belongs to */
+  feedID: string;
+  /** Earliest timestamp this report is valid for, in the resolution encoded by the feed ID */
+  validFromTimestamp: number;
+  /** Observation time of the report data, in the resolution encoded by the feed ID */
+  observationsTimestamp: number;
   nativeFee: bigint;
   linkFee: bigint;
   expiresAt: number;
@@ -133,8 +139,8 @@ export interface DecodedV8Report extends DecodedReportFields {
   version: "V8";
   /** DON's consensus median price (18 decimal precision) */
   midPrice: bigint;
-  /** Timestamp of the last valid price update */
-  lastUpdateTimestamp: number;
+  /** Timestamp of the last valid price update, as an exact uint64 in nanoseconds */
+  lastUpdateTimestamp: bigint;
   /** Market status - 0 (Unknown), 1 (Closed), 2 (Open) */
   marketStatus: MarketStatus;
 }
@@ -161,8 +167,8 @@ export interface DecodedV9Report extends DecodedReportFields {
 export interface DecodedV10Report extends DecodedReportFields {
   version: "V10";
   price: bigint;
-  /** Timestamp of the last valid price update */
-  lastUpdateTimestamp: number;
+  /** Timestamp of the last valid price update, as an exact uint64 in nanoseconds */
+  lastUpdateTimestamp: bigint;
   /** Market status - 0 (Unknown), 1 (Closed), 2 (Open) */
   marketStatus: MarketStatus;
   /** Currently applied multiplier accounting for past corporate actions */
@@ -254,7 +260,7 @@ export interface DecodedV14Report extends DecodedReportFields {
  * This union type represents any valid decoded report format. The version field
  * can be used to determine the specific format and access version-specific fields.
  */
-export type DecodedReport = (
+export type DecodedReport =
   | DecodedV2Report
   | DecodedV3Report
   | DecodedV4Report
@@ -267,12 +273,4 @@ export type DecodedReport = (
   | DecodedV11Report
   | DecodedV12Report
   | DecodedV13Report
-  | DecodedV14Report
-) & {
-  /** Feed ID this report belongs to */
-  feedID: string;
-  /** Earliest timestamp this report is valid for */
-  validFromTimestamp: number;
-  /** Latest timestamp this report applies to */
-  observationsTimestamp: number;
-};
+  | DecodedV14Report;
