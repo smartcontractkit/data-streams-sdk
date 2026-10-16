@@ -6,13 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/coder/websocket"
 	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
-	"nhooyr.io/websocket"
 )
 
 func TestClient_Subscribe(t *testing.T) {
@@ -834,6 +835,69 @@ func TestClient_StreamHA_AllOriginsFailInitialConnect(t *testing.T) {
 
 	// Allow retry goroutines to run; a nil *stream receiver would fault immediately.
 	time.Sleep(300 * time.Millisecond)
+}
+
+func TestClient_StreamReconnectExhaustedReturnsNoActiveConnectionsError(t *testing.T) {
+	connectAttempts := &atomic.Uint64{}
+
+	ms := newMockServer(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		if r.URL.Path != apiV2WS {
+			t.Errorf("expected path %s, got %s", apiV2WS, r.URL.Path)
+		}
+
+		attempt := connectAttempts.Add(1)
+		if attempt > 1 {
+			// After the initial successful subscribe, force reconnect attempts to fail.
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		conn, err := websocket.Accept(
+			w, r, &websocket.AcceptOptions{CompressionMode: websocket.CompressionContextTakeover},
+		)
+		if err != nil {
+			t.Fatalf("error accepting connection: %s", err)
+		}
+
+		// Close immediately so client enters reconnect flow.
+		_ = conn.CloseNow()
+	})
+	defer ms.Close()
+
+	streamsClient, err := ms.Client()
+	if err != nil {
+		t.Fatalf("error creating client %s", err)
+	}
+
+	cc := streamsClient.(*client)
+	cc.config.WsMaxReconnect = 1
+
+	sub, err := streamsClient.Stream(t.Context(), []feed.ID{feed1})
+	if err != nil {
+		t.Fatalf("error subscribing %s", err)
+	}
+	defer sub.Close()
+
+	readCtx, cancel := context.WithTimeout(t.Context(), maxWSReconnectIntervalSeconds)
+	defer cancel()
+
+	_, err = sub.Read(readCtx)
+	if err == nil {
+		t.Fatal("expected Read to fail after reconnect attempts are exhausted")
+	}
+
+	if !errors.Is(err, ErrStreamNoActiveConnections) {
+		t.Fatalf("expected errors.Is(err, ErrStreamNoActiveConnections) to be true, got err: %v", err)
+	}
+
+	if !strings.Contains(err.Error(), fmt.Sprintf("%d", http.StatusForbidden)) {
+		t.Fatalf("expected error to include underlying reconnect status code %d, got err: %v", http.StatusForbidden, err)
+	}
 }
 
 func TestClient_StreamOutOfOrder(t *testing.T) {
