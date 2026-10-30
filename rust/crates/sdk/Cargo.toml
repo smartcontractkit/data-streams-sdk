@@ -38,8 +38,8 @@ dotenv = "0.15"
 [features]
 default = ["full"]
 
-rest = ["reqwest/json", "reqwest/rustls-tls", "tokio/full", "tracing"]
-websocket = ["tokio-tungstenite/rustls-tls-native-roots", "tokio/full", "tracing"]
+rest = ["reqwest/json", "reqwest/rustls-tls", "tokio/full"]
+websocket = ["tokio-tungstenite/rustls-tls-native-roots", "tokio/full"]
 tracing = ["dep:tracing"]
 
 full = ["rest", "websocket", "tracing"]
