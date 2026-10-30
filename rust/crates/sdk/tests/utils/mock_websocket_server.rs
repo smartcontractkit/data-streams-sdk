@@ -89,7 +89,7 @@ impl MockWebSocketServer {
                     ServerCommand::Send(data) => {
                         let clients = clients_command.lock().await;
                         for client in clients.iter() {
-                            let _ = client.send(Message::Binary(data.clone())).await;
+                            let _ = client.send(Message::Binary(data.clone().into())).await;
                         }
                     }
                     ServerCommand::DropConnections => {
