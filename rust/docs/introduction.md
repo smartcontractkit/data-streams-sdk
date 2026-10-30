@@ -4,7 +4,7 @@ The Data Streams SDK is a Rust library that provides a convenient way to consume
 
 ## Prerequisites
 
-- Rust 1.70 or later
+- Rust 1.71 or later
 - Valid Chainlink Data Streams credentials
 
 ## Project Structure
