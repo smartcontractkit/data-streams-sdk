@@ -317,6 +317,28 @@ async fn test_stream_ha_x_cll_origin_header() {
 }
 
 #[tokio::test]
+async fn test_stream_ha_graceful_close_reconnect_preserves_active_connections() {
+    // Regression test for graceful close; must decrement active_connections only once, not twice.
+    let (mock_server, stream, _) = prepare_scenario().await;
+
+    let initial_active = stream.get_stats().active_connections;
+    assert_eq!(initial_active, NUMBER_OF_CONNECTIONS);
+
+    // Server-initiated graceful close: sends a Close frame to every connected client.
+    // The listener stays up so clients can reconnect immediately.
+    mock_server.close_connections().await;
+
+    // Allow time for all connections to close and reconnect.
+    sleep(Duration::from_millis(500)).await;
+
+    let stats = stream.get_stats();
+    assert_eq!(
+        stats.active_connections, NUMBER_OF_CONNECTIONS,
+        "active_connections should be restored to its initial value after graceful close + reconnect"
+    );
+}
+
+#[tokio::test]
 #[ignore] // Ignored because it takes a while to complete. To run it, use this command: cargo test -- --ignored
 async fn test_stream_ha_max_reconnection_attempts() {
     // Monitor client behavior.
