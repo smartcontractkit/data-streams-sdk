@@ -162,4 +162,26 @@ mod tests {
         assert_eq!(decoded.nav_date, expected_timestamp as i64);
         assert_eq!(decoded.ripcord, expected_ripcord);
     }
+
+    #[test]
+    fn test_abi_encode_round_trips_negative_values() {
+        let report = ReportDataV12 {
+            feed_id: ID([0u8; 32]),
+            valid_from_timestamp: 1,
+            observations_timestamp: 1,
+            native_fee: BigInt::ZERO,
+            link_fee: BigInt::ZERO,
+            expires_at: 2,
+            nav_per_share: BigInt::from(-1),
+            next_nav_per_share: BigInt::from(-1_000_000),
+            nav_date: -1,
+            ripcord: 0,
+        };
+
+        let decoded = ReportDataV12::decode(&report.abi_encode().unwrap()).unwrap();
+
+        assert_eq!(decoded.nav_per_share, BigInt::from(-1));
+        assert_eq!(decoded.next_nav_per_share, BigInt::from(-1_000_000));
+        assert_eq!(decoded.nav_date, -1);
+    }
 }
