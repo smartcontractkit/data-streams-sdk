@@ -6,6 +6,7 @@ pub mod v11;
 pub mod v12;
 pub mod v13;
 pub mod v14;
+pub mod v15;
 pub mod v2;
 pub mod v3;
 pub mod v4;
@@ -129,9 +130,9 @@ mod tests {
     use super::*;
     use crate::report::{
         v1::ReportDataV1, v10::ReportDataV10, v11::ReportDataV11, v12::ReportDataV12,
-        v13::ReportDataV13, v14::ReportDataV14, v2::ReportDataV2, v3::ReportDataV3,
-        v4::ReportDataV4, v5::ReportDataV5, v6::ReportDataV6, v7::ReportDataV7, v8::ReportDataV8,
-        v9::ReportDataV9,
+        v13::ReportDataV13, v14::ReportDataV14, v15::ReportDataV15, v2::ReportDataV2,
+        v3::ReportDataV3, v4::ReportDataV4, v5::ReportDataV5, v6::ReportDataV6, v7::ReportDataV7,
+        v8::ReportDataV8, v9::ReportDataV9,
     };
     use num_bigint::BigInt;
 
@@ -191,6 +192,10 @@ mod tests {
         00, 14, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
         163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
     ]);
+    const V15_FEED_ID: ID = ID([
+        00, 15, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58,
+        163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114,
+    ]);
 
     pub const MOCK_TIMESTAMP: u32 = 1718885772;
     pub const MOCK_LAST_SEEN_TIMESTAMP_NS: u64 = 1718885772000000000;
@@ -212,6 +217,9 @@ mod tests {
     pub const MOCK_GOLDMAN_ROLL_PRICE: isize = 230;
     pub const MOCK_CURRENT_BUSINESS_DAY: u32 = 3;
     pub const MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE: isize = 231;
+    pub const MOCK_ADAPTIVE_RATE: isize = 137;
+    pub const MOCK_REFERENCE_RATE: isize = 211;
+    pub const MOCK_MARKET_RATE: isize = 95;
 
     pub fn generate_mock_report_data_v1() -> ReportDataV1 {
         let report_data = ReportDataV1 {
@@ -488,6 +496,22 @@ mod tests {
         };
 
         report_data
+    }
+
+    pub fn generate_mock_report_data_v15() -> ReportDataV15 {
+        let multiplier: BigInt = "1000000000000000000".parse::<BigInt>().unwrap(); // 1.0 with 18 decimals
+
+        ReportDataV15 {
+            feed_id: V15_FEED_ID,
+            valid_from_timestamp: MOCK_TIMESTAMP,
+            observations_timestamp: MOCK_TIMESTAMP,
+            native_fee: BigInt::from(MOCK_FEE),
+            link_fee: BigInt::from(MOCK_FEE),
+            expires_at: MOCK_TIMESTAMP + 100,
+            adaptive_rate: BigInt::from(MOCK_ADAPTIVE_RATE) * &multiplier,
+            reference_rate: BigInt::from(MOCK_REFERENCE_RATE) * &multiplier,
+            market_rate: BigInt::from(MOCK_MARKET_RATE) * &multiplier,
+        }
     }
 
     fn generate_mock_report(encoded_report_data: &[u8]) -> Vec<u8> {
@@ -983,6 +1007,37 @@ mod tests {
             BigInt::from(MOCK_INTERPOLATED_GOLDMAN_ROLL_PRICE)
                 .checked_mul(&"1000000000000000000".parse::<BigInt>().unwrap())
                 .unwrap()
+        );
+    }
+
+    #[test]
+    fn test_decode_report_v15() {
+        let report_data = generate_mock_report_data_v15();
+        let encoded_report_data = report_data.abi_encode().unwrap();
+
+        let report = generate_mock_report(&encoded_report_data);
+
+        let (_report_context, report_blob) = decode_full_report(&report).unwrap();
+
+        let decoded_report = ReportDataV15::decode(&report_blob).unwrap();
+
+        // Round-trip through the full-report path.
+        let multiplier: BigInt = "1000000000000000000".parse::<BigInt>().unwrap();
+        assert_eq!(decoded_report.feed_id, V15_FEED_ID);
+        assert_eq!(decoded_report.valid_from_timestamp, MOCK_TIMESTAMP);
+        assert_eq!(decoded_report.observations_timestamp, MOCK_TIMESTAMP);
+        assert_eq!(decoded_report.expires_at, MOCK_TIMESTAMP + 100);
+        assert_eq!(
+            decoded_report.adaptive_rate,
+            BigInt::from(MOCK_ADAPTIVE_RATE) * &multiplier
+        );
+        assert_eq!(
+            decoded_report.reference_rate,
+            BigInt::from(MOCK_REFERENCE_RATE) * &multiplier
+        );
+        assert_eq!(
+            decoded_report.market_rate,
+            BigInt::from(MOCK_MARKET_RATE) * &multiplier
         );
     }
 }

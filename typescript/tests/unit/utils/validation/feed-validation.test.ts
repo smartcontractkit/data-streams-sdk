@@ -40,6 +40,7 @@ describe("Feed ID Validation Tests", () => {
     V12: "0x000c6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
     V13: "0x000d13a9b9c5e37a099f374e92c37914af5c268f3a8a9721f1725135bfb4cbb8",
     V14: "0x000e6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
+    V15: "0x000f6b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472",
   };
 
   const REAL_WORLD_FEED_IDS = {
@@ -104,6 +105,10 @@ describe("Feed ID Validation Tests", () => {
 
     it("should accept valid V14 feed ID", () => {
       expect(() => validateFeedId(VALID_FEED_IDS.V14)).not.toThrow();
+    });
+
+    it("should accept valid V15 feed ID", () => {
+      expect(() => validateFeedId(VALID_FEED_IDS.V15)).not.toThrow();
     });
 
     it("should accept real-world feed IDs", () => {
@@ -361,7 +366,7 @@ describe("Feed ID Validation Tests", () => {
 
     it("should provide specific error for unsupported version", () => {
       expect(() => validateFeedId(VALID_FEED_IDS.V1)).toThrow(
-        "Invalid feed ID version. Schema version must be one of 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d or 0x000e (a resolution nibble may prefix the schema version, e.g. 0x1003)"
+        "Invalid feed ID version. Schema version must be one of 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e or 0x000f (a resolution nibble may prefix the schema version, e.g. 0x1003)"
       );
     });
 
@@ -426,6 +431,7 @@ describe("Feed ID Validation Tests", () => {
       expect(() => validateFeedId(VALID_FEED_IDS.V12)).not.toThrow();
       expect(() => validateFeedId(VALID_FEED_IDS.V13)).not.toThrow();
       expect(() => validateFeedId(VALID_FEED_IDS.V14)).not.toThrow();
+      expect(() => validateFeedId(VALID_FEED_IDS.V15)).not.toThrow();
       expect(() => validateFeedId(VALID_FEED_IDS.V1)).toThrow(); // V1 not supported in our implementation
     });
   });

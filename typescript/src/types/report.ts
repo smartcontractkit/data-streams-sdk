@@ -255,6 +255,19 @@ export interface DecodedV14Report extends DecodedReportFields {
 }
 
 /**
+ * Decoded V15 report format.
+ *
+ * Carries three signed values, each with 18 decimal precision.
+ */
+export interface DecodedV15Report extends DecodedReportFields {
+  /** Report format version identifier */
+  version: "V15";
+  adaptiveRate: bigint;
+  referenceRate: bigint;
+  marketRate: bigint;
+}
+
+/**
  * Complete decoded report structure received from Data Streams.
  *
  * This union type represents any valid decoded report format. The version field
@@ -273,4 +286,5 @@ export type DecodedReport =
   | DecodedV11Report
   | DecodedV12Report
   | DecodedV13Report
-  | DecodedV14Report;
+  | DecodedV14Report
+  | DecodedV15Report;

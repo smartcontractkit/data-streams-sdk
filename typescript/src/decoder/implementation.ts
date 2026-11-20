@@ -8,6 +8,7 @@ import {
   DecodedV12Report,
   DecodedV13Report,
   DecodedV14Report,
+  DecodedV15Report,
   DecodedV2Report,
   DecodedV3Report,
   DecodedV4Report,
@@ -180,6 +181,18 @@ const reportSchemaV13 = [
   { type: "int192", name: "lastTradedPrice" },
 ];
 
+const reportSchemaV15 = [
+  { type: "bytes32", name: "feedId" },
+  { type: "uint64", name: "validFromTimestamp" },
+  { type: "uint64", name: "observationsTimestamp" },
+  { type: "uint192", name: "nativeFee" },
+  { type: "uint192", name: "linkFee" },
+  { type: "uint64", name: "expiresAt" },
+  { type: "int192", name: "adaptiveRate" },
+  { type: "int192", name: "referenceRate" },
+  { type: "int192", name: "marketRate" },
+];
+
 const reportSchemaV14 = [
   { type: "bytes32", name: "feedId" },
   { type: "uint64", name: "validFromTimestamp" },
@@ -224,7 +237,8 @@ export function decodeReport(
   | DecodedV11Report
   | DecodedV12Report
   | DecodedV13Report
-  | DecodedV14Report {
+  | DecodedV14Report
+  | DecodedV15Report {
   logger?.debug(`Decoding report for feed ${feedId}`);
 
   try {
@@ -282,6 +296,7 @@ const reportDecoders: Record<ReportVersion, (reportBlob: string) => DecodedRepor
   V12: decodeV12Report,
   V13: decodeV13Report,
   V14: decodeV14Report,
+  V15: decodeV15Report,
 };
 
 /**
@@ -628,6 +643,27 @@ function decodeV14Report(reportBlob: string): DecodedV14Report {
   } catch (error) {
     throw new ReportDecodingError(
       `Failed to decode V14 report: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+function decodeV15Report(reportBlob: string): DecodedV15Report {
+  try {
+    const decoded = globalAbiCoder.decode(
+      reportSchemaV15.map(item => item.type),
+      getBytes(reportBlob)
+    );
+
+    return {
+      version: "V15",
+      ...decodeCommonFields(decoded),
+      adaptiveRate: decoded[6],
+      referenceRate: decoded[7],
+      marketRate: decoded[8],
+    };
+  } catch (error) {
+    throw new ReportDecodingError(
+      `Failed to decode V15 report: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }

@@ -20,6 +20,7 @@ import {
   DecodedV12Report,
   DecodedV13Report,
   DecodedV14Report,
+  DecodedV15Report,
   DecodedV2Report,
   DecodedV3Report,
   DecodedV4Report,
@@ -49,6 +50,7 @@ const mockV11FeedId = "0x000b" + "7".repeat(60);
 const mockV12FeedId = "0x000c" + "7".repeat(60);
 const mockV13FeedId = "0x000d" + "7".repeat(60);
 const mockV14FeedId = "0x000e" + "7".repeat(60);
+const mockV15FeedId = "0x000f" + "7".repeat(60);
 
 // Create a properly encoded full report
 const mockReportContext = [
@@ -488,6 +490,43 @@ const mockV14FullReport = abiCoder.encode(
   ]
 );
 
+// Create V15 report blob
+const mockV15ReportBlob = abiCoder.encode(
+  [
+    "bytes32", // feed id
+    "uint32", // valid from ts
+    "uint32", // observation ts
+    "uint192", // native fee
+    "uint192", // link fee
+    "uint32", // expires at
+    "int192", // first value
+    "int192", // second value
+    "int192", // third value
+  ],
+  [
+    mockV15FeedId,
+    Math.floor(Date.now() / 1000),
+    Math.floor(Date.now() / 1000),
+    1000000000000000000n, // 1 native token
+    2000000000000000000n, // 2 LINK
+    Math.floor(Date.now() / 1000) + 3600, // expires in 1 hour
+    137250000000000000000n,
+    211500000000000000000n,
+    95125000000000000000n,
+  ]
+);
+
+const mockV15FullReport = abiCoder.encode(
+  ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+  [
+    mockReportContext,
+    mockV15ReportBlob,
+    ["0x0000000000000000000000000000000000000000000000000000000000000013"],
+    ["0x0000000000000000000000000000000000000000000000000000000000000014"],
+    "0x0000000000000000000000000000000000000000000000000000000000000015",
+  ]
+);
+
 describe("Report Decoder", () => {
   describe("common signed metadata", () => {
     const MS_TIMESTAMP = 1759800000000; // millisecond-resolution timestamp, > 2^32
@@ -507,6 +546,7 @@ describe("Report Decoder", () => {
         [mockV12FullReport, mockV12FeedId],
         [mockV13FullReport, mockV13FeedId],
         [mockV14FullReport, mockV14FeedId],
+        [mockV15FullReport, mockV15FeedId],
       ];
 
       for (const [fullReport, feedId] of cases) {
@@ -1219,6 +1259,65 @@ describe("Report Decoder", () => {
       expect(typeof decoded.askVolume).toBe("number");
       expect(typeof decoded.bidVolume).toBe("number");
       expect(typeof decoded.lastTradedPrice).toBe("bigint");
+    });
+  });
+
+  describe("v15 reports", () => {
+    it("should decode valid v15 report", () => {
+      const decoded = decodeReport(mockV15FullReport, mockV15FeedId) as DecodedV15Report;
+
+      expect(decoded.version).toBe("V15");
+      expect(decoded.feedID).toBe(mockV15FeedId);
+      expect(decoded.nativeFee).toBe(1000000000000000000n);
+      expect(decoded.linkFee).toBe(2000000000000000000n);
+      expect(decoded.expiresAt).toBeGreaterThan(decoded.observationsTimestamp);
+      expect(decoded.adaptiveRate).toBe(137250000000000000000n);
+      expect(decoded.referenceRate).toBe(211500000000000000000n);
+      expect(decoded.marketRate).toBe(95125000000000000000n);
+    });
+
+    it("should decode negative values", () => {
+      const blob = abiCoder.encode(
+        ["bytes32", "uint32", "uint32", "uint192", "uint192", "uint32", "int192", "int192", "int192"],
+        [mockV15FeedId, 1, 1, 0n, 0n, 2, -1n, -2n, -3n]
+      );
+      const fullReport = abiCoder.encode(
+        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+        [
+          mockReportContext,
+          blob,
+          ["0x0000000000000000000000000000000000000000000000000000000000000013"],
+          ["0x0000000000000000000000000000000000000000000000000000000000000014"],
+          "0x0000000000000000000000000000000000000000000000000000000000000015",
+        ]
+      );
+      const decoded = decodeReport(fullReport, mockV15FeedId) as DecodedV15Report;
+
+      expect(decoded.adaptiveRate).toBe(-1n);
+      expect(decoded.referenceRate).toBe(-2n);
+      expect(decoded.marketRate).toBe(-3n);
+    });
+
+    it("should reject a short v15 report blob", () => {
+      const blob = abiCoder.encode(
+        ["bytes32", "uint32", "uint32", "uint192", "uint192", "uint32", "int192", "int192"],
+        [mockV15FeedId, 1, 1, 0n, 0n, 2, 1n, 2n]
+      );
+      const fullReport = abiCoder.encode(
+        ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
+        [
+          mockReportContext,
+          blob,
+          ["0x0000000000000000000000000000000000000000000000000000000000000013"],
+          ["0x0000000000000000000000000000000000000000000000000000000000000014"],
+          "0x0000000000000000000000000000000000000000000000000000000000000015",
+        ]
+      );
+      expect(() => decodeReport(fullReport, mockV15FeedId)).toThrow();
+    });
+
+    it("should handle malformed v15 report", () => {
+      expect(() => decodeReport("0xinvalid", mockV15FeedId)).toThrow();
     });
   });
 

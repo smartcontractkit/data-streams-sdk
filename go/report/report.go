@@ -11,6 +11,7 @@ import (
 	v12 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v12"
 	v13 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v13"
 	v14 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v14"
+	v15 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v15"
 	v2 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v2"
 	v3 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v3"
 	v4 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v4"
@@ -23,7 +24,7 @@ import (
 
 // Data represents the actual report data and attributes
 type Data interface {
-	v1.Data | v2.Data | v3.Data | v4.Data | v5.Data | v6.Data | v7.Data | v8.Data | v9.Data | v10.Data | v11.Data | v12.Data | v13.Data | v14.Data
+	v1.Data | v2.Data | v3.Data | v4.Data | v5.Data | v6.Data | v7.Data | v8.Data | v9.Data | v10.Data | v11.Data | v12.Data | v13.Data | v14.Data | v15.Data
 	Schema() abi.Arguments
 }
 
@@ -79,6 +80,8 @@ func Decode[T Data](fullReport []byte) (r *Report[T], err error) {
 		data, err = v13.Decode(r.ReportBlob)
 	case v14.Data:
 		data, err = v14.Decode(r.ReportBlob)
+	case v15.Data:
+		data, err = v15.Decode(r.ReportBlob)
 	default:
 		return nil, fmt.Errorf("report: unsupported data type")
 	}

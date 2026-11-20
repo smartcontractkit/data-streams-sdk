@@ -26,6 +26,8 @@ const (
 	FeedVersion12
 	FeedVersion13
 	_
+	// FeedVersion15 is set explicitly because there is no FeedVersion14 constant.
+	FeedVersion15 FeedVersion = 15
 )
 
 // Resolution represents the timestamp resolution for a feed

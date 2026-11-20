@@ -5,6 +5,7 @@ import {
   DecodedV12Report,
   DecodedV13Report,
   DecodedV14Report,
+  DecodedV15Report,
   DecodedV2Report,
   DecodedV3Report,
   DecodedV4Report,
@@ -64,6 +65,7 @@ const REPORT_VERSIONS = {
   "000c": "V12",
   "000d": "V13",
   "000e": "V14",
+  "000f": "V15",
 } as const;
 
 export type ReportVersion = (typeof REPORT_VERSIONS)[keyof typeof REPORT_VERSIONS];
@@ -71,7 +73,7 @@ export type ReportVersion = (typeof REPORT_VERSIONS)[keyof typeof REPORT_VERSION
 /**
  * Determines the version of a feed based on its ID
  * @param feedId The feed ID to check
- * @returns "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13" or "V14" depending on the feed ID schema version
+ * @returns "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13", "V14" or "V15" depending on the feed ID schema version
  * @throws Error if the feed ID has an unknown schema version or timestamp resolution
  */
 export function getReportVersion(feedId: string): ReportVersion {
@@ -89,7 +91,7 @@ export function getReportVersion(feedId: string): ReportVersion {
 /**
  * Formats a report as a human-readable string
  * @param report The report object to format
- * @param version The version of the report (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13 or V14)
+ * @param version The version of the report (V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14 or V15)
  * @returns Formatted string representation of the report
  */
 export function formatReport(report: DecodedReport, version: ReportVersion): string {
@@ -214,6 +216,13 @@ export function formatReport(report: DecodedReport, version: ReportVersion): str
       output += `Goldman Roll Price: ${r.goldmanRollPrice.toString()}\n`;
       output += `Current Business Day: ${r.currentBusinessDay.toString()}\n`;
       output += `Interpolated Goldman Roll Price: ${r.interpolatedGoldmanRollPrice.toString()}\n`;
+      break;
+    }
+    case "V15": {
+      const r = report as DecodedV15Report;
+      output += `Adaptive Rate: ${r.adaptiveRate.toString()}\n`;
+      output += `Reference Rate: ${r.referenceRate.toString()}\n`;
+      output += `Market Rate: ${r.marketRate.toString()}\n`;
       break;
     }
   }
