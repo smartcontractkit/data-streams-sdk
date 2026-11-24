@@ -409,9 +409,13 @@ mod tests {
             mid: BigInt::from(MOCK_MID).checked_mul(&multiplier).unwrap(),
             last_seen_timestamp_ns: MOCK_LAST_SEEN_TIMESTAMP_NS,
             bid: BigInt::from(MOCK_BID).checked_mul(&multiplier).unwrap(),
-            bid_volume: BigInt::from(MOCK_BID_VOLUME).checked_mul(&multiplier).unwrap(),
+            bid_volume: BigInt::from(MOCK_BID_VOLUME)
+                .checked_mul(&multiplier)
+                .unwrap(),
             ask: BigInt::from(MOCK_ASK).checked_mul(&multiplier).unwrap(),
-            ask_volume: BigInt::from(MOCK_ASK_VOLUME).checked_mul(&multiplier).unwrap(),
+            ask_volume: BigInt::from(MOCK_ASK_VOLUME)
+                .checked_mul(&multiplier)
+                .unwrap(),
             last_traded_price: BigInt::from(MOCK_LAST_TRADED_PRICE)
                 .checked_mul(&multiplier)
                 .unwrap(),
@@ -503,11 +507,11 @@ mod tests {
 
         ReportDataV15 {
             feed_id: V15_FEED_ID,
-            valid_from_timestamp: MOCK_TIMESTAMP,
-            observations_timestamp: MOCK_TIMESTAMP,
+            valid_from_timestamp: u64::from(MOCK_TIMESTAMP),
+            observations_timestamp: u64::from(MOCK_TIMESTAMP),
             native_fee: BigInt::from(MOCK_FEE),
             link_fee: BigInt::from(MOCK_FEE),
-            expires_at: MOCK_TIMESTAMP + 100,
+            expires_at: u64::from(MOCK_TIMESTAMP) + 100,
             adaptive_rate: BigInt::from(MOCK_ADAPTIVE_RATE) * &multiplier,
             reference_rate: BigInt::from(MOCK_REFERENCE_RATE) * &multiplier,
             market_rate: BigInt::from(MOCK_MARKET_RATE) * &multiplier,
@@ -895,7 +899,7 @@ mod tests {
         println!("Expected: {}", hex::encode(&expected));
         assert_eq!(report_blob, expected);
 
-        let decoded_report = ReportDataV10::decode(&report_blob).unwrap();
+        let decoded_report = ReportDataV11::decode(&report_blob).unwrap();
 
         assert_eq!(decoded_report.feed_id, V11_FEED_ID);
     }
@@ -1024,9 +1028,15 @@ mod tests {
         // Round-trip through the full-report path.
         let multiplier: BigInt = "1000000000000000000".parse::<BigInt>().unwrap();
         assert_eq!(decoded_report.feed_id, V15_FEED_ID);
-        assert_eq!(decoded_report.valid_from_timestamp, MOCK_TIMESTAMP);
-        assert_eq!(decoded_report.observations_timestamp, MOCK_TIMESTAMP);
-        assert_eq!(decoded_report.expires_at, MOCK_TIMESTAMP + 100);
+        assert_eq!(
+            decoded_report.valid_from_timestamp,
+            u64::from(MOCK_TIMESTAMP)
+        );
+        assert_eq!(
+            decoded_report.observations_timestamp,
+            u64::from(MOCK_TIMESTAMP)
+        );
+        assert_eq!(decoded_report.expires_at, u64::from(MOCK_TIMESTAMP) + 100);
         assert_eq!(
             decoded_report.adaptive_rate,
             BigInt::from(MOCK_ADAPTIVE_RATE) * &multiplier

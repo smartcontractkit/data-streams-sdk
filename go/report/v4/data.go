@@ -73,6 +73,10 @@ func Decode(data []byte) (*Data, error) {
 		return nil, fmt.Errorf("failed to copy report values to struct: %w", err)
 	}
 
+	if raw.FeedID.Version() != feed.FeedVersion4 {
+		return nil, fmt.Errorf("%w: feed ID %s has version %d, want 4", feed.ErrWrongSchemaVersion, raw.FeedID.String(), raw.FeedID.Version())
+	}
+
 	res := raw.FeedID.Resolution()
 
 	decoded := &Data{

@@ -1,9 +1,12 @@
 package v3
 
 import (
+	"errors"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
 )
 
 func TestData(t *testing.T) {
@@ -66,5 +69,20 @@ func TestData(t *testing.T) {
 	}
 	if d.Ask.Cmp(ask) != 0 {
 		t.Errorf("Ask mismatch: expected %v, got %v", ask, d.Ask)
+	}
+}
+
+func TestDecodeRejectsOtherSchemaVersion(t *testing.T) {
+	// The v15 feed ID shares this schema's word layout.
+	feedID := [32]uint8{00, 15, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114}
+
+	b, err := schema.Pack(feedID, uint64(1), uint64(2), big.NewInt(10), big.NewInt(10), uint64(3),
+		big.NewInt(1), big.NewInt(2), big.NewInt(3))
+	if err != nil {
+		t.Fatalf("failed to serialize report: %s", err)
+	}
+
+	if _, err := Decode(b); !errors.Is(err, feed.ErrWrongSchemaVersion) {
+		t.Fatalf("expected ErrWrongSchemaVersion, got %v", err)
 	}
 }

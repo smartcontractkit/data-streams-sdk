@@ -73,6 +73,7 @@ impl ReportDataV13 {
         let feed_id = ID(data[..ReportBase::WORD_SIZE]
             .try_into()
             .map_err(|_| ReportError::InvalidLength("feed_id (bytes32)"))?);
+        ReportBase::check_schema_version(&feed_id, 13)?;
 
         let valid_from_timestamp = ReportBase::read_uint32(data, ReportBase::WORD_SIZE)?;
         let observations_timestamp = ReportBase::read_uint32(data, 2 * ReportBase::WORD_SIZE)?;
@@ -132,8 +133,8 @@ impl ReportDataV13 {
 mod tests {
     use super::*;
     use crate::report::tests::{
-        generate_mock_report_data_v13, MOCK_FEE, MOCK_TIMESTAMP, MOCK_BEST_ASK, MOCK_BEST_BID, MOCK_ASK_VOLUME,
-        MOCK_BID_VOLUME, MOCK_LAST_TRADED_PRICE
+        generate_mock_report_data_v13, MOCK_ASK_VOLUME, MOCK_BEST_ASK, MOCK_BEST_BID,
+        MOCK_BID_VOLUME, MOCK_FEE, MOCK_LAST_TRADED_PRICE, MOCK_TIMESTAMP,
     };
 
     const V13_FEED_ID_STR: &str =
@@ -150,11 +151,17 @@ mod tests {
         let expected_feed_id = ID::from_hex_str(V13_FEED_ID_STR).unwrap();
         let expected_timestamp: u32 = MOCK_TIMESTAMP;
         let expected_fee = BigInt::from(MOCK_FEE);
-        let expected_best_ask = BigInt::from(MOCK_BEST_ASK).checked_mul(&multiplier).unwrap();
-        let expected_best_bid = BigInt::from(MOCK_BEST_BID).checked_mul(&multiplier).unwrap();
+        let expected_best_ask = BigInt::from(MOCK_BEST_ASK)
+            .checked_mul(&multiplier)
+            .unwrap();
+        let expected_best_bid = BigInt::from(MOCK_BEST_BID)
+            .checked_mul(&multiplier)
+            .unwrap();
         let expected_ask_volume: u64 = MOCK_ASK_VOLUME;
         let expected_bid_volume: u64 = MOCK_BID_VOLUME;
-        let expected_last_traded_price = BigInt::from(MOCK_LAST_TRADED_PRICE).checked_mul(&multiplier).unwrap();
+        let expected_last_traded_price = BigInt::from(MOCK_LAST_TRADED_PRICE)
+            .checked_mul(&multiplier)
+            .unwrap();
 
         assert_eq!(decoded.feed_id, expected_feed_id);
         assert_eq!(decoded.valid_from_timestamp, expected_timestamp);

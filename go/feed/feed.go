@@ -3,6 +3,7 @@ package feed
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -25,10 +26,13 @@ const (
 	FeedVersion11
 	FeedVersion12
 	FeedVersion13
-	_
-	// FeedVersion15 is set explicitly because there is no FeedVersion14 constant.
-	FeedVersion15 FeedVersion = 15
+	FeedVersion14
+	FeedVersion15
 )
+
+// ErrWrongSchemaVersion is returned when a report's feed ID carries a schema version
+// other than the one the decoder handles.
+var ErrWrongSchemaVersion = errors.New("feed ID does not match the report schema version")
 
 // Resolution represents the timestamp resolution for a feed
 type Resolution uint8

@@ -62,6 +62,7 @@ impl ReportDataV4 {
         let feed_id = ID(data[..ReportBase::WORD_SIZE]
             .try_into()
             .map_err(|_| ReportError::InvalidLength("feed_id (bytes32"))?);
+        ReportBase::check_schema_version(&feed_id, 4)?;
         let valid_from_timestamp = ReportBase::read_uint32(data, ReportBase::WORD_SIZE)?;
         let observations_timestamp = ReportBase::read_uint32(data, 2 * ReportBase::WORD_SIZE)?;
         let native_fee = ReportBase::read_uint192(data, 3 * ReportBase::WORD_SIZE)?;
@@ -111,7 +112,7 @@ impl ReportDataV4 {
 mod tests {
     use super::*;
     use crate::report::tests::{
-        generate_mock_report_data_v4, MOCK_FEE, MOCK_PRICE, MOCK_TIMESTAMP, MARKET_STATUS_OPEN
+        generate_mock_report_data_v4, MARKET_STATUS_OPEN, MOCK_FEE, MOCK_PRICE, MOCK_TIMESTAMP,
     };
 
     const V4_FEED_ID_STR: &str =

@@ -33,7 +33,30 @@ pub enum IDError {
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ID(pub [u8; 32]);
 
+/// The unit of the timestamps in a report, taken from the feed ID.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Resolution {
+    Seconds,
+    Milliseconds,
+}
+
 impl ID {
+    /// Returns the schema version: the first two bytes of the ID, without the resolution nibble.
+    pub fn version(&self) -> u16 {
+        u16::from_be_bytes([self.0[0], self.0[1]]) & 0x0FFF
+    }
+
+    /// Returns the timestamp resolution: the high nibble of the first byte.
+    ///
+    /// Returns the nibble as the error value when it is not a defined resolution.
+    pub fn resolution(&self) -> Result<Resolution, u8> {
+        match self.0[0] >> 4 {
+            0 => Ok(Resolution::Seconds),
+            1 => Ok(Resolution::Milliseconds),
+            other => Err(other),
+        }
+    }
+
     /// Parses an `ID` from a hexadecimal string with a "0x" prefix.
     ///
     /// # Arguments
@@ -252,6 +275,22 @@ mod tests {
         assert_eq!(V2_FEED_ID.to_hex_string(), V2_FEED_ID_STR);
         assert_eq!(V3_FEED_ID.to_hex_string(), V3_FEED_ID_STR);
         assert_eq!(V4_FEED_ID.to_hex_string(), V4_FEED_ID_STR);
+    }
+
+    #[test]
+    fn test_version_and_resolution() {
+        assert_eq!(V3_FEED_ID.version(), 3);
+        assert_eq!(V3_FEED_ID.resolution(), Ok(Resolution::Seconds));
+
+        let mut millis = V3_FEED_ID;
+        millis.0[0] = 0x10;
+        assert_eq!(millis.version(), 3);
+        assert_eq!(millis.resolution(), Ok(Resolution::Milliseconds));
+
+        let mut unknown = V3_FEED_ID;
+        unknown.0[0] = 0x20;
+        assert_eq!(unknown.version(), 3);
+        assert_eq!(unknown.resolution(), Err(2));
     }
 
     #[test]

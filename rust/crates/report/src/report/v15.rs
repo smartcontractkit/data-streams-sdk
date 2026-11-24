@@ -1,4 +1,4 @@
-use crate::feed_id::ID;
+use crate::feed_id::{Resolution, ID};
 use crate::report::base::{ReportBase, ReportError};
 
 use num_bigint::BigInt;
@@ -9,6 +9,9 @@ use num_bigint::BigInt;
 /// - `feed_id`: The feed ID the report has data for.
 /// - `valid_from_timestamp`: Earliest timestamp for which the report is applicable.
 /// - `observations_timestamp`: Latest timestamp for which the report is applicable.
+///
+/// The three timestamps are raw values in the resolution encoded in the feed ID (seconds or
+/// milliseconds). The `*_seconds` methods return them in Unix seconds.
 /// - `native_fee`: Base cost to validate a transaction using the report, denominated in the chain’s native token (e.g., WETH/ETH).
 /// - `link_fee`: Base cost to validate a transaction using the report, denominated in LINK.
 /// - `expires_at`: Latest timestamp where the report can be verified onchain.
@@ -20,11 +23,11 @@ use num_bigint::BigInt;
 /// ```solidity
 ///     struct ReportDataV15 {
 ///         bytes32 feedId;
-///         uint32 validFromTimestamp;
-///         uint32 observationsTimestamp;
+///         uint64 validFromTimestamp;
+///         uint64 observationsTimestamp;
 ///         uint192 nativeFee;
 ///         uint192 linkFee;
-///         uint32 expiresAt;
+///         uint64 expiresAt;
 ///         int192 adaptiveRate;
 ///         int192 referenceRate;
 ///         int192 marketRate;
@@ -33,11 +36,11 @@ use num_bigint::BigInt;
 #[derive(Debug)]
 pub struct ReportDataV15 {
     pub feed_id: ID,
-    pub valid_from_timestamp: u32,
-    pub observations_timestamp: u32,
+    pub valid_from_timestamp: u64,
+    pub observations_timestamp: u64,
     pub native_fee: BigInt,
     pub link_fee: BigInt,
-    pub expires_at: u32,
+    pub expires_at: u64,
     pub adaptive_rate: BigInt,
     pub reference_rate: BigInt,
     pub market_rate: BigInt,
@@ -65,12 +68,16 @@ impl ReportDataV15 {
         let feed_id = ID(data[..ReportBase::WORD_SIZE]
             .try_into()
             .map_err(|_| ReportError::InvalidLength("feed_id (bytes32)"))?);
+        ReportBase::check_schema_version(&feed_id, 15)?;
+        feed_id
+            .resolution()
+            .map_err(ReportError::UnknownResolution)?;
 
-        let valid_from_timestamp = ReportBase::read_uint32(data, ReportBase::WORD_SIZE)?;
-        let observations_timestamp = ReportBase::read_uint32(data, 2 * ReportBase::WORD_SIZE)?;
+        let valid_from_timestamp = ReportBase::read_uint64(data, ReportBase::WORD_SIZE)?;
+        let observations_timestamp = ReportBase::read_uint64(data, 2 * ReportBase::WORD_SIZE)?;
         let native_fee = ReportBase::read_uint192(data, 3 * ReportBase::WORD_SIZE)?;
         let link_fee = ReportBase::read_uint192(data, 4 * ReportBase::WORD_SIZE)?;
-        let expires_at = ReportBase::read_uint32(data, 5 * ReportBase::WORD_SIZE)?;
+        let expires_at = ReportBase::read_uint64(data, 5 * ReportBase::WORD_SIZE)?;
         let adaptive_rate = ReportBase::read_int192(data, 6 * ReportBase::WORD_SIZE)?;
         let reference_rate = ReportBase::read_int192(data, 7 * ReportBase::WORD_SIZE)?;
         let market_rate = ReportBase::read_int192(data, 8 * ReportBase::WORD_SIZE)?;
@@ -88,6 +95,28 @@ impl ReportDataV15 {
         })
     }
 
+    fn to_seconds(&self, timestamp: u64) -> u64 {
+        match self.feed_id.resolution() {
+            Ok(Resolution::Milliseconds) => timestamp / 1000,
+            _ => timestamp,
+        }
+    }
+
+    /// `valid_from_timestamp` in Unix seconds.
+    pub fn valid_from_timestamp_seconds(&self) -> u64 {
+        self.to_seconds(self.valid_from_timestamp)
+    }
+
+    /// `observations_timestamp` in Unix seconds.
+    pub fn observations_timestamp_seconds(&self) -> u64 {
+        self.to_seconds(self.observations_timestamp)
+    }
+
+    /// `expires_at` in Unix seconds.
+    pub fn expires_at_seconds(&self) -> u64 {
+        self.to_seconds(self.expires_at)
+    }
+
     /// Encodes the `ReportDataV15` into an ABI-encoded byte array.
     ///
     /// # Returns
@@ -101,11 +130,11 @@ impl ReportDataV15 {
         let mut buffer = Vec::with_capacity(9 * ReportBase::WORD_SIZE);
 
         buffer.extend_from_slice(&self.feed_id.0);
-        buffer.extend_from_slice(&ReportBase::encode_uint32(self.valid_from_timestamp)?);
-        buffer.extend_from_slice(&ReportBase::encode_uint32(self.observations_timestamp)?);
+        buffer.extend_from_slice(&ReportBase::encode_uint64(self.valid_from_timestamp)?);
+        buffer.extend_from_slice(&ReportBase::encode_uint64(self.observations_timestamp)?);
         buffer.extend_from_slice(&ReportBase::encode_uint192(&self.native_fee)?);
         buffer.extend_from_slice(&ReportBase::encode_uint192(&self.link_fee)?);
-        buffer.extend_from_slice(&ReportBase::encode_uint32(self.expires_at)?);
+        buffer.extend_from_slice(&ReportBase::encode_uint64(self.expires_at)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.adaptive_rate)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.reference_rate)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.market_rate)?);
@@ -132,7 +161,7 @@ mod tests {
         let decoded = ReportDataV15::decode(&encoded).unwrap();
 
         let expected_feed_id = ID::from_hex_str(V15_FEED_ID_STR).unwrap();
-        let expected_timestamp: u32 = MOCK_TIMESTAMP;
+        let expected_timestamp = u64::from(MOCK_TIMESTAMP);
         let multiplier: BigInt = "1000000000000000000".parse::<BigInt>().unwrap();
 
         assert_eq!(decoded.feed_id, expected_feed_id);
@@ -179,5 +208,50 @@ mod tests {
         assert_eq!(decoded.adaptive_rate, BigInt::from(-1));
         assert_eq!(decoded.reference_rate, BigInt::from(-2));
         assert_eq!(decoded.market_rate, BigInt::from(-3));
+    }
+
+    #[test]
+    fn test_decode_report_data_v15_rejects_other_schema_version() {
+        // A v3 feed ID shares the word layout of this schema.
+        let mut report_data = generate_mock_report_data_v15();
+        report_data.feed_id.0[1] = 0x03;
+        let encoded = report_data.abi_encode().unwrap();
+        assert!(matches!(
+            ReportDataV15::decode(&encoded),
+            Err(ReportError::WrongSchemaVersion {
+                expected: 15,
+                got: 3
+            })
+        ));
+    }
+
+    #[test]
+    fn test_decode_report_data_v15_rejects_unknown_resolution() {
+        let mut report_data = generate_mock_report_data_v15();
+        report_data.feed_id.0[0] = 0x20;
+        let encoded = report_data.abi_encode().unwrap();
+        assert!(matches!(
+            ReportDataV15::decode(&encoded),
+            Err(ReportError::UnknownResolution(2))
+        ));
+    }
+
+    #[test]
+    fn test_decode_report_data_v15_timestamps_by_resolution() {
+        let seconds = generate_mock_report_data_v15();
+        assert_eq!(seconds.observations_timestamp_seconds(), 1718885772);
+
+        let mut millis = generate_mock_report_data_v15();
+        millis.feed_id.0[0] = 0x10;
+        millis.valid_from_timestamp = 1718885772_123;
+        millis.observations_timestamp = 1718885773_456;
+        millis.expires_at = 1718885872_999;
+
+        // Millisecond values do not fit in 32 bits and must survive the round trip.
+        let decoded = ReportDataV15::decode(&millis.abi_encode().unwrap()).unwrap();
+        assert_eq!(decoded.observations_timestamp, 1718885773_456);
+        assert_eq!(decoded.valid_from_timestamp_seconds(), 1718885772);
+        assert_eq!(decoded.observations_timestamp_seconds(), 1718885773);
+        assert_eq!(decoded.expires_at_seconds(), 1718885872);
     }
 }

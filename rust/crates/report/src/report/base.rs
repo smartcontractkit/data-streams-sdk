@@ -1,3 +1,4 @@
+use crate::feed_id::ID;
 use num_bigint::{BigInt, Sign};
 use thiserror::Error;
 
@@ -14,12 +15,28 @@ pub enum ReportError {
 
     #[error("Invalid value for {0}")]
     InvalidValue(&'static str),
+
+    #[error("Feed ID has schema version {got}, expected {expected}")]
+    WrongSchemaVersion { expected: u16, got: u16 },
+
+    #[error("Unknown timestamp resolution 0x{0:x} in feed ID")]
+    UnknownResolution(u8),
 }
 
 pub(crate) struct ReportBase;
 
 impl ReportBase {
     pub(crate) const WORD_SIZE: usize = 32;
+
+    /// Fails unless the feed ID carries the schema version the decoder handles. Schemas
+    /// can share a word layout, so the layout alone cannot tell them apart.
+    pub(crate) fn check_schema_version(feed_id: &ID, expected: u16) -> Result<(), ReportError> {
+        let got = feed_id.version();
+        if got != expected {
+            return Err(ReportError::WrongSchemaVersion { expected, got });
+        }
+        Ok(())
+    }
 
     pub(crate) fn read_int192(data: &[u8], offset: usize) -> Result<BigInt, ReportError> {
         if offset + Self::WORD_SIZE > data.len() {
