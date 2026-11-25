@@ -121,7 +121,7 @@ dependencies = [
 
 [[package]]
 name = "chainlink-data-streams-report"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "hex",
  "num-bigint",
@@ -133,7 +133,7 @@ dependencies = [
 
 [[package]]
 name = "chainlink-data-streams-sdk"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "byteorder",
  "chainlink-data-streams-report",

@@ -94,6 +94,10 @@ func (Data) Schema() abi.Arguments {
 
 // Decode decodes the serialized data bytes
 func Decode(data []byte) (*Data, error) {
+	if err := feed.CheckVersion(data, feed.FeedVersion14); err != nil {
+		return nil, err
+	}
+
 	values, err := schema.Unpack(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode report: %w", err)
@@ -118,10 +122,6 @@ func Decode(data []byte) (*Data, error) {
 	}
 	if raw.LastSeenTimestampNs > uint64(maxInt64) {
 		return nil, fmt.Errorf("LastSeenTimestampNs overflow: %d exceeds maximum timestamp", raw.LastSeenTimestampNs)
-	}
-
-	if raw.FeedID.Version() != feed.FeedVersion14 {
-		return nil, fmt.Errorf("%w: feed ID %s has version %d, want 14", feed.ErrWrongSchemaVersion, raw.FeedID.String(), raw.FeedID.Version())
 	}
 
 	res := raw.FeedID.Resolution()

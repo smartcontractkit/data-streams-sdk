@@ -65,7 +65,6 @@ impl ReportDataV1 {
         let feed_id = ID(data[..ReportBase::WORD_SIZE]
             .try_into()
             .map_err(|_| ReportError::InvalidLength("feed_id (bytes32)"))?);
-        ReportBase::check_schema_version(&feed_id, 1)?;
 
         let observations_timestamp = ReportBase::read_uint32(data, ReportBase::WORD_SIZE)?;
         let benchmark_price = ReportBase::read_int192(data, 2 * ReportBase::WORD_SIZE)?;
@@ -149,5 +148,15 @@ mod tests {
         assert_eq!(decoded.current_block_hash, expected_current_block_hash);
         assert_eq!(decoded.valid_from_block_num, expected_valid_from_block_num);
         assert_eq!(decoded.current_block_timestamp, expected_timestamp as u64);
+    }
+
+    #[test]
+    fn decode_report_data_v1_accepts_legacy_feed_id() {
+        let mut report_data: ReportDataV1 = generate_mock_report_data_v1();
+        report_data.feed_id.0[..7].copy_from_slice(b"ETH-USD");
+        let encoded = report_data.abi_encode().unwrap();
+        let decoded = ReportDataV1::decode(&encoded).unwrap();
+
+        assert_eq!(decoded.feed_id, report_data.feed_id);
     }
 }

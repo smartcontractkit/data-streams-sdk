@@ -91,6 +91,10 @@ impl ReportBase {
             return Err(ReportError::DataTooShort("uint32"));
         }
         let value_bytes = &data[offset..offset + Self::WORD_SIZE];
+        // Reject a wider value, such as a millisecond timestamp, instead of truncating it.
+        if value_bytes[..28].iter().any(|&b| b != 0) {
+            return Err(ReportError::InvalidValue("uint32"));
+        }
         Ok(u32::from_be_bytes(
             value_bytes[28..32]
                 .try_into()
@@ -204,6 +208,18 @@ mod tests {
     fn test_encode_int192_rejects_out_of_range_values() {
         assert!(ReportBase::encode_int192(&(BigInt::from(1) << 191usize)).is_err());
         assert!(ReportBase::encode_int192(&(-(BigInt::from(1) << 191usize) - 1)).is_err());
+    }
+
+    #[test]
+    fn test_read_uint32_rejects_wider_values() {
+        let word = ReportBase::encode_uint32(u32::MAX).unwrap();
+        assert_eq!(ReportBase::read_uint32(&word, 0).unwrap(), u32::MAX);
+
+        let word = ReportBase::encode_uint64(1_759_800_000_000).unwrap();
+        assert!(matches!(
+            ReportBase::read_uint32(&word, 0),
+            Err(ReportError::InvalidValue("uint32"))
+        ));
     }
 
     #[test]

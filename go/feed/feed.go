@@ -34,6 +34,9 @@ const (
 // other than the one the decoder handles.
 var ErrWrongSchemaVersion = errors.New("feed ID does not match the report schema version")
 
+// ErrUnknownResolution is returned when a report's feed ID carries an undefined timestamp resolution.
+var ErrUnknownResolution = errors.New("feed ID has an undefined timestamp resolution")
+
 // Resolution represents the timestamp resolution for a feed
 type Resolution uint8
 
@@ -120,4 +123,23 @@ func ParseTimestamp(ts uint64, res Resolution) time.Time {
 		return time.UnixMilli(int64(ts))
 	}
 	return time.Unix(int64(ts), 0)
+}
+
+// CheckVersion validates the schema version and timestamp resolution of the feed ID
+// in the first word of a report blob. Schemas can share a word layout, so the layout
+// alone cannot tell them apart.
+func CheckVersion(report []byte, want FeedVersion) error {
+	var id ID
+	if len(report) < len(id) {
+		return fmt.Errorf("report blob has %d bytes, too short for a feed ID", len(report))
+	}
+	copy(id[:], report)
+
+	if id.Version() != want {
+		return fmt.Errorf("%w: feed ID %s has version %d, want %d", ErrWrongSchemaVersion, id.String(), id.Version(), want)
+	}
+	if res := id.Resolution(); res != ResolutionSeconds && res != ResolutionMilliseconds {
+		return fmt.Errorf("%w: feed ID %s has resolution %d", ErrUnknownResolution, id.String(), res)
+	}
+	return nil
 }

@@ -87,7 +87,7 @@ func Decode[T Data](fullReport []byte) (r *Report[T], err error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("report: failed to decode data: %s", err)
+		return nil, fmt.Errorf("report: failed to decode data: %w", err)
 	}
 
 	// Required to return typed data as T

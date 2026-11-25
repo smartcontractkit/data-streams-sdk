@@ -1,6 +1,7 @@
 package report
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
+	"github.com/smartcontractkit/data-streams-sdk/go/v2/feed"
 	"github.com/smartcontractkit/data-streams-sdk/go/v2/report/common"
 	v1 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v1"
 	v10 "github.com/smartcontractkit/data-streams-sdk/go/v2/report/v10"
@@ -237,6 +239,49 @@ func TestReport(t *testing.T) {
 	if !reflect.DeepEqual(v15Report, rv15) {
 		t.Errorf("expected: %#v, got: %#v", v15Report, rv15)
 	}
+}
+
+func TestDecodeChecksFeedID(t *testing.T) {
+	pack := func(blob []byte) []byte {
+		b, err := schema.Pack(v15Report.ReportContext, blob, v15Report.RawRs, v15Report.RawSs, v15Report.RawVs)
+		if err != nil {
+			t.Fatalf("failed to encode report: %s", err)
+		}
+		return b
+	}
+
+	t.Run("wrong version with same layout", func(t *testing.T) {
+		// v3 and v15 share the same word layout.
+		if _, err := Decode[v15.Data](pack(v3Report.ReportBlob)); !errors.Is(err, feed.ErrWrongSchemaVersion) {
+			t.Fatalf("expected ErrWrongSchemaVersion, got %v", err)
+		}
+	})
+
+	t.Run("wrong version with different layout", func(t *testing.T) {
+		if _, err := Decode[v14.Data](pack(v3Report.ReportBlob)); !errors.Is(err, feed.ErrWrongSchemaVersion) {
+			t.Fatalf("expected ErrWrongSchemaVersion, got %v", err)
+		}
+	})
+
+	t.Run("undefined resolution", func(t *testing.T) {
+		data := v15Data
+		data.FeedID[0] = 0x20
+		if _, err := Decode[v15.Data](pack(mustPackData(data))); !errors.Is(err, feed.ErrUnknownResolution) {
+			t.Fatalf("expected ErrUnknownResolution, got %v", err)
+		}
+	})
+
+	t.Run("legacy v1 feed ID", func(t *testing.T) {
+		data := v1Data
+		copy(data.FeedID[:], "ETH-USD")
+		r, err := Decode[v1.Data](pack(mustPackData(data)))
+		if err != nil {
+			t.Fatalf("failed to decode report: %s", err)
+		}
+		if r.Data.FeedID != data.FeedID {
+			t.Errorf("FeedID mismatch: expected %v, got %v", data.FeedID, r.Data.FeedID)
+		}
+	})
 }
 
 var v1Report = &Report[v1.Data]{

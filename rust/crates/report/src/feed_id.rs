@@ -41,12 +41,12 @@ pub enum Resolution {
 }
 
 impl ID {
-    /// Returns the schema version: the first two bytes of the ID, without the resolution nibble.
+    /// Returns the schema version from the first two bytes of the ID, without the resolution nibble.
     pub fn version(&self) -> u16 {
         u16::from_be_bytes([self.0[0], self.0[1]]) & 0x0FFF
     }
 
-    /// Returns the timestamp resolution: the high nibble of the first byte.
+    /// Returns the timestamp resolution from the high nibble of the first byte.
     ///
     /// Returns the nibble as the error value when it is not a defined resolution.
     pub fn resolution(&self) -> Result<Resolution, u8> {

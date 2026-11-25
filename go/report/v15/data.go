@@ -36,27 +36,27 @@ func Schema() abi.Arguments {
 // Data is the container for this schema attributes
 type Data struct {
 	FeedID                feed.ID `abi:"feedId"`
+	ValidFromTimestamp    time.Time
 	ObservationsTimestamp time.Time
+	NativeFee             *big.Int
+	LinkFee               *big.Int
+	ExpiresAt             time.Time
 	AdaptiveRate          *big.Int
 	ReferenceRate         *big.Int
 	MarketRate            *big.Int
-	ValidFromTimestamp    time.Time
-	ExpiresAt             time.Time
-	LinkFee               *big.Int
-	NativeFee             *big.Int
 }
 
 // rawData is used internally for ABI decoding - types must match ABI schema
 type rawData struct {
 	FeedID                feed.ID `abi:"feedId"`
+	ValidFromTimestamp    uint64
 	ObservationsTimestamp uint64
+	NativeFee             *big.Int
+	LinkFee               *big.Int
+	ExpiresAt             uint64
 	AdaptiveRate          *big.Int
 	ReferenceRate         *big.Int
 	MarketRate            *big.Int
-	ValidFromTimestamp    uint64
-	ExpiresAt             uint64
-	LinkFee               *big.Int
-	NativeFee             *big.Int
 }
 
 // Schema returns this data version schema
@@ -66,6 +66,10 @@ func (Data) Schema() abi.Arguments {
 
 // Decode decodes the serialized data bytes
 func Decode(data []byte) (*Data, error) {
+	if err := feed.CheckVersion(data, feed.FeedVersion15); err != nil {
+		return nil, err
+	}
+
 	values, err := schema.Unpack(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode report: %w", err)
@@ -75,8 +79,16 @@ func Decode(data []byte) (*Data, error) {
 		return nil, fmt.Errorf("failed to copy report values to struct: %w", err)
 	}
 
-	if raw.FeedID.Version() != feed.FeedVersion15 {
-		return nil, fmt.Errorf("%w: feed ID %s has version %d, want 15", feed.ErrWrongSchemaVersion, raw.FeedID.String(), raw.FeedID.Version())
+	// Validate timestamps do not overflow int64
+	const maxInt64 = uint64(^uint64(0) >> 1) // 2^63 - 1
+	if raw.ValidFromTimestamp > maxInt64 {
+		return nil, fmt.Errorf("ValidFromTimestamp overflow: %d exceeds maximum timestamp", raw.ValidFromTimestamp)
+	}
+	if raw.ObservationsTimestamp > maxInt64 {
+		return nil, fmt.Errorf("ObservationsTimestamp overflow: %d exceeds maximum timestamp", raw.ObservationsTimestamp)
+	}
+	if raw.ExpiresAt > maxInt64 {
+		return nil, fmt.Errorf("ExpiresAt overflow: %d exceeds maximum timestamp", raw.ExpiresAt)
 	}
 
 	res := raw.FeedID.Resolution()

@@ -85,6 +85,10 @@ func (Data) Schema() abi.Arguments {
 
 // Decode decodes the serialized data bytes
 func Decode(data []byte) (*Data, error) {
+	if err := feed.CheckVersion(data, feed.FeedVersion11); err != nil {
+		return nil, err
+	}
+
 	values, err := schema.Unpack(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode report: %w", err)
@@ -92,10 +96,6 @@ func Decode(data []byte) (*Data, error) {
 	raw := new(rawData)
 	if err = schema.Copy(raw, values); err != nil {
 		return nil, fmt.Errorf("failed to copy report values to struct: %w", err)
-	}
-
-	if raw.FeedID.Version() != feed.FeedVersion11 {
-		return nil, fmt.Errorf("%w: feed ID %s has version %d, want 11", feed.ErrWrongSchemaVersion, raw.FeedID.String(), raw.FeedID.Version())
 	}
 
 	res := raw.FeedID.Resolution()

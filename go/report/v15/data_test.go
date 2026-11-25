@@ -132,6 +132,20 @@ func TestDecodeRejectsShortBlob(t *testing.T) {
 	}
 }
 
+func TestDecodeRejectsTimestampOverflow(t *testing.T) {
+	feedID := [32]uint8{00, 15, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114}
+
+	b, err := schema.Pack(feedID, uint64(1), uint64(2), big.NewInt(10), big.NewInt(10), uint64(1)<<63,
+		big.NewInt(1), big.NewInt(2), big.NewInt(3))
+	if err != nil {
+		t.Fatalf("failed to serialize report: %s", err)
+	}
+
+	if _, err := Decode(b); err == nil {
+		t.Fatal("expected an error decoding an ExpiresAt above MaxInt64")
+	}
+}
+
 func TestDecodeRejectsOtherSchemaVersion(t *testing.T) {
 	// The v3 feed ID shares this schema's word layout.
 	feedID := [32]uint8{00, 03, 107, 74, 167, 229, 124, 167, 182, 138, 225, 191, 69, 101, 63, 86, 182, 86, 253, 58, 163, 53, 239, 127, 174, 105, 107, 102, 63, 27, 132, 114}
