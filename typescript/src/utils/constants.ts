@@ -22,8 +22,8 @@ export const WS_CONSTANTS = {
 export const VALIDATION_REGEX = {
   /** Matches valid feed IDs (0x followed by 64 hex characters) */
   FEED_ID: /^0x[0-9a-fA-F]{64}$/,
-  /** Matches valid schema versions (0x0002-0x0009, 0x000a-0x000e) */
-  SCHEMA_VERSION: /^0x000([2-9]|a|b|c|d|e)$/,
+  /** Matches valid schema versions (0x0002-0x0009, 0x000a-0x000f) */
+  SCHEMA_VERSION: /^0x000([2-9]|a|b|c|d|e|f)$/,
 } as const;
 
 // Request timeout constants

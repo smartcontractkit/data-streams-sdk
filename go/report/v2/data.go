@@ -60,6 +60,10 @@ func (Data) Schema() abi.Arguments {
 
 // Decode decodes the serialized data bytes
 func Decode(report []byte) (*Data, error) {
+	if err := feed.CheckVersion(report, feed.FeedVersion2); err != nil {
+		return nil, err
+	}
+
 	values, err := schema.Unpack(report)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode report: %w", err)

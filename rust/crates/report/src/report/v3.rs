@@ -85,6 +85,7 @@ impl ReportDataV3 {
         let feed_id = ID(data[..ReportBase::WORD_SIZE]
             .try_into()
             .map_err(|_| ReportError::InvalidLength("feed_id (bytes32)"))?);
+        ReportBase::check_schema_version(&feed_id, 3)?;
 
         let valid_from_timestamp = ReportBase::read_uint32(data, ReportBase::WORD_SIZE)?;
         let observations_timestamp = ReportBase::read_uint32(data, 2 * ReportBase::WORD_SIZE)?;

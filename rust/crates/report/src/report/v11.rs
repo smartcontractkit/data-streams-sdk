@@ -82,6 +82,7 @@ impl ReportDataV11 {
         let feed_id = ID(data[..ReportBase::WORD_SIZE]
             .try_into()
             .map_err(|_| ReportError::InvalidLength("feed_id (bytes32)"))?);
+        ReportBase::check_schema_version(&feed_id, 11)?;
 
         let valid_from_timestamp = ReportBase::read_uint32(data, ReportBase::WORD_SIZE)?;
         let observations_timestamp = ReportBase::read_uint32(data, 2 * ReportBase::WORD_SIZE)?;
@@ -173,9 +174,13 @@ mod tests {
         let expected_mid = BigInt::from(MOCK_MID).checked_mul(&multiplier).unwrap();
         let expected_last_seen_timestamp_ns: u64 = MOCK_LAST_SEEN_TIMESTAMP_NS;
         let expected_bid = BigInt::from(MOCK_BID).checked_mul(&multiplier).unwrap();
-        let expected_bid_volume = BigInt::from(MOCK_BID_VOLUME).checked_mul(&multiplier).unwrap();
+        let expected_bid_volume = BigInt::from(MOCK_BID_VOLUME)
+            .checked_mul(&multiplier)
+            .unwrap();
         let expected_ask = BigInt::from(MOCK_ASK).checked_mul(&multiplier).unwrap();
-        let expected_ask_volume = BigInt::from(MOCK_ASK_VOLUME).checked_mul(&multiplier).unwrap();
+        let expected_ask_volume = BigInt::from(MOCK_ASK_VOLUME)
+            .checked_mul(&multiplier)
+            .unwrap();
         let expected_last_traded_price = BigInt::from(MOCK_LAST_TRADED_PRICE)
             .checked_mul(&multiplier)
             .unwrap();

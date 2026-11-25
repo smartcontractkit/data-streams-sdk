@@ -19,7 +19,7 @@ use num_bigint::BigInt;
 ///
 /// # Ripcord Flag
 /// - `0` (false): Feed's data provider is OK. Fund's data provider and accuracy is as expected.
-/// - `1` (true): Feed's data provider is flagging a pause. Data provider detected outliers, 
+/// - `1` (true): Feed's data provider is flagging a pause. Data provider detected outliers,
 ///   deviated thresholds, or operational issues. **DO NOT consume NAV data when ripcord=1.**
 ///
 /// # Solidity Equivalent
@@ -73,6 +73,7 @@ impl ReportDataV9 {
         let feed_id = ID(data[..ReportBase::WORD_SIZE]
             .try_into()
             .map_err(|_| ReportError::InvalidLength("feed_id (bytes32)"))?);
+        ReportBase::check_schema_version(&feed_id, 9)?;
 
         let valid_from_timestamp = ReportBase::read_uint32(data, ReportBase::WORD_SIZE)?;
         let observations_timestamp = ReportBase::read_uint32(data, 2 * ReportBase::WORD_SIZE)?;
@@ -128,16 +129,14 @@ impl ReportDataV9 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::report::tests::{
-        generate_mock_report_data_v9, MOCK_FEE, MOCK_TIMESTAMP,
-    };
+    use crate::report::tests::{generate_mock_report_data_v9, MOCK_FEE, MOCK_TIMESTAMP};
 
     const V9_FEED_ID_STR: &str =
         "0x00096b4aa7e57ca7b68ae1bf45653f56b656fd3aa335ef7fae696b663f1b8472";
 
     const MOCK_NAV_PER_SHARE: isize = 1;
     const MOCK_AUM: isize = 1000;
-    const RIPCORD_NORMAL: u32 = 0; 
+    const RIPCORD_NORMAL: u32 = 0;
 
     #[test]
     fn test_decode_report_data_v9() {
