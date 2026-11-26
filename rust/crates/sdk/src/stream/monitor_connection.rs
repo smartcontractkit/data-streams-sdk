@@ -89,7 +89,6 @@ pub(crate) async fn run_stream(
                                 } else {
                                     info!("Connection closed");
                                 }
-                                stats.active_connections.fetch_sub(1, Ordering::SeqCst);
                             }
                             _ => {
                                 warn!("Received unhandled message.");
