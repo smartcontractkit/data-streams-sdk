@@ -10,6 +10,7 @@ export interface StreamOptions {
 
 export interface IStream {
   on(event: "report", listener: (report: Report) => void): this;
+  once(event: "report", listener: (report: Report) => void): this;
   on(event: "error", listener: (error: Error) => void): this;
   on(event: "disconnected", listener: () => void): this;
   on(

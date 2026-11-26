@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { Stream } from "../../../../src/stream";
-import { Config } from "../../../../src/types/client";
+import { Config, IStream } from "../../../../src/types/client";
 import { LogLevel } from "../../../../src/types/logger";
 import * as originDiscovery from "../../../../src/utils/origin-discovery";
 
@@ -91,6 +91,25 @@ describe("Stream - Event Re-emission", () => {
 
     expect(reconnectingSpy).toHaveBeenCalledTimes(2);
     expect(reconnectingSpy).toHaveBeenCalledWith(reconnectingInfo);
+  });
+
+  it("supports one-time report listeners through IStream", () => {
+    const typedStream: IStream = stream;
+    const reportListener = jest.fn();
+    const report = {
+      feedID: "0x0003" + "1".repeat(60),
+      fullReport: "0x1234",
+      validFromTimestamp: 1,
+      observationsTimestamp: 2,
+    };
+
+    expect(typedStream.once("report", reportListener)).toBe(typedStream);
+
+    stream.emit("report", report);
+    stream.emit("report", report);
+
+    expect(reportListener).toHaveBeenCalledTimes(1);
+    expect(reportListener).toHaveBeenCalledWith(report);
   });
 
   it("re-emits 'connection-lost' event exactly once per transition", async () => {
